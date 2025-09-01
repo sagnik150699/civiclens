@@ -39,6 +39,7 @@ const formSchema = z.object({
   address: z.string().optional(),
   lat: z.string().optional(),
   lng: z.string().optional(),
+  captcha: z.string().min(1, { message: 'Please solve the captcha.' }),
 });
 
 function SubmitButton() {
@@ -55,6 +56,8 @@ export function IssueReportForm() {
   const { toast } = useToast();
   const [state, formAction] = useActionState(submitIssue, { errors: {} });
   const [preview, setPreview] = useState<string | null>(null);
+  const [num1, setNum1] = useState(0);
+  const [num2, setNum2] = useState(0);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -62,6 +65,7 @@ export function IssueReportForm() {
       description: '',
       category: undefined,
       address: '',
+      captcha: '',
     },
   });
 
@@ -94,6 +98,11 @@ export function IssueReportForm() {
   };
 
   useEffect(() => {
+    setNum1(Math.floor(Math.random() * 10) + 1);
+    setNum2(Math.floor(Math.random() * 10) + 1);
+  }, []);
+
+  useEffect(() => {
     if (state?.success) {
       toast({
         title: 'Success!',
@@ -102,6 +111,9 @@ export function IssueReportForm() {
       });
       form.reset();
       setPreview(null);
+      // Generate new numbers for next submission
+      setNum1(Math.floor(Math.random() * 10) + 1);
+      setNum2(Math.floor(Math.random() * 10) + 1);
     } else if (state?.message && !state.success) {
       toast({
         title: 'Error',
@@ -115,7 +127,12 @@ export function IssueReportForm() {
 
   return (
     <Form {...form}>
-      <form action={formAction} className="space-y-4">
+      <form
+        action={formAction}
+        className="space-y-4"
+        // Use a key to force re-render on success and reset captcha
+        key={num1 + num2}
+      >
         <h2 className="text-2xl font-bold font-headline text-center">Report an Issue</h2>
         
         <FormField
@@ -241,6 +258,24 @@ export function IssueReportForm() {
             />
           </div>
         )}
+
+        <FormField
+          control={form.control}
+          name="captcha"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>
+                Security Question: What is {num1} + {num2}?
+              </FormLabel>
+              <FormControl>
+                <Input placeholder="Your answer" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <input type="hidden" name="captchaQuestion" value={`${num1}+${num2}`} />
+
 
         <SubmitButton />
       </form>

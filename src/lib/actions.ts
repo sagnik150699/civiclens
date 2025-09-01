@@ -14,6 +14,7 @@ const issueSchema = z.object({
   address: z.string().optional(),
   lat: z.string().optional(),
   lng: z.string().optional(),
+  captcha: z.string().min(1, 'Please solve the captcha.'),
 });
 
 export async function submitIssue(prevState: any, formData: FormData) {
@@ -23,11 +24,23 @@ export async function submitIssue(prevState: any, formData: FormData) {
     address: formData.get('address'),
     lat: formData.get('lat'),
     lng: formData.get('lng'),
+    captcha: formData.get('captcha'),
   });
 
   if (!validatedFields.success) {
     return {
       errors: validatedFields.error.flatten().fieldErrors,
+    };
+  }
+
+  const captchaQuestion = formData.get('captchaQuestion') as string;
+  const [num1, num2] = captchaQuestion.split('+').map(Number);
+  const expectedAnswer = num1 + num2;
+
+  if (parseInt(validatedFields.data.captcha, 10) !== expectedAnswer) {
+    return {
+        success: false,
+        message: 'Incorrect CAPTCHA answer. Please try again.',
     };
   }
   
