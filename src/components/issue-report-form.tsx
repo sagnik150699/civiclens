@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useFormState, useFormStatus } from 'react-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -26,9 +26,8 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import Image from 'next/image';
-import { CameraIcon, Send } from 'lucide-react';
+import { CameraIcon, Send, LocateIcon } from 'lucide-react';
 import { ISSUE_CATEGORIES } from '@/lib/constants';
 
 const formSchema = z.object({
@@ -37,6 +36,9 @@ const formSchema = z.object({
   }),
   category: z.enum(ISSUE_CATEGORIES.map(c => c.value) as [string, ...string[]]),
   photo: z.any().optional(),
+  address: z.string().optional(),
+  lat: z.string().optional(),
+  lng: z.string().optional(),
 });
 
 function SubmitButton() {
@@ -59,8 +61,37 @@ export function IssueReportForm() {
     defaultValues: {
       description: '',
       category: undefined,
+      address: '',
     },
   });
+
+  const handleGeolocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          form.setValue('lat', position.coords.latitude.toString());
+          form.setValue('lng', position.coords.longitude.toString());
+          toast({
+            title: 'Location Acquired',
+            description: 'Your current location has been set.',
+          });
+        },
+        () => {
+          toast({
+            title: 'Geolocation Error',
+            description: 'Could not acquire your location. Please enter your address manually.',
+            variant: 'destructive',
+          });
+        }
+      );
+    } else {
+      toast({
+        title: 'Geolocation Not Supported',
+        description: 'Your browser does not support geolocation.',
+        variant: 'destructive',
+      });
+    }
+  };
 
   useEffect(() => {
     if (state?.success) {
@@ -134,10 +165,41 @@ export function IssueReportForm() {
 
         <FormField
           control={form.control}
+          name="address"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Address (Optional)</FormLabel>
+              <FormControl>
+                <div className="relative">
+                  <Input
+                    placeholder="Enter the address or use geolocation"
+                    {...field}
+                  />
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8"
+                    onClick={handleGeolocation}
+                  >
+                    <LocateIcon className="h-5 w-5 text-muted-foreground" />
+                  </Button>
+                </div>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <input type="hidden" {...form.register("lat")} />
+        <input type="hidden" {...form.register("lng")} />
+
+
+        <FormField
+          control={form.control}
           name="photo"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Photo</FormLabel>
+              <FormLabel>Photo (Optional)</FormLabel>
               <FormControl>
                 <div className="relative">
                   <Input

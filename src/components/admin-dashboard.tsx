@@ -11,6 +11,12 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from '@/components/ui/tooltip'
+import {
   Card,
   CardContent,
   CardDescription,
@@ -33,7 +39,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import type { IssueReport, IssueStatus, IssuePriority } from '@/lib/data';
-import { ISSUE_CATEGORIES, ISSUE_PRIORITIES, ISSUE_STATUSES } from '@/lib/constants';
+import { ISSUE_CATEGORIES, ISSUE_PRIORITIES, ISSUE_STATUSES, ICONS } from '@/lib/constants';
 import { MoreHorizontal, MapPin } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { updateIssueStatus } from '@/lib/actions';
@@ -91,13 +97,22 @@ export function AdminDashboard({ initialIssues }: { initialIssues: IssueReport[]
     }
   };
 
+  const clearFilters = () => {
+    setStatusFilter('all');
+    setPriorityFilter('all');
+    setCategoryFilter('all');
+  }
+
 
   return (
     <div className="mx-auto grid w-full max-w-6xl items-start gap-6 md:grid-cols-[180px_1fr] lg:grid-cols-[250px_1fr]">
       <div className="grid gap-6">
         <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Filters</CardTitle>
+            <Button variant="ghost" size="icon" onClick={clearFilters} className="h-6 w-6">
+                <ICONS.x className="h-4 w-4 text-muted-foreground" />
+            </Button>
           </CardHeader>
           <CardContent className="grid gap-4">
             <Select onValueChange={setStatusFilter} value={statusFilter}>
@@ -189,6 +204,7 @@ export function AdminDashboard({ initialIssues }: { initialIssues: IssueReport[]
                 <TableRow>
                   <TableHead>Priority</TableHead>
                   <TableHead>Category</TableHead>
+                  <TableHead>Address</TableHead>
                   <TableHead>Description</TableHead>
                   <TableHead>Reported</TableHead>
                   <TableHead>Status</TableHead>
@@ -207,6 +223,7 @@ export function AdminDashboard({ initialIssues }: { initialIssues: IssueReport[]
                         <span className="font-medium">{ISSUE_CATEGORIES.find(c => c.value === issue.category)?.label}</span>
                       </div>
                     </TableCell>
+                    <TableCell className="max-w-xs truncate">{issue.address}</TableCell>
                     <TableCell className="max-w-xs truncate">{issue.description}</TableCell>
                     <TableCell>{formatDistanceToNow(new Date(issue.createdAt), { addSuffix: true })}</TableCell>
                     <TableCell><StatusBadge status={issue.status} /></TableCell>

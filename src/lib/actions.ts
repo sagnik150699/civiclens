@@ -5,16 +5,24 @@ import { revalidatePath } from 'next/cache';
 import { prioritizeIssueReport } from '@/ai/flows/prioritize-issue-reports';
 import { addIssue, updateIssueStatus as dbUpdateIssueStatus, type IssuePriority, type IssueStatus } from '@/lib/data';
 import { ISSUE_CATEGORIES, ISSUE_STATUSES } from './constants';
+import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
 
 const issueSchema = z.object({
   description: z.string().min(10, 'Please provide a more detailed description.'),
   category: z.enum(ISSUE_CATEGORIES.map(c => c.value) as [string, ...string[]]),
+  address: z.string().optional(),
+  lat: z.string().optional(),
+  lng: z.string().optional(),
 });
 
 export async function submitIssue(prevState: any, formData: FormData) {
   const validatedFields = issueSchema.safeParse({
     description: formData.get('description'),
     category: formData.get('category'),
+    address: formData.get('address'),
+    lat: formData.get('lat'),
+    lng: formData.get('lng'),
   });
 
   if (!validatedFields.success) {
@@ -23,7 +31,7 @@ export async function submitIssue(prevState: any, formData: FormData) {
     };
   }
   
-  const { description, category } = validatedFields.data;
+  const { description, category, address, lat, lng } = validatedFields.data;
   const photo = formData.get('photo') as File;
   let photoDataUri: string | undefined = undefined;
   let photoUrl: string | null = null;
@@ -32,17 +40,14 @@ export async function submitIssue(prevState: any, formData: FormData) {
     if (photo && photo.size > 0) {
       const buffer = Buffer.from(await photo.arrayBuffer());
       photoDataUri = `data:${photo.type};base64,${buffer.toString('base64')}`;
-      // In a real app, you'd upload this to a storage service and get a URL.
-      // Here, we'll just use a placeholder.
       photoUrl = "https://picsum.photos/400/300";
     }
 
     const aiResult = await prioritizeIssueReport({ description, photoDataUri });
 
-    // Mock location data
     const location = {
-      lat: 34.0522 + (Math.random() - 0.5) * 0.1,
-      lng: -118.2437 + (Math.random() - 0.5) * 0.1,
+      lat: lat ? parseFloat(lat) : 34.0522 + (Math.random() - 0.5) * 0.1,
+      lng: lng ? parseFloat(lng) : -118.2437 + (Math.random() - 0.5) * 0.1,
     };
 
     await addIssue({
@@ -53,6 +58,7 @@ export async function submitIssue(prevState: any, formData: FormData) {
       status: 'Submitted',
       priority: (aiResult.priority as IssuePriority) || 'Medium',
       reason: aiResult.reason || 'AI analysis failed.',
+      address: address || 'N/A',
     });
 
     revalidatePath('/');
@@ -85,4 +91,38 @@ export async function updateIssueStatus(id: string, status: IssueStatus) {
         console.error(error);
         return { success: false, message: "Failed to update status."}
     }
+}
+
+
+const loginSchema = z.object({
+  username: z.string(),
+  password: z.string(),
+});
+
+export async function login(prevState: any, formData: FormData) {
+  const validatedFields = loginSchema.safeParse({
+    username: formData.get('username'),
+    password: formData.get('password'),
+  });
+
+  if (!validatedFields.success) {
+    return {
+      message: 'Invalid data.',
+    };
+  }
+  
+  const { username, password } = validatedFields.data;
+  
+  if (username === 'admin' && password === 'admin') {
+    const expires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    cookies().set('session', 'admin-logged-in', { expires, httpOnly: true });
+    redirect('/admin');
+  }
+
+  return { message: 'Invalid username or password.' };
+}
+
+export async function logout() {
+  cookies().set('session', '', { expires: new Date(0) });
+  redirect('/login');
 }

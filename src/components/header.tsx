@@ -1,8 +1,14 @@
 import Link from 'next/link';
-import { MountainIcon } from 'lucide-react';
+import { MountainIcon, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { logout } from '@/lib/actions';
+import { cookies } from 'next/headers';
 
 export function Header() {
+    const cookieStore = cookies();
+    const session = cookieStore.get('session');
+    const isLoggedIn = !!session?.value;
+
   return (
     <header className="px-4 lg:px-6 h-14 flex items-center bg-card shadow-sm">
       <Link href="/" className="flex items-center justify-center" prefetch={false}>
@@ -20,6 +26,14 @@ export function Header() {
             Admin Dashboard
           </Link>
         </Button>
+        {isLoggedIn && (
+            <form action={logout}>
+                <Button type="submit" variant="ghost">
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Logout
+                </Button>
+            </form>
+        )}
       </nav>
     </header>
   );

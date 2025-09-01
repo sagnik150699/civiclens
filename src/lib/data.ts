@@ -12,6 +12,7 @@ export interface IssueReport {
     lat: number;
     lng: number;
   };
+  address: string;
   photoUrl: string | null;
   status: IssueStatus;
   priority: IssuePriority;
@@ -26,6 +27,7 @@ let issues: IssueReport[] = [
         description: 'Large pothole on the main street near the library. It is causing traffic issues.',
         category: 'pothole',
         location: { lat: 34.0522, lng: -118.2437 },
+        address: '123 Main St, Los Angeles, CA',
         photoUrl: 'https://picsum.photos/400/300?grayscale',
         status: 'Submitted',
         priority: 'High',
@@ -37,6 +39,7 @@ let issues: IssueReport[] = [
         description: 'Streetlight is flickering on and off at the corner of Oak & Pine.',
         category: 'streetlight_out',
         location: { lat: 34.055, lng: -118.245 },
+        address: 'Corner of Oak & Pine, Los Angeles, CA',
         photoUrl: 'https://picsum.photos/400/300?blur=2',
         status: 'Acknowledged',
         priority: 'Medium',
@@ -48,6 +51,7 @@ let issues: IssueReport[] = [
         description: 'Trash can in the park is overflowing.',
         category: 'trash_overflow',
         location: { lat: 34.05, lng: -118.24 },
+        address: 'Central Park, Los Angeles, CA',
         photoUrl: 'https://picsum.photos/400/300',
         status: 'Resolved',
         priority: 'Low',
