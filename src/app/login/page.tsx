@@ -1,5 +1,6 @@
 'use client';
-import { useFormState, useFormStatus } from 'react-dom';
+import { useActionState } from 'react';
+import { useFormStatus } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -18,7 +19,7 @@ function SubmitButton() {
   }
 
 export default function LoginPage() {
-    const [state, formAction] = useFormState(login, undefined);
+    const [state, formAction] = useActionState(login, undefined);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted/40">
