@@ -34,7 +34,9 @@ const formSchema = z.object({
   description: z.string().min(10, {
     message: 'Description must be at least 10 characters.',
   }),
-  category: z.enum(ISSUE_CATEGORIES.map(c => c.value) as [string, ...string[]]),
+  category: z.enum(ISSUE_CATEGORIES.map(c => c.value) as [string, ...string[]], {
+    required_error: "Please select a category.",
+  }),
   photo: z.any().optional(),
   address: z.string().optional(),
   lat: z.string().optional(),
@@ -54,10 +56,11 @@ function SubmitButton() {
 
 export function IssueReportForm() {
   const { toast } = useToast();
-  const [state, formAction] = useActionState(submitIssue, { errors: {} });
+  const [state, formAction] = useActionState(submitIssue, undefined);
   const [preview, setPreview] = useState<string | null>(null);
   const [num1, setNum1] = useState(0);
   const [num2, setNum2] = useState(0);
+  const formRef = useRef<HTMLFormElement>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -128,7 +131,12 @@ export function IssueReportForm() {
   return (
     <Form {...form}>
       <form
+        ref={formRef}
         action={formAction}
+        onSubmit={form.handleSubmit(() => {
+          // FormData will be passed to the action automatically by the form element
+          formRef.current?.submit();
+        })}
         className="space-y-4"
         // Use a key to force re-render on success and reset captcha
         key={num1 + num2}

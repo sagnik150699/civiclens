@@ -29,6 +29,8 @@ export async function submitIssue(prevState: any, formData: FormData) {
 
   if (!validatedFields.success) {
     return {
+      success: false,
+      message: "Validation failed. Please check your inputs.",
       errors: validatedFields.error.flatten().fieldErrors,
     };
   }
