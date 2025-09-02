@@ -4,6 +4,8 @@ import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { prioritizeIssueReport } from '@/ai/flows/prioritize-issue-reports';
 import { addIssue, updateIssueStatus as dbUpdateIssueStatus, type IssuePriority, type IssueStatus } from '@/lib/data';
+import { storage } from '@/lib/firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { ISSUE_CATEGORIES, ISSUE_STATUSES } from './constants';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
@@ -50,16 +52,17 @@ export async function submitIssue(prevState: any, formData: FormData) {
   
   const { description, category, address, lat, lng } = validatedFields.data;
   const photo = formData.get('photo') as File;
-  let photoDataUri: string | undefined = undefined;
   
   try {
-    if (photo && photo.size > 0) {
-      const buffer = Buffer.from(await photo.arrayBuffer());
-      photoDataUri = `data:${photo.type};base64,${buffer.toString('base64')}`;
-    } else {
-        // This should not be reached if client-side validation is working
-        return { success: false, message: 'A photo is required.' };
-    }
+    const buffer = Buffer.from(await photo.arrayBuffer());
+    const photoDataUri = `data:${photo.type};base64,${buffer.toString('base64')}`;
+    
+    // Upload image to Firebase Storage
+    const storageRef = ref(storage, `issues/${Date.now()}-${photo.name}`);
+    const uploadResult = await uploadBytes(storageRef, buffer, {
+        contentType: photo.type,
+    });
+    const photoUrl = await getDownloadURL(uploadResult.ref);
 
     const aiResult = await prioritizeIssueReport({ description, photoDataUri });
 
@@ -72,7 +75,7 @@ export async function submitIssue(prevState: any, formData: FormData) {
       description,
       category,
       location,
-      photoUrl: "https://picsum.photos/400/300", // Placeholder, as we don't store the image itself
+      photoUrl,
       status: 'Submitted',
       priority: (aiResult.priority as IssuePriority) || 'Medium',
       reason: aiResult.reason || 'AI analysis failed.',
@@ -84,7 +87,7 @@ export async function submitIssue(prevState: any, formData: FormData) {
     return { success: true, message: 'Issue reported successfully!' };
 
   } catch (error) {
-    console.error(error);
+    console.error("Error submitting issue:", error);
     return { success: false, message: 'An unexpected error occurred.' };
   }
 }
@@ -102,9 +105,12 @@ export async function updateIssueStatus(id: string, status: IssueStatus) {
     }
 
     try {
-        await dbUpdateIssueStatus(id, status);
-        revalidatePath('/admin');
-        return { success: true, message: `Status updated to ${status}`};
+        const success = await dbUpdateIssueStatus(id, status);
+        if (success) {
+            revalidatePath('/admin');
+            return { success: true, message: `Status updated to ${status}`};
+        }
+        return { success: false, message: "Failed to update status."}
     } catch (error) {
         console.error(error);
         return { success: false, message: "Failed to update status."}

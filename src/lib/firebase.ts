@@ -1,0 +1,21 @@
+// Import the functions you need from the SDKs you need
+import { initializeApp, getApps, getApp } from "firebase/app";
+import { getFirestore } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
+
+const firebaseConfig = {
+  projectId: "civiclens-bexm4",
+  appId: "1:873086332859:web:8856f2a6ffa3f493ff5e9e",
+  storageBucket: "civiclens-bexm4.appspot.com",
+  apiKey: "AIzaSyAanUGeE4WzPNUCfx9d_KSM4vt5cZdStJg",
+  authDomain: "civiclens-bexm4.firebaseapp.com",
+  messagingSenderId: "873086332859",
+};
+
+// Initialize Firebase
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+const db = getFirestore(app);
+const storage = getStorage(app);
+
+
+export { app, db, storage };

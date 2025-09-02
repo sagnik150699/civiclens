@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, type FC } from 'react';
+import { useMemo, useState, type FC, useEffect } from 'react';
 import Image from 'next/image';
 import {
   Table,
@@ -39,11 +39,13 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import type { IssueReport, IssueStatus, IssuePriority } from '@/lib/data';
+import { getIssues } from '@/lib/data';
 import { ISSUE_CATEGORIES, ISSUE_PRIORITIES, ISSUE_STATUSES, ICONS } from '@/lib/constants';
 import { MoreHorizontal, MapPin } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { updateIssueStatus } from '@/lib/actions';
 import { useToast } from '@/hooks/use-toast';
+import { Skeleton } from './ui/skeleton';
 
 const priorityColors: Record<IssuePriority, string> = {
   High: 'bg-red-500 hover:bg-red-500/90',
@@ -68,10 +70,23 @@ const PriorityBadge: FC<{ priority: IssuePriority }> = ({ priority }) => (
 
 export function AdminDashboard({ initialIssues }: { initialIssues: IssueReport[] }) {
   const [issues, setIssues] = useState<IssueReport[]>(initialIssues);
+  const [isLoading, setIsLoading] = useState(initialIssues.length === 0);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const { toast } = useToast();
+
+  useEffect(() => {
+    async function loadIssues() {
+      setIsLoading(true);
+      const fetchedIssues = await getIssues();
+      setIssues(fetchedIssues);
+      setIsLoading(false);
+    }
+    if (initialIssues.length === 0) {
+        loadIssues();
+    }
+  }, [initialIssues]);
 
   const filteredIssues = useMemo(() => {
     return issues.filter((issue) => {
@@ -161,8 +176,8 @@ export function AdminDashboard({ initialIssues }: { initialIssues: IssueReport[]
                     <Image
                         src="https://picsum.photos/800/400"
                         alt="City map with issue locations"
-                        layout="fill"
-                        objectFit="cover"
+                        fill
+                        className="object-cover"
                         data-ai-hint="city map"
                     />
                     {filteredIssues.map(issue => {
@@ -211,7 +226,19 @@ export function AdminDashboard({ initialIssues }: { initialIssues: IssueReport[]
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredIssues.map((issue) => {
+                {isLoading ? (
+                    Array.from({ length: 5 }).map((_, i) => (
+                        <TableRow key={i}>
+                            <TableCell><Skeleton className="h-6 w-16" /></TableCell>
+                            <TableCell><Skeleton className="h-6 w-24" /></TableCell>
+                            <TableCell><Skeleton className="h-6 w-48" /></TableCell>
+                            <TableCell><Skeleton className="h-6 w-64" /></TableCell>
+                            <TableCell><Skeleton className="h-6 w-24" /></TableCell>
+                            <TableCell><Skeleton className="h-6 w-20" /></TableCell>
+                            <TableCell><Skeleton className="h-8 w-8" /></TableCell>
+                        </TableRow>
+                    ))
+                ) : filteredIssues.map((issue) => {
                   const CategoryIcon = ISSUE_CATEGORIES.find(c => c.value === issue.category)?.icon || MapPin;
                   const categoryLabel = ISSUE_CATEGORIES.find(c => c.value === issue.category)?.label || issue.category;
                   return (
@@ -247,7 +274,7 @@ export function AdminDashboard({ initialIssues }: { initialIssues: IssueReport[]
                 })}
               </TableBody>
             </Table>
-            {filteredIssues.length === 0 && (
+            {!isLoading && filteredIssues.length === 0 && (
               <div className="text-center p-8 text-muted-foreground">
                 No issues match the current filters.
               </div>
