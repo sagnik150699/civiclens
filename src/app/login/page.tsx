@@ -30,28 +30,20 @@ export default function LoginPage() {
             return;
         }
 
-        try {
-            const result = await login(email, password);
+        const result = await login(email, password);
 
-            if (!result.success) {
-                 toast({
-                    title: 'Login Failed',
-                    description: result.message || 'An unknown error occurred.',
-                    variant: 'destructive',
-                });
-            }
-            // The server action will handle the redirect on success.
-            // If we are here, it means login failed.
-        } catch (error) {
-            console.error("Authentication Error:", error);
-            toast({
+        // If login fails, the server action returns an error message.
+        // If it succeeds, it redirects, so this code won't be reached on success.
+        if (result && !result.success) {
+             toast({
                 title: 'Login Failed',
-                description: 'An unknown authentication error occurred.',
+                description: result.message || 'An unknown error occurred.',
                 variant: 'destructive',
             });
-        } finally {
-            setIsAuthenticating(false);
         }
+        
+        // We only reach here if the login failed.
+        setIsAuthenticating(false);
     };
     
   return (
