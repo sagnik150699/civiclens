@@ -1,9 +1,8 @@
-import Link from 'next-intl/link';
+import { Link } from 'next-intl/navigation';
 import { MountainIcon, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { logout } from '@/lib/actions';
 import { cookies } from 'next/headers';
-import { useTranslations } from 'next-intl';
 import { getTranslator } from 'next-intl/server';
 import { LanguageSwitcher } from './language-switcher';
 

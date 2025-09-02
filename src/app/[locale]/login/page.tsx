@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { login } from '@/lib/actions';
 import { MountainIcon } from 'lucide-react';
-import Link from 'next-intl/link';
+import { Link } from 'next-intl/navigation';
 import { useTranslations } from 'next-intl';
 
 function SubmitButton() {
