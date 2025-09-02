@@ -133,10 +133,6 @@ export function IssueReportForm() {
       <form
         ref={formRef}
         action={formAction}
-        onSubmit={form.handleSubmit(() => {
-          // FormData will be passed to the action automatically by the form element
-          formRef.current?.submit();
-        })}
         className="space-y-4"
         // Use a key to force re-render on success and reset captcha
         key={num1 + num2}
