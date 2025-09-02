@@ -15,7 +15,7 @@ const issueSchema = z.object({
   address: z.string().min(1, 'Address is required.'),
   lat: z.string().optional(),
   lng: z.string().optional(),
-  captcha: z.string().min(1, 'Please solve the captcha.'),
+  captcha: z.string().min(1, { message: 'Please solve the captcha.' }),
 });
 
 export async function submitIssue(prevState: any, formData: FormData) {

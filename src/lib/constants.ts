@@ -1,4 +1,4 @@
-import { Lightbulb, SprayCan, Trash2, type LucideIcon, MapPin, X, Car, TreeDeciduous } from 'lucide-react';
+import { Lightbulb, SprayCan, Trash2, type LucideIcon, MapPin, X, Car, TreeDeciduous, Footprints, Signpost, Droplets } from 'lucide-react';
 import { PotholeIcon } from '@/components/icons/pothole-icon';
 
 export const ISSUE_CATEGORIES: { value: string; label: string; icon: LucideIcon }[] = [
@@ -8,6 +8,9 @@ export const ISSUE_CATEGORIES: { value: string; label: string; icon: LucideIcon 
   { value: 'graffiti', label: 'Graffiti', icon: SprayCan },
   { value: 'abandoned_vehicle', label: 'Abandoned Vehicle', icon: Car },
   { value: 'fallen_tree', label: 'Fallen Tree', icon: TreeDeciduous },
+  { value: 'broken_sidewalk', label: 'Broken Sidewalk', icon: Footprints },
+  { value: 'damaged_sign', label: 'Damaged Sign', icon: Signpost },
+  { value: 'water_leak', label: 'Water Leak', icon: Droplets },
 ];
 
 export const ISSUE_STATUSES = ["Submitted", "Acknowledged", "In Progress", "Resolved"] as const;
@@ -20,6 +23,9 @@ export const ICONS = {
     graffiti: SprayCan,
     abandoned_vehicle: Car,
     fallen_tree: TreeDeciduous,
+    broken_sidewalk: Footprints,
+    damaged_sign: Signpost,
+    water_leak: Droplets,
     mapPin: MapPin,
     x: X
 }
