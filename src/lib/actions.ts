@@ -1,3 +1,4 @@
+
 'use server';
 
 import { z } from 'zod';
@@ -118,24 +119,13 @@ export async function updateIssueStatus(id: string, status: IssueStatus) {
     }
 }
 
-
-const loginSchema = z.object({
-  idToken: z.string(),
-});
-
-export async function login(prevState: any, formData: FormData) {
-  const validatedFields = loginSchema.safeParse({
-    idToken: formData.get('idToken'),
-  });
-
-  if (!validatedFields.success) {
+export async function login(idToken: string) {
+  if (!idToken) {
     return {
       success: false,
-      message: 'Invalid data.',
+      message: 'Authentication token is missing.',
     };
   }
-  
-  const { idToken } = validatedFields.data;
   
   try {
     const decodedToken = await adminAuth.verifyIdToken(idToken);

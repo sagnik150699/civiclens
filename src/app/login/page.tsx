@@ -1,6 +1,6 @@
+
 'use client';
-import { useActionState, useEffect, useState, useRef } from 'react';
-import { useFormStatus } from 'react-dom';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -13,81 +13,54 @@ import { auth } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 
-function SubmitButton({ isAuthenticating }: { isAuthenticating: boolean }) {
-    const { pending } = useFormStatus();
-    const isDisabled = pending || isAuthenticating;
-    return (
-      <Button type="submit" className="w-full" disabled={isDisabled}>
-        {isAuthenticating ? "Authenticating..." : pending ? "Logging in..." : "Login"}
-      </Button>
-    );
-  }
-
 export default function LoginPage() {
-    const [state, formAction] = useActionState(login, undefined);
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
     const [isAuthenticating, setIsAuthenticating] = useState(false);
-    const [idToken, setIdToken] = useState('');
     const router = useRouter();
     const { toast } = useToast();
-    const formRef = useRef<HTMLFormElement>(null);
 
-    useEffect(() => {
-        if (state?.success) {
-            router.push('/admin');
-        } else if (state?.message) {
-            toast({
-                title: 'Login Failed',
-                description: state.message,
-                variant: 'destructive',
-            });
-             // Reset state after showing error
-            setIsAuthenticating(false);
-        }
-    }, [state, router, toast]);
-
-    useEffect(() => {
-        // When idToken is set, we can submit the formAction
-        if (idToken && formRef.current) {
-            // We use a hidden input and programmatically submit to ensure
-            // the idToken is part of the form data for the server action.
-            const formData = new FormData(formRef.current);
-            formData.set('idToken', idToken);
-            formAction(formData);
-        }
-    }, [idToken, formAction]);
-    
-    const handleLoginAttempt = async (event: React.MouseEvent<HTMLButtonElement>) => {
+    const handleLogin = async (event: React.MouseEvent<HTMLButtonElement>) => {
         event.preventDefault();
-        const form = formRef.current;
-        if (!form) return;
+        setIsAuthenticating(true);
 
-        const formData = new FormData(form);
-        const email = formData.get('email') as string;
-        const password = formData.get('password') as string;
-        
         if (!email || !password) {
             toast({
                 title: 'Login Failed',
                 description: 'Email and password are required.',
                 variant: 'destructive',
             });
+            setIsAuthenticating(false);
             return;
         }
 
-        setIsAuthenticating(true);
-        
         try {
+            // 1. Sign in on the client with Firebase Auth
             const userCredential = await signInWithEmailAndPassword(auth, email, password);
             const token = await userCredential.user.getIdToken();
-            setIdToken(token); // This will trigger the useEffect to call the action
+
+            // 2. Call the server action to create the session cookie
+            const result = await login(token);
+
+            if (result.success) {
+                // 3. Redirect on success
+                router.push('/admin');
+            } else {
+                toast({
+                    title: 'Login Failed',
+                    description: result.message || 'An unknown error occurred.',
+                    variant: 'destructive',
+                });
+            }
         } catch (error) {
             const authError = error as AuthError;
-            console.error("Firebase Authentication Error:", authError);
+            console.error("Authentication Error:", authError);
             toast({
                 title: 'Login Failed',
                 description: authError.message || 'An unknown authentication error occurred.',
                 variant: 'destructive',
             });
+        } finally {
             setIsAuthenticating(false);
         }
     };
@@ -95,7 +68,6 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted/40">
         <div className="w-full max-w-md">
-            <form ref={formRef} action={formAction}>
             <Card>
                 <CardHeader className="text-center">
                     <Link href="/" className="flex items-center justify-center mb-4" prefetch={false}>
@@ -107,19 +79,32 @@ export default function LoginPage() {
                 <CardContent className="space-y-4">
                     <div className="space-y-2">
                         <Label htmlFor="email">Email</Label>
-                        <Input id="email" name="email" type="email" placeholder="admin@example.com" required />
+                        <Input 
+                            id="email" 
+                            name="email" 
+                            type="email" 
+                            placeholder="admin@example.com" 
+                            required 
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                        />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="password">Password</Label>
-                        <Input id="password" name="password" type="password" required />
+                        <Input 
+                            id="password" 
+                            name="password" 
+                            type="password" 
+                            required 
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                        />
                     </div>
-                    {/* The button now triggers the client-side auth first */}
-                    <Button onClick={handleLoginAttempt} className="w-full" disabled={isAuthenticating}>
+                    <Button onClick={handleLogin} className="w-full" disabled={isAuthenticating}>
                       {isAuthenticating ? "Logging in..." : "Login"}
                     </Button>
                 </CardContent>
             </Card>
-            </form>
         </div>
     </div>
   );
