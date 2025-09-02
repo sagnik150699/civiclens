@@ -38,7 +38,7 @@ const formSchema = z.object({
     required_error: "Please select a category.",
   }),
   photo: z.any().refine(file => file instanceof File && file.size > 0, 'A photo is required.'),
-  address: z.string().optional(),
+  address: z.string().min(1, 'Address is required.'),
   lat: z.string().optional(),
   lng: z.string().optional(),
   captcha: z.string().min(1, { message: 'Please solve the captcha.' }),
@@ -208,7 +208,7 @@ export function IssueReportForm() {
           name="address"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Address (Optional)</FormLabel>
+              <FormLabel>Address</FormLabel>
               <FormControl>
                 <div className="relative">
                   <Input

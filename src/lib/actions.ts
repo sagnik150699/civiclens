@@ -12,7 +12,7 @@ const issueSchema = z.object({
   description: z.string().min(10, 'Please provide a more detailed description.'),
   category: z.enum(ISSUE_CATEGORIES.map(c => c.value) as [string, ...string[]]),
   photo: z.any().refine(file => file?.size > 0, 'A photo is required.'),
-  address: z.string().optional(),
+  address: z.string().min(1, 'Address is required.'),
   lat: z.string().optional(),
   lng: z.string().optional(),
   captcha: z.string().min(1, 'Please solve the captcha.'),
@@ -76,7 +76,7 @@ export async function submitIssue(prevState: any, formData: FormData) {
       status: 'Submitted',
       priority: (aiResult.priority as IssuePriority) || 'Medium',
       reason: aiResult.reason || 'AI analysis failed.',
-      address: address || 'N/A',
+      address: address,
     });
 
     revalidatePath('/');
