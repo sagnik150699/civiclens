@@ -16,8 +16,8 @@ export default function RootLayout({
 }>) {
 
   return (
-    // The lang attribute is managed by Next.js now
-    <html suppressHydrationWarning>
+    // The lang attribute is now managed by the locale layout
+    <html>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
