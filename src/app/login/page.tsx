@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { login } from '@/lib/actions';
 import { MountainIcon } from 'lucide-react';
 import Link from 'next/link';
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { signInWithEmailAndPassword, type AuthError } from "firebase/auth";
 import { auth } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
@@ -49,7 +49,6 @@ export default function LoginPage() {
             const actionFormData = new FormData();
             actionFormData.append('idToken', idToken);
             
-            // Directly call the server action function
             const result = await login(undefined, actionFormData);
 
             if (result?.success) {
@@ -63,10 +62,11 @@ export default function LoginPage() {
             }
 
         } catch (error) {
-            console.error("Firebase Authentication Error:", error);
+            const authError = error as AuthError;
+            console.error("Firebase Authentication Error:", authError);
             toast({
                 title: 'Login Failed',
-                description: 'Invalid email or password.',
+                description: authError.message || 'An unknown authentication error occurred.',
                 variant: 'destructive',
             });
         }
