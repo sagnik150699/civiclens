@@ -32,8 +32,7 @@ export default function LoginPage() {
 
         const result = await login(email, password);
 
-        // If login fails, the server action returns an error message.
-        // If it succeeds, it redirects, so this code won't be reached on success.
+        // A successful login will redirect, so this code will only be reached on failure.
         if (result && !result.success) {
              toast({
                 title: 'Login Failed',
@@ -42,7 +41,7 @@ export default function LoginPage() {
             });
         }
         
-        // We only reach here if the login failed.
+        // Always reset loading state after the attempt if it fails.
         setIsAuthenticating(false);
     };
     
@@ -72,11 +71,12 @@ export default function LoginPage() {
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="password">Password</Label>
+                            <Label htmlFor="password">Password</Label>                            
                             <Input 
                                 id="password" 
                                 name="password" 
                                 type="password" 
+                                placeholder="admin"
                                 required 
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
