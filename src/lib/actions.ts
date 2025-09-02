@@ -4,7 +4,8 @@ import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { prioritizeIssueReport } from '@/ai/flows/prioritize-issue-reports';
 import { addIssue, updateIssueStatus as dbUpdateIssueStatus, type IssuePriority, type IssueStatus } from '@/lib/data';
-import { storage } from '@/lib/firebase';
+import { storage, auth } from '@/lib/firebase';
+import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { ISSUE_CATEGORIES, ISSUE_STATUSES } from './constants';
 import { cookies } from 'next/headers';
@@ -119,13 +120,13 @@ export async function updateIssueStatus(id: string, status: IssueStatus) {
 
 
 const loginSchema = z.object({
-  username: z.string(),
+  email: z.string().email(),
   password: z.string(),
 });
 
 export async function login(prevState: any, formData: FormData) {
   const validatedFields = loginSchema.safeParse({
-    username: formData.get('username'),
+    email: formData.get('email'),
     password: formData.get('password'),
   });
 
@@ -135,18 +136,24 @@ export async function login(prevState: any, formData: FormData) {
     };
   }
   
-  const { username, password } = validatedFields.data;
-  
-  if (username === 'admin' && password === 'admin') {
-    const expires = new Date(Date.now() + 24 * 60 * 60 * 1000);
-    cookies().set('session', 'admin-logged-in', { expires, httpOnly: true });
-    redirect(`/admin`);
-  }
+  const { email, password } = validatedFields.data;
 
-  return { message: 'Invalid username or password.' };
+  try {
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    if (userCredential.user) {
+        const expires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+        cookies().set('session', 'admin-logged-in', { expires, httpOnly: true });
+        redirect(`/admin`);
+    } else {
+        return { message: 'Invalid email or password.' };
+    }
+  } catch (error) {
+    return { message: 'Invalid email or password.' };
+  }
 }
 
 export async function logout() {
+  await signOut(auth);
   cookies().set('session', '', { expires: new Date(0) });
   redirect(`/login`);
 }

@@ -35,12 +35,12 @@ export default function LoginPage() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="space-y-2">
-                        <Label htmlFor="username">Username</Label>
-                        <Input id="username" name="username" placeholder="admin" required />
+                        <Label htmlFor="email">Email</Label>
+                        <Input id="email" name="email" type="email" placeholder="admin@example.com" required />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="password">Password</Label>
-                        <Input id="password" name="password" type="password" placeholder="admin" required />
+                        <Input id="password" name="password" type="password" required />
                     </div>
                     {state?.message && <p className="text-sm text-destructive">{state.message}</p>}
                     <SubmitButton />
