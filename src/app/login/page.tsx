@@ -27,6 +27,18 @@ export default function LoginPage() {
     const router = useRouter();
     const { toast } = useToast();
 
+    useEffect(() => {
+        if (state?.success) {
+            router.push('/admin');
+        } else if (state?.message) {
+            toast({
+                title: 'Login Failed',
+                description: state.message,
+                variant: 'destructive',
+            });
+        }
+    }, [state, router, toast]);
+
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         const formData = new FormData(event.currentTarget);
@@ -49,17 +61,9 @@ export default function LoginPage() {
             const actionFormData = new FormData();
             actionFormData.append('idToken', idToken);
             
-            const result = await login(undefined, actionFormData);
-
-            if (result?.success) {
-                router.push('/admin');
-            } else {
-                 toast({
-                    title: 'Login Failed',
-                    description: result?.message || 'You are not authorized.',
-                    variant: 'destructive',
-                });
-            }
+            // We directly call the server action here.
+            // The useEffect hook will handle the redirect on success.
+            formAction(actionFormData);
 
         } catch (error) {
             const authError = error as AuthError;
