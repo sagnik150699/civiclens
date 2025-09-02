@@ -37,7 +37,7 @@ const formSchema = z.object({
   category: z.enum(ISSUE_CATEGORIES.map(c => c.value) as [string, ...string[]], {
     required_error: "Please select a category.",
   }),
-  photo: z.any().optional(),
+  photo: z.any().refine(file => file instanceof File && file.size > 0, 'A photo is required.'),
   address: z.string().optional(),
   lat: z.string().optional(),
   lng: z.string().optional(),
@@ -69,6 +69,7 @@ export function IssueReportForm() {
       category: undefined,
       address: '',
       captcha: '',
+      photo: undefined,
     },
   });
 
@@ -76,8 +77,14 @@ export function IssueReportForm() {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          form.setValue('lat', position.coords.latitude.toString());
-          form.setValue('lng', position.coords.longitude.toString());
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+          form.setValue('lat', lat.toString());
+          form.setValue('lng', lng.toString());
+
+          // Simple reverse geocoding simulation
+          form.setValue('address', `Near lat: ${lat.toFixed(4)}, lng: ${lng.toFixed(4)}`);
+          
           toast({
             title: 'Location Acquired',
             description: 'Your current location has been set.',
@@ -133,11 +140,9 @@ export function IssueReportForm() {
       <form
         ref={formRef}
         action={formAction}
-        onSubmit={(evt) => {
-            form.handleSubmit(() => {
-                // FormData is handled by the form action
-            })(evt)
-        }}
+        onSubmit={form.handleSubmit(() => {
+            // The action will be triggered automatically by the form element
+        })}
         className="space-y-4"
         // Use a key to force re-render on success and reset captcha
         key={num1 + num2}
@@ -225,7 +230,7 @@ export function IssueReportForm() {
           name="photo"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Photo (Optional)</FormLabel>
+              <FormLabel>Photo</FormLabel>
               <FormControl>
                 <div className="relative">
                   <Input
@@ -234,8 +239,8 @@ export function IssueReportForm() {
                     className="pl-10"
                     {...photoRef}
                     onChange={(e) => {
-                      field.onChange(e.target.files?.[0]);
                       const file = e.target.files?.[0];
+                      field.onChange(file);
                       if (file) {
                         const reader = new FileReader();
                         reader.onloadend = () => {

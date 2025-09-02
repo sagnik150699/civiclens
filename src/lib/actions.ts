@@ -11,6 +11,7 @@ import { redirect } from 'next/navigation';
 const issueSchema = z.object({
   description: z.string().min(10, 'Please provide a more detailed description.'),
   category: z.enum(ISSUE_CATEGORIES.map(c => c.value) as [string, ...string[]]),
+  photo: z.any().refine(file => file?.size > 0, 'A photo is required.'),
   address: z.string().optional(),
   lat: z.string().optional(),
   lng: z.string().optional(),
@@ -21,6 +22,7 @@ export async function submitIssue(prevState: any, formData: FormData) {
   const validatedFields = issueSchema.safeParse({
     description: formData.get('description'),
     category: formData.get('category'),
+    photo: formData.get('photo'),
     address: formData.get('address'),
     lat: formData.get('lat'),
     lng: formData.get('lng'),
@@ -49,13 +51,14 @@ export async function submitIssue(prevState: any, formData: FormData) {
   const { description, category, address, lat, lng } = validatedFields.data;
   const photo = formData.get('photo') as File;
   let photoDataUri: string | undefined = undefined;
-  let photoUrl: string | null = null;
   
   try {
     if (photo && photo.size > 0) {
       const buffer = Buffer.from(await photo.arrayBuffer());
       photoDataUri = `data:${photo.type};base64,${buffer.toString('base64')}`;
-      photoUrl = "https://picsum.photos/400/300";
+    } else {
+        // This should not be reached if client-side validation is working
+        return { success: false, message: 'A photo is required.' };
     }
 
     const aiResult = await prioritizeIssueReport({ description, photoDataUri });
@@ -69,7 +72,7 @@ export async function submitIssue(prevState: any, formData: FormData) {
       description,
       category,
       location,
-      photoUrl,
+      photoUrl: "https://picsum.photos/400/300", // Placeholder, as we don't store the image itself
       status: 'Submitted',
       priority: (aiResult.priority as IssuePriority) || 'Medium',
       reason: aiResult.reason || 'AI analysis failed.',
