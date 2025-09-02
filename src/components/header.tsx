@@ -1,17 +1,22 @@
+'use client';
+
 import { Link } from 'next-intl/navigation';
 import { MountainIcon, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { logout } from '@/lib/actions';
-import { cookies } from 'next/headers';
-import { getTranslator } from 'next-intl/server';
 import { LanguageSwitcher } from './language-switcher';
+import { useTranslations } from 'next-intl';
 
-export async function Header() {
-    const cookieStore = cookies();
-    const session = cookieStore.get('session');
-    const isLoggedIn = !!session?.value;
-    const locale = cookieStore.get('NEXT_LOCALE')?.value || 'en';
-    const t = await getTranslator(locale, 'Header');
+// Note: This component is now a client component to support the next-intl Link.
+// We can no longer read cookies directly on the server for the initial render.
+// The visibility of the logout button will be handled on the client side based on session state
+// or passed down as a prop from a server component if needed.
+// For this app's structure, we'll simplify and assume a more robust auth check would be
+// implemented in a real-world scenario (e.g., in a provider or layout).
+// The middleware will still protect the admin route on the server.
+
+export function Header({ isLoggedIn }: { isLoggedIn: boolean }) {
+    const t = useTranslations('Header');
 
   return (
     <header className="px-4 lg:px-6 h-14 flex items-center bg-card shadow-sm">
