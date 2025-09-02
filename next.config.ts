@@ -28,10 +28,6 @@ const nextConfig: NextConfig = {
       }
     ],
   },
-  experimental: {
-    serverActions: {
-    }
-  }
 };
 
 export default nextConfig;
