@@ -6,7 +6,6 @@ import { revalidatePath } from 'next/cache';
 import { prioritizeIssueReport } from '@/ai/flows/prioritize-issue-reports';
 import { addIssue, updateIssueStatus as dbUpdateIssueStatus, type IssuePriority, type IssueStatus } from '@/lib/data';
 import { storage } from '@/lib/firebase';
-import { adminAuth } from '@/lib/firebase-admin';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { ISSUE_CATEGORIES, ISSUE_STATUSES } from './constants';
 import { cookies } from 'next/headers';
@@ -119,42 +118,18 @@ export async function updateIssueStatus(id: string, status: IssueStatus) {
     }
 }
 
-export async function login(idToken: string) {
-  if (!idToken) {
-    return {
-      success: false,
-      message: 'Authentication token is missing.',
-    };
+export async function login(username: string, password: string): Promise<{ success: boolean; message?: string }> {
+  if (username === 'admin' && password === 'admin') {
+    const sessionData = { user: 'admin', loggedIn: true };
+    const expiresIn = 60 * 60 * 24 * 5 * 1000; // 5 days
+    cookies().set('session', JSON.stringify(sessionData), { maxAge: expiresIn, httpOnly: true, secure: process.env.NODE_ENV === 'production' });
+    return { success: true };
   }
   
-  try {
-    const decodedToken = await adminAuth.verifyIdToken(idToken);
-    
-    if (decodedToken.email !== process.env.ADMIN_EMAIL) {
-        return { success: false, message: 'You are not authorized to access this page.' };
-    }
-    
-    const expiresIn = 60 * 60 * 24 * 5 * 1000; // 5 days
-    const sessionCookie = await adminAuth.createSessionCookie(idToken, { expiresIn });
-    cookies().set('session', sessionCookie, { maxAge: expiresIn, httpOnly: true, secure: process.env.NODE_ENV === 'production' });
-    
-    return { success: true };
-  } catch (error) {
-    console.error(error);
-    return { success: false, message: 'Authentication failed. Please try again.' };
-  }
+  return { success: false, message: 'Invalid username or password.' };
 }
 
 export async function logout() {
-  const sessionCookie = cookies().get('session')?.value;
-  if (sessionCookie) {
-    try {
-        const decodedClaims = await adminAuth.verifySessionCookie(sessionCookie, true);
-        await adminAuth.revokeRefreshTokens(decodedClaims.sub);
-    } catch(error) {
-        // ignore error
-    }
-  }
   cookies().set('session', '', { expires: new Date(0) });
   redirect(`/login`);
 }

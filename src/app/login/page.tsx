@@ -8,8 +8,6 @@ import { Label } from '@/components/ui/label';
 import { login } from '@/lib/actions';
 import { MountainIcon } from 'lucide-react';
 import Link from 'next/link';
-import { signInWithEmailAndPassword, type AuthError } from "firebase/auth";
-import { auth } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 
@@ -27,7 +25,7 @@ export default function LoginPage() {
         if (!email || !password) {
             toast({
                 title: 'Login Failed',
-                description: 'Email and password are required.',
+                description: 'Username and password are required.',
                 variant: 'destructive',
             });
             setIsAuthenticating(false);
@@ -35,15 +33,9 @@ export default function LoginPage() {
         }
 
         try {
-            // 1. Sign in on the client with Firebase Auth
-            const userCredential = await signInWithEmailAndPassword(auth, email, password);
-            const token = await userCredential.user.getIdToken();
-
-            // 2. Call the server action to create the session cookie
-            const result = await login(token);
+            const result = await login(email, password);
 
             if (result.success) {
-                // 3. Redirect on success
                 router.push('/admin');
             } else {
                 toast({
@@ -53,11 +45,10 @@ export default function LoginPage() {
                 });
             }
         } catch (error) {
-            const authError = error as AuthError;
-            console.error("Authentication Error:", authError);
+            console.error("Authentication Error:", error);
             toast({
                 title: 'Login Failed',
-                description: authError.message || 'An unknown authentication error occurred.',
+                description: 'An unknown authentication error occurred.',
                 variant: 'destructive',
             });
         } finally {
@@ -78,12 +69,12 @@ export default function LoginPage() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="space-y-2">
-                        <Label htmlFor="email">Email</Label>
+                        <Label htmlFor="email">Username</Label>
                         <Input 
                             id="email" 
                             name="email" 
-                            type="email" 
-                            placeholder="admin@example.com" 
+                            type="text" 
+                            placeholder="admin" 
                             required 
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}

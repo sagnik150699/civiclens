@@ -17,8 +17,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   const cookieStore = cookies();
-  const session = cookieStore.get('session');
-  const isLoggedIn = !!session?.value;
+  const sessionCookie = cookieStore.get('session');
+  let isLoggedIn = false;
+  if (sessionCookie?.value) {
+    try {
+      const session = JSON.parse(sessionCookie.value);
+      isLoggedIn = session.loggedIn === true;
+    } catch (e) {
+      isLoggedIn = false;
+    }
+  }
+
 
   return (
     <html>
