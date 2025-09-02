@@ -28,6 +28,14 @@ const nextConfig: NextConfig = {
       }
     ],
   },
+  experimental: {
+    serverActions: {
+      allowedOrigins: [
+        'civiclens-bexm4.web.app',
+        'civiclens-bexm4.firebaseapp.com'
+      ]
+    }
+  }
 };
 
 export default nextConfig;

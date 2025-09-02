@@ -1,10 +1,10 @@
 // Import the functions you need from the SDKs you need
-import { initializeApp, getApps, getApp } from "firebase/app";
+import { initializeApp, getApps, getApp, type FirebaseOptions } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 import { getAuth } from "firebase/auth";
 
-const firebaseConfig = {
+const firebaseConfig: FirebaseOptions = {
   projectId: "civiclens-bexm4",
   appId: "1:873086332859:web:8856f2a6ffa3f493ff5e9e",
   storageBucket: "civiclens-bexm4.appspot.com",
@@ -20,4 +20,4 @@ const storage = getStorage(app);
 const auth = getAuth(app);
 
 
-export { app, db, storage, auth };
+export { app, db, storage, auth, firebaseConfig };

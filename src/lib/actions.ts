@@ -4,8 +4,8 @@ import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { prioritizeIssueReport } from '@/ai/flows/prioritize-issue-reports';
 import { addIssue, updateIssueStatus as dbUpdateIssueStatus, type IssuePriority, type IssueStatus } from '@/lib/data';
-import { storage, auth } from '@/lib/firebase';
-import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
+import { storage } from '@/lib/firebase';
+import { adminAuth } from '@/lib/firebase-admin';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { ISSUE_CATEGORIES, ISSUE_STATUSES } from './constants';
 import { cookies } from 'next/headers';
@@ -120,14 +120,12 @@ export async function updateIssueStatus(id: string, status: IssueStatus) {
 
 
 const loginSchema = z.object({
-  email: z.string().email(),
-  password: z.string(),
+  idToken: z.string(),
 });
 
 export async function login(prevState: any, formData: FormData) {
   const validatedFields = loginSchema.safeParse({
-    email: formData.get('email'),
-    password: formData.get('password'),
+    idToken: formData.get('idToken'),
   });
 
   if (!validatedFields.success) {
@@ -136,24 +134,35 @@ export async function login(prevState: any, formData: FormData) {
     };
   }
   
-  const { email, password } = validatedFields.data;
+  const { idToken } = validatedFields.data;
 
   try {
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    if (userCredential.user) {
-        const expires = new Date(Date.now() + 24 * 60 * 60 * 1000);
-        cookies().set('session', 'admin-logged-in', { expires, httpOnly: true });
-        redirect(`/admin`);
-    } else {
-        return { message: 'Invalid email or password.' };
+    const decodedToken = await adminAuth.verifyIdToken(idToken);
+    
+    if (decodedToken.email !== process.env.ADMIN_EMAIL) {
+        return { message: 'You are not authorized to access this page.' };
     }
+    
+    const sessionCookie = await adminAuth.createSessionCookie(idToken, { expiresIn: 60 * 60 * 24 * 5 * 1000 });
+    cookies().set('session', sessionCookie, { httpOnly: true, secure: process.env.NODE_ENV === 'production' });
+    
+    redirect(`/admin`);
   } catch (error) {
+    console.error(error);
     return { message: 'Invalid email or password.' };
   }
 }
 
 export async function logout() {
-  await signOut(auth);
+  const sessionCookie = cookies().get('session')?.value;
+  if (sessionCookie) {
+    try {
+        const decodedClaims = await adminAuth.verifySessionCookie(sessionCookie, true);
+        await adminAuth.revokeRefreshTokens(decodedClaims.sub);
+    } catch(error) {
+        // ignore error
+    }
+  }
   cookies().set('session', '', { expires: new Date(0) });
   redirect(`/login`);
 }
