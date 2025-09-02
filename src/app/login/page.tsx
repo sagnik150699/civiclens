@@ -9,16 +9,14 @@ import { login } from '@/lib/actions';
 import { MountainIcon } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isAuthenticating, setIsAuthenticating] = useState(false);
-    const router = useRouter();
     const { toast } = useToast();
 
-    const handleLogin = async (event: React.MouseEvent<HTMLButtonElement>) => {
+    const handleLogin = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         setIsAuthenticating(true);
 
@@ -35,15 +33,15 @@ export default function LoginPage() {
         try {
             const result = await login(email, password);
 
-            if (result.success) {
-                router.push('/admin');
-            } else {
-                toast({
+            if (!result.success) {
+                 toast({
                     title: 'Login Failed',
                     description: result.message || 'An unknown error occurred.',
                     variant: 'destructive',
                 });
             }
+            // The server action will handle the redirect on success.
+            // If we are here, it means login failed.
         } catch (error) {
             console.error("Authentication Error:", error);
             toast({
@@ -67,33 +65,35 @@ export default function LoginPage() {
                     <CardTitle className="text-2xl font-bold font-headline">Admin Login</CardTitle>
                     <CardDescription>Enter your credentials to access the dashboard.</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="email">Username</Label>
-                        <Input 
-                            id="email" 
-                            name="email" 
-                            type="text" 
-                            placeholder="admin" 
-                            required 
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                        />
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="password">Password</Label>
-                        <Input 
-                            id="password" 
-                            name="password" 
-                            type="password" 
-                            required 
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                        />
-                    </div>
-                    <Button onClick={handleLogin} className="w-full" disabled={isAuthenticating}>
-                      {isAuthenticating ? "Logging in..." : "Login"}
-                    </Button>
+                <CardContent>
+                    <form onSubmit={handleLogin} className="space-y-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="email">Username</Label>
+                            <Input 
+                                id="email" 
+                                name="email" 
+                                type="text" 
+                                placeholder="admin" 
+                                required 
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="password">Password</Label>
+                            <Input 
+                                id="password" 
+                                name="password" 
+                                type="password" 
+                                required 
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                            />
+                        </div>
+                        <Button type="submit" className="w-full" disabled={isAuthenticating}>
+                          {isAuthenticating ? "Logging in..." : "Login"}
+                        </Button>
+                    </form>
                 </CardContent>
             </Card>
         </div>
