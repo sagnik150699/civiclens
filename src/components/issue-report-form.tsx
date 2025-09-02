@@ -1,10 +1,8 @@
+
 'use client';
 
 import { useEffect, useState, useRef, useActionState } from 'react';
 import { useFormStatus } from 'react-dom';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
-import { z } from 'zod';
 import { submitIssue } from '@/lib/actions';
 import { useToast } from '@/hooks/use-toast';
 
@@ -17,32 +15,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
+import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import Image from 'next/image';
 import { CameraIcon, Send, LocateIcon } from 'lucide-react';
 import { ISSUE_CATEGORIES } from '@/lib/constants';
-
-const formSchema = z.object({
-  description: z.string().min(10, {
-    message: 'Description must be at least 10 characters.',
-  }),
-  category: z.enum(ISSUE_CATEGORIES.map(c => c.value) as [string, ...string[]], {
-    required_error: "Please select a category.",
-  }),
-  photo: z.any().refine(file => file instanceof File && file.size > 0, 'A photo is required.'),
-  address: z.string().min(1, 'Address is required.'),
-  lat: z.string().optional(),
-  lng: z.string().optional(),
-  captcha: z.string().min(1, { message: 'Please solve the captcha.' }),
-});
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -58,42 +35,36 @@ export function IssueReportForm() {
   const { toast } = useToast();
   const [state, formAction] = useActionState(submitIssue, undefined);
   const [preview, setPreview] = useState<string | null>(null);
+  const [address, setAddress] = useState('');
+  const [lat, setLat] = useState('');
+  const [lng, setLng] = useState('');
   const [num1, setNum1] = useState(0);
   const [num2, setNum2] = useState(0);
   const formRef = useRef<HTMLFormElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      description: '',
-      category: undefined,
-      address: '',
-      captcha: '',
-      photo: undefined,
-    },
-  });
 
   const handleGeolocation = async () => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         async (position) => {
-          const lat = position.coords.latitude;
-          const lng = position.coords.longitude;
-          form.setValue('lat', lat.toString());
-          form.setValue('lng', lng.toString());
+          const latCoord = position.coords.latitude;
+          const lngCoord = position.coords.longitude;
+          setLat(latCoord.toString());
+          setLng(lngCoord.toString());
 
           // Reverse geocode to get address
           try {
-            const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+            const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latCoord}&lon=${lngCoord}`);
             const data = await response.json();
             if (data && data.display_name) {
-              form.setValue('address', data.display_name);
+              setAddress(data.display_name);
             } else {
-              form.setValue('address', `Near lat: ${lat.toFixed(4)}, lng: ${lng.toFixed(4)}`);
+              setAddress(`Near lat: ${latCoord.toFixed(4)}, lng: ${lngCoord.toFixed(4)}`);
             }
           } catch (error) {
             console.error("Reverse geocoding failed", error);
-            form.setValue('address', `Near lat: ${lat.toFixed(4)}, lng: ${lng.toFixed(4)}`);
+            setAddress(`Near lat: ${latCoord.toFixed(4)}, lng: ${lngCoord.toFixed(4)}`);
           }
           
           toast({
@@ -118,9 +89,13 @@ export function IssueReportForm() {
     }
   };
 
-  useEffect(() => {
+  const resetCaptcha = () => {
     setNum1(Math.floor(Math.random() * 10) + 1);
     setNum2(Math.floor(Math.random() * 10) + 1);
+  };
+
+  useEffect(() => {
+    resetCaptcha();
   }, []);
 
   useEffect(() => {
@@ -130,151 +105,124 @@ export function IssueReportForm() {
         description: state.message,
         variant: 'default',
       });
-      form.reset();
+      formRef.current?.reset();
       setPreview(null);
-      // Generate new numbers for next submission
-      setNum1(Math.floor(Math.random() * 10) + 1);
-      setNum2(Math.floor(Math.random() * 10) + 1);
+      setAddress('');
+      setLat('');
+      setLng('');
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      resetCaptcha();
     } else if (state?.message && !state.success) {
       toast({
         title: 'Error',
         description: state.message,
         variant: 'destructive',
       });
+       // Keep form data but generate a new captcha
+       resetCaptcha();
     }
-  }, [state, toast, form]);
-
-  const photoRef = form.register('photo');
+  }, [state, toast]);
 
   return (
-    <Form {...form}>
       <form
         ref={formRef}
         action={formAction}
-        onSubmit={form.handleSubmit(() => formRef.current?.requestSubmit())}
         className="space-y-4"
-        // Use a key to force re-render on success and reset captcha
-        key={num1 + num2}
+        key={num1 + num2} // Use key to help React re-render captcha
       >
         <h2 className="text-2xl font-bold font-headline text-center">Report an Issue</h2>
         
-        <FormField
-          control={form.control}
-          name="category"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Category</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
+        <div className="space-y-2">
+            <Label htmlFor="category">Category</Label>
+            <Select name="category">
+                <SelectTrigger id="category">
                     <SelectValue placeholder="Select an issue category" />
-                  </SelectTrigger>
-                </FormControl>
+                </SelectTrigger>
                 <SelectContent>
-                  {ISSUE_CATEGORIES.map(({ value, label, icon: Icon }) => (
+                {ISSUE_CATEGORIES.map(({ value, label, icon: Icon }) => (
                     <SelectItem key={value} value={value}>
-                      <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2">
                         <Icon className="h-4 w-4 text-muted-foreground" />
                         <span>{label}</span>
-                      </div>
+                    </div>
                     </SelectItem>
-                  ))}
+                ))}
                 </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+            </Select>
+            {state?.errors?.category && <p className="text-sm font-medium text-destructive">{state.errors.category[0]}</p>}
+        </div>
         
-        <FormField
-          control={form.control}
-          name="description"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Description</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="Tell us more about the issue..."
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="space-y-2">
+            <Label htmlFor="description">Description</Label>
+            <Textarea
+                id="description"
+                name="description"
+                placeholder="Tell us more about the issue..."
+            />
+            {state?.errors?.description && <p className="text-sm font-medium text-destructive">{state.errors.description[0]}</p>}
+        </div>
 
-        <FormField
-          control={form.control}
-          name="address"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Address</FormLabel>
-              <FormControl>
-                <div className="relative">
-                  <Input
+        <div className="space-y-2">
+            <Label htmlFor="address">Address</Label>
+            <div className="relative">
+                <Input
+                    id="address"
+                    name="address"
                     placeholder="Enter the address or use geolocation"
-                    {...field}
-                  />
-                  <Button
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                />
+                <Button
                     type="button"
                     size="icon"
                     variant="ghost"
                     className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8"
                     onClick={handleGeolocation}
-                  >
+                >
                     <LocateIcon className="h-5 w-5 text-muted-foreground" />
-                  </Button>
-                </div>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <input type="hidden" {...form.register("lat")} />
-        <input type="hidden" {...form.register("lng")} />
+                </Button>
+            </div>
+            {state?.errors?.address && <p className="text-sm font-medium text-destructive">{state.errors.address[0]}</p>}
+        </div>
+        <input type="hidden" name="lat" value={lat} />
+        <input type="hidden" name="lng" value={lng} />
 
-
-        <FormField
-          control={form.control}
-          name="photo"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Photo</FormLabel>
-              <FormControl>
-                <div className="relative">
-                  <Input
-                    type="file"
-                    accept="image/*"
-                    className="pl-10"
-                    {...photoRef}
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      field.onChange(file);
-                      if (file) {
-                        const reader = new FileReader();
-                        reader.onloadend = () => {
-                          setPreview(reader.result as string);
-                        };
-                        reader.readAsDataURL(file);
-                      } else {
-                        setPreview(null);
-                      }
-                    }}
-                  />
-                  <CameraIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                </div>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="space-y-2">
+          <Label htmlFor="photo">Photo</Label>
+          <div className="relative">
+            <Input
+              id="photo"
+              name="photo"
+              type="file"
+              accept="image/*"
+              className="pl-10"
+              ref={fileInputRef}
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  const reader = new FileReader();
+                  reader.onloadend = () => {
+                    setPreview(reader.result as string);
+                  };
+                  reader.readAsDataURL(file);
+                } else {
+                  setPreview(null);
+                }
+              }}
+            />
+            <CameraIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+          </div>
+          {state?.errors?.photo && <p className="text-sm font-medium text-destructive">{state.errors.photo[0]}</p>}
+        </div>
         
         {preview && (
           <div className="relative h-48 w-full">
             <Image
               src={preview}
               alt="Image preview"
-              layout="fill"
+              fill
               objectFit="cover"
               className="rounded-md"
               data-ai-hint="user uploaded image"
@@ -282,26 +230,16 @@ export function IssueReportForm() {
           </div>
         )}
 
-        <FormField
-          control={form.control}
-          name="captcha"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>
-                Security Question: What is {num1} + {num2}?
-              </FormLabel>
-              <FormControl>
-                <Input placeholder="Your answer" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="space-y-2">
+          <Label htmlFor="captcha">
+            Security Question: What is {num1} + {num2}?
+          </Label>
+          <Input id="captcha" name="captcha" placeholder="Your answer" />
+          {state?.errors?.captcha && <p className="text-sm font-medium text-destructive">{state.errors.captcha[0]}</p>}
+        </div>
         <input type="hidden" name="captchaQuestion" value={`${num1}+${num2}`} />
-
 
         <SubmitButton />
       </form>
-    </Form>
   );
 }
