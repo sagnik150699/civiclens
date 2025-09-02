@@ -1,5 +1,5 @@
 'use client';
-import { useActionState } from 'react';
+import { useActionState, useEffect } from 'react';
 import { useFormStatus } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,7 +12,6 @@ import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
 
 function SubmitButton() {
     const { pending } = useFormStatus();
@@ -28,7 +27,9 @@ export default function LoginPage() {
     const router = useRouter();
     const { toast } = useToast();
 
-    const handleSubmit = async (formData: FormData) => {
+    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        const formData = new FormData(event.currentTarget);
         const email = formData.get('email') as string;
         const password = formData.get('password') as string;
         
@@ -48,7 +49,18 @@ export default function LoginPage() {
             const actionFormData = new FormData();
             actionFormData.append('idToken', idToken);
             
-            formAction(actionFormData);
+            // Directly call the server action function
+            const result = await login(undefined, actionFormData);
+
+            if (result?.success) {
+                router.push('/admin');
+            } else {
+                 toast({
+                    title: 'Login Failed',
+                    description: result?.message || 'You are not authorized.',
+                    variant: 'destructive',
+                });
+            }
 
         } catch (error) {
             console.error("Firebase Authentication Error:", error);
@@ -60,23 +72,10 @@ export default function LoginPage() {
         }
     };
     
-    useEffect(() => {
-        if (state?.success) {
-            router.push('/admin');
-        } else if (state?.message) {
-            toast({
-                title: 'Login Failed',
-                description: state.message,
-                variant: 'destructive',
-            });
-        }
-    }, [state, router, toast]);
-
-
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted/40">
         <div className="w-full max-w-md">
-            <form action={handleSubmit}>
+            <form onSubmit={handleSubmit}>
             <Card>
                 <CardHeader className="text-center">
                     <Link href="/" className="flex items-center justify-center mb-4" prefetch={false}>
