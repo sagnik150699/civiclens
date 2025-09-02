@@ -12,6 +12,7 @@ import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
 function SubmitButton() {
     const { pending } = useFormStatus();
@@ -31,6 +32,15 @@ export default function LoginPage() {
         const email = formData.get('email') as string;
         const password = formData.get('password') as string;
         
+        if (!email || !password) {
+            toast({
+                title: 'Login Failed',
+                description: 'Email and password are required.',
+                variant: 'destructive',
+            });
+            return;
+        }
+        
         try {
             const userCredential = await signInWithEmailAndPassword(auth, email, password);
             const idToken = await userCredential.user.getIdToken();
@@ -38,17 +48,7 @@ export default function LoginPage() {
             const actionFormData = new FormData();
             actionFormData.append('idToken', idToken);
             
-            const result = await login(undefined, actionFormData);
-            
-            if (result?.success) {
-                router.push('/admin');
-            } else {
-                 toast({
-                    title: 'Login Failed',
-                    description: result?.message || 'You are not authorized.',
-                    variant: 'destructive',
-                });
-            }
+            formAction(actionFormData);
 
         } catch (error) {
             console.error("Firebase Authentication Error:", error);
@@ -59,6 +59,18 @@ export default function LoginPage() {
             });
         }
     };
+    
+    useEffect(() => {
+        if (state?.success) {
+            router.push('/admin');
+        } else if (state?.message) {
+            toast({
+                title: 'Login Failed',
+                description: state.message,
+                variant: 'destructive',
+            });
+        }
+    }, [state, router, toast]);
 
 
   return (
@@ -82,7 +94,6 @@ export default function LoginPage() {
                         <Label htmlFor="password">Password</Label>
                         <Input id="password" name="password" type="password" required />
                     </div>
-                    {state?.message && <p className="text-sm text-destructive">{state.message}</p>}
                     <SubmitButton />
                 </CardContent>
             </Card>
