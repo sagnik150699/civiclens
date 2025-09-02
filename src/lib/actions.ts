@@ -7,6 +7,7 @@ import { addIssue, updateIssueStatus as dbUpdateIssueStatus, type IssuePriority,
 import { ISSUE_CATEGORIES, ISSUE_STATUSES } from './constants';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
+import { getLocale } from 'next-intl/server';
 
 const issueSchema = z.object({
   description: z.string().min(10, 'Please provide a more detailed description.'),
@@ -118,6 +119,7 @@ const loginSchema = z.object({
 });
 
 export async function login(prevState: any, formData: FormData) {
+  const locale = await getLocale();
   const validatedFields = loginSchema.safeParse({
     username: formData.get('username'),
     password: formData.get('password'),
@@ -134,13 +136,14 @@ export async function login(prevState: any, formData: FormData) {
   if (username === 'admin' && password === 'admin') {
     const expires = new Date(Date.now() + 24 * 60 * 60 * 1000);
     cookies().set('session', 'admin-logged-in', { expires, httpOnly: true });
-    redirect('/admin');
+    redirect(`/${locale}/admin`);
   }
 
   return { message: 'Invalid username or password.' };
 }
 
 export async function logout() {
+  const locale = await getLocale();
   cookies().set('session', '', { expires: new Date(0) });
-  redirect('/login');
+  redirect(`/${locale}/login`);
 }

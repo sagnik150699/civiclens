@@ -1,0 +1,80 @@
+
+{
+  "HomePage": {
+    "title1": "Report Civic Issues.",
+    "title2": "Improve Your Community.",
+    "description": "Spotted a pothole, a broken streetlight, or overflowing trash? Use CivicLens to report issues directly to your local government. It’s fast, easy, and makes a real difference."
+  },
+  "IssueReportForm": {
+    "title": "Report an Issue",
+    "categoryLabel": "Category",
+    "categoryPlaceholder": "Select an issue category",
+    "descriptionLabel": "Description",
+    "descriptionPlaceholder": "Tell us more about the issue...",
+    "addressLabel": "Address (Optional)",
+    "addressPlaceholder": "Enter the address or use geolocation",
+    "photoLabel": "Photo",
+    "captchaLabel": "Security Question: What is {num1} + {num2}?",
+    "captchaPlaceholder": "Your answer",
+    "submitButton": "Submit Report",
+    "submittingButton": "Submitting...",
+    "geolocationSuccess": "Location Acquired",
+    "geolocationSuccessDesc": "Your current location has been set.",
+    "geolocationError": "Geolocation Error",
+    "geolocationErrorDesc": "Could not acquire your location. Please enter your address manually.",
+    "geolocationNotSupported": "Geolocation Not Supported",
+    "geolocationNotSupportedDesc": "Your browser does not support geolocation.",
+    "pothole": "Pothole",
+    "streetlight_out": "Streetlight Out",
+    "trash_overflow": "Trash Overflow",
+    "graffiti": "Graffiti",
+    "abandoned_vehicle": "Abandoned Vehicle",
+    "fallen_tree": "Fallen Tree"
+  },
+  "Header": {
+    "reportIssue": "Report an Issue",
+    "adminDashboard": "Admin Dashboard",
+    "logout": "Logout",
+    "appName": "CivicLens"
+  },
+  "LoginPage": {
+    "title": "Admin Login",
+    "description": "Enter your credentials to access the dashboard.",
+    "usernameLabel": "Username",
+    "usernamePlaceholder": "admin",
+    "passwordLabel": "Password",
+    "passwordPlaceholder": "admin",
+    "loginButton": "Login",
+    "loggingInButton": "Logging in..."
+  },
+  "AdminDashboard": {
+    "title": "Admin Dashboard",
+    "filtersTitle": "Filters",
+    "filterByStatus": "Filter by status",
+    "allStatuses": "All Statuses",
+    "filterByPriority": "Filter by priority",
+    "allPriorities": "All Priorities",
+    "filterByCategory": "Filter by category",
+    "allCategories": "All Categories",
+    "issueMapTitle": "Issue Map",
+    "issueMapDescription": "Live map of reported issues.",
+    "reportedIssuesTitle": "Reported Issues",
+    "reportedIssuesDescription": "A list of all issues reported by citizens.",
+    "priorityColumn": "Priority",
+    "categoryColumn": "Category",
+    "addressColumn": "Address",
+    "descriptionColumn": "Description",
+    "reportedColumn": "Reported",
+    "statusColumn": "Status",
+    "actionsColumn": "Actions",
+    "acknowledgeAction": "Acknowledge",
+    "setInProgressAction": "Set In Progress",
+    "resolveAction": "Resolve",
+    "noIssuesMessage": "No issues match the current filters."
+  },
+  "LanguageSwitcher": {
+    "label": "Language",
+    "en": "English",
+    "hi": "Hindi"
+  }
+}

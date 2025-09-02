@@ -44,7 +44,7 @@ import { MoreHorizontal, MapPin } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { updateIssueStatus } from '@/lib/actions';
 import { useToast } from '@/hooks/use-toast';
-
+import { useTranslations } from 'next-intl';
 
 const priorityColors: Record<IssuePriority, string> = {
   High: 'bg-red-500 hover:bg-red-500/90',
@@ -68,6 +68,8 @@ const PriorityBadge: FC<{ priority: IssuePriority }> = ({ priority }) => (
 );
 
 export function AdminDashboard({ initialIssues }: { initialIssues: IssueReport[] }) {
+  const t = useTranslations('AdminDashboard');
+  const tCat = useTranslations('IssueReportForm');
   const [issues, setIssues] = useState<IssueReport[]>(initialIssues);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
@@ -109,7 +111,7 @@ export function AdminDashboard({ initialIssues }: { initialIssues: IssueReport[]
       <div className="grid gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Filters</CardTitle>
+            <CardTitle>{t('filtersTitle')}</CardTitle>
             <Button variant="ghost" size="icon" onClick={clearFilters} className="h-6 w-6">
                 <ICONS.x className="h-4 w-4 text-muted-foreground" />
             </Button>
@@ -117,10 +119,10 @@ export function AdminDashboard({ initialIssues }: { initialIssues: IssueReport[]
           <CardContent className="grid gap-4">
             <Select onValueChange={setStatusFilter} value={statusFilter}>
               <SelectTrigger>
-                <SelectValue placeholder="Filter by status" />
+                <SelectValue placeholder={t('filterByStatus')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
+                <SelectItem value="all">{t('allStatuses')}</SelectItem>
                 {ISSUE_STATUSES.map(status => (
                   <SelectItem key={status} value={status}>{status}</SelectItem>
                 ))}
@@ -128,10 +130,10 @@ export function AdminDashboard({ initialIssues }: { initialIssues: IssueReport[]
             </Select>
             <Select onValueChange={setPriorityFilter} value={priorityFilter}>
               <SelectTrigger>
-                <SelectValue placeholder="Filter by priority" />
+                <SelectValue placeholder={t('filterByPriority')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Priorities</SelectItem>
+                <SelectItem value="all">{t('allPriorities')}</SelectItem>
                 {ISSUE_PRIORITIES.map(priority => (
                   <SelectItem key={priority} value={priority}>{priority}</SelectItem>
                 ))}
@@ -139,12 +141,12 @@ export function AdminDashboard({ initialIssues }: { initialIssues: IssueReport[]
             </Select>
             <Select onValueChange={setCategoryFilter} value={categoryFilter}>
               <SelectTrigger>
-                <SelectValue placeholder="Filter by category" />
+                <SelectValue placeholder={t('filterByCategory')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
+                <SelectItem value="all">{t('allCategories')}</SelectItem>
                 {ISSUE_CATEGORIES.map(cat => (
-                  <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
+                  <SelectItem key={cat.value} value={cat.value}>{tCat(cat.value as any)}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -154,8 +156,8 @@ export function AdminDashboard({ initialIssues }: { initialIssues: IssueReport[]
       <div className="grid gap-6">
         <Card>
             <CardHeader>
-                <CardTitle>Issue Map</CardTitle>
-                <CardDescription>Live map of reported issues.</CardDescription>
+                <CardTitle>{t('issueMapTitle')}</CardTitle>
+                <CardDescription>{t('issueMapDescription')}</CardDescription>
             </CardHeader>
             <CardContent>
                 <div className="relative h-64 w-full overflow-hidden rounded-md">
@@ -193,22 +195,22 @@ export function AdminDashboard({ initialIssues }: { initialIssues: IssueReport[]
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Reported Issues</CardTitle>
+            <CardTitle>{t('reportedIssuesTitle')}</CardTitle>
             <CardDescription>
-              A list of all issues reported by citizens.
+              {t('reportedIssuesDescription')}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Priority</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Address</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead>Reported</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead><span className="sr-only">Actions</span></TableHead>
+                  <TableHead>{t('priorityColumn')}</TableHead>
+                  <TableHead>{t('categoryColumn')}</TableHead>
+                  <TableHead>{t('addressColumn')}</TableHead>
+                  <TableHead>{t('descriptionColumn')}</TableHead>
+                  <TableHead>{t('reportedColumn')}</TableHead>
+                  <TableHead>{t('statusColumn')}</TableHead>
+                  <TableHead><span className="sr-only">{t('actionsColumn')}</span></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -220,7 +222,7 @@ export function AdminDashboard({ initialIssues }: { initialIssues: IssueReport[]
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <CategoryIcon className="h-4 w-4 text-muted-foreground" />
-                        <span className="font-medium">{ISSUE_CATEGORIES.find(c => c.value === issue.category)?.label}</span>
+                        <span className="font-medium">{tCat(issue.category as any)}</span>
                       </div>
                     </TableCell>
                     <TableCell className="max-w-xs truncate">{issue.address}</TableCell>
@@ -236,9 +238,9 @@ export function AdminDashboard({ initialIssues }: { initialIssues: IssueReport[]
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onSelect={() => handleStatusUpdate(issue.id, 'Acknowledged')}>Acknowledge</DropdownMenuItem>
-                          <DropdownMenuItem onSelect={() => handleStatusUpdate(issue.id, 'In Progress')}>Set In Progress</DropdownMenuItem>
-                          <DropdownMenuItem onSelect={() => handleStatusUpdate(issue.id, 'Resolved')}>Resolve</DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => handleStatusUpdate(issue.id, 'Acknowledged')}>{t('acknowledgeAction')}</DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => handleStatusUpdate(issue.id, 'In Progress')}>{t('setInProgressAction')}</DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => handleStatusUpdate(issue.id, 'Resolved')}>{t('resolveAction')}</DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -249,7 +251,7 @@ export function AdminDashboard({ initialIssues }: { initialIssues: IssueReport[]
             </Table>
             {filteredIssues.length === 0 && (
               <div className="text-center p-8 text-muted-foreground">
-                No issues match the current filters.
+                {t('noIssuesMessage')}
               </div>
             )}
           </CardContent>

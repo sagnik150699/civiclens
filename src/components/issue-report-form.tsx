@@ -7,6 +7,7 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { submitIssue } from '@/lib/actions';
 import { useToast } from '@/hooks/use-toast';
+import { useTranslations } from 'next-intl';
 
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -46,15 +47,17 @@ const formSchema = z.object({
 
 function SubmitButton() {
   const { pending } = useFormStatus();
+  const t = useTranslations('IssueReportForm');
   return (
     <Button type="submit" className="w-full" disabled={pending}>
-      {pending ? 'Submitting...' : 'Submit Report'}
+      {pending ? t('submittingButton') : t('submitButton')}
       <Send className="ml-2 h-4 w-4" />
     </Button>
   );
 }
 
 export function IssueReportForm() {
+  const t = useTranslations('IssueReportForm');
   const { toast } = useToast();
   const [state, formAction] = useActionState(submitIssue, undefined);
   const [preview, setPreview] = useState<string | null>(null);
@@ -73,35 +76,46 @@ export function IssueReportForm() {
     },
   });
 
-  const handleGeolocation = () => {
+  const handleGeolocation = async () => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        (position) => {
+        async (position) => {
           const lat = position.coords.latitude;
           const lng = position.coords.longitude;
           form.setValue('lat', lat.toString());
           form.setValue('lng', lng.toString());
 
-          // Simple reverse geocoding simulation
-          form.setValue('address', `Near lat: ${lat.toFixed(4)}, lng: ${lng.toFixed(4)}`);
+          // Reverse geocode to get address
+          try {
+            const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+            const data = await response.json();
+            if (data && data.display_name) {
+              form.setValue('address', data.display_name);
+            } else {
+              form.setValue('address', `Near lat: ${lat.toFixed(4)}, lng: ${lng.toFixed(4)}`);
+            }
+          } catch (error) {
+            console.error("Reverse geocoding failed", error);
+            form.setValue('address', `Near lat: ${lat.toFixed(4)}, lng: ${lng.toFixed(4)}`);
+          }
           
           toast({
-            title: 'Location Acquired',
-            description: 'Your current location has been set.',
+            title: t('geolocationSuccess'),
+            description: t('geolocationSuccessDesc'),
           });
         },
         () => {
           toast({
-            title: 'Geolocation Error',
-            description: 'Could not acquire your location. Please enter your address manually.',
+            title: t('geolocationError'),
+            description: t('geolocationErrorDesc'),
             variant: 'destructive',
           });
         }
       );
     } else {
       toast({
-        title: 'Geolocation Not Supported',
-        description: 'Your browser does not support geolocation.',
+        title: t('geolocationNotSupported'),
+        description: t('geolocationNotSupportedDesc'),
         variant: 'destructive',
       });
     }
@@ -140,33 +154,31 @@ export function IssueReportForm() {
       <form
         ref={formRef}
         action={formAction}
-        onSubmit={form.handleSubmit(() => {
-            // The action will be triggered automatically by the form element
-        })}
+        onSubmit={form.handleSubmit(() => formRef.current?.requestSubmit())}
         className="space-y-4"
         // Use a key to force re-render on success and reset captcha
         key={num1 + num2}
       >
-        <h2 className="text-2xl font-bold font-headline text-center">Report an Issue</h2>
+        <h2 className="text-2xl font-bold font-headline text-center">{t('title')}</h2>
         
         <FormField
           control={form.control}
           name="category"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Category</FormLabel>
+              <FormLabel>{t('categoryLabel')}</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select an issue category" />
+                    <SelectValue placeholder={t('categoryPlaceholder')} />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {ISSUE_CATEGORIES.map(({ value, label, icon: Icon }) => (
+                  {ISSUE_CATEGORIES.map(({ value, icon: Icon }) => (
                     <SelectItem key={value} value={value}>
                       <div className="flex items-center gap-2">
                         <Icon className="h-4 w-4 text-muted-foreground" />
-                        <span>{label}</span>
+                        <span>{t(value as any)}</span>
                       </div>
                     </SelectItem>
                   ))}
@@ -182,10 +194,10 @@ export function IssueReportForm() {
           name="description"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Description</FormLabel>
+              <FormLabel>{t('descriptionLabel')}</FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="Tell us more about the issue..."
+                  placeholder={t('descriptionPlaceholder')}
                   {...field}
                 />
               </FormControl>
@@ -199,11 +211,11 @@ export function IssueReportForm() {
           name="address"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Address (Optional)</FormLabel>
+              <FormLabel>{t('addressLabel')}</FormLabel>
               <FormControl>
                 <div className="relative">
                   <Input
-                    placeholder="Enter the address or use geolocation"
+                    placeholder={t('addressPlaceholder')}
                     {...field}
                   />
                   <Button
@@ -230,7 +242,7 @@ export function IssueReportForm() {
           name="photo"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Photo</FormLabel>
+              <FormLabel>{t('photoLabel')}</FormLabel>
               <FormControl>
                 <div className="relative">
                   <Input
@@ -279,10 +291,10 @@ export function IssueReportForm() {
           render={({ field }) => (
             <FormItem>
               <FormLabel>
-                Security Question: What is {num1} + {num2}?
+                {t('captchaLabel', {num1, num2})}
               </FormLabel>
               <FormControl>
-                <Input placeholder="Your answer" {...field} />
+                <Input placeholder={t('captchaPlaceholder')} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

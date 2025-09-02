@@ -1,0 +1,80 @@
+
+{
+  "HomePage": {
+    "title1": "नागरिक मुद्दों की रिपोर्ट करें।",
+    "title2": "अपने समुदाय में सुधार करें।",
+    "description": "क्या आपने कोई गड्ढा, टूटी हुई स्ट्रीटलाइट, या कचरे का ढेर देखा है? सिविक लेंस का उपयोग करके सीधे अपनी स्थानीय सरकार को समस्याओं की रिपोर्ट करें। यह तेज़, आसान है, और इससे वास्तविक अंतर आता है।"
+  },
+  "IssueReportForm": {
+    "title": "समस्या की रिपोर्ट करें",
+    "categoryLabel": "श्रेणी",
+    "categoryPlaceholder": "एक समस्या श्रेणी चुनें",
+    "descriptionLabel": "विवरण",
+    "descriptionPlaceholder": "समस्या के बारे में और बताएं...",
+    "addressLabel": "पता (वैकल्पिक)",
+    "addressPlaceholder": "पता दर्ज करें या जियोलोकेशन का उपयोग करें",
+    "photoLabel": "तस्वीर",
+    "captchaLabel": "सुरक्षा प्रश्न: {num1} + {num2} क्या है?",
+    "captchaPlaceholder": "आपका जवाब",
+    "submitButton": "रिपोर्ट सबमिट करें",
+    "submittingButton": "सबमिट हो रहा है...",
+    "geolocationSuccess": "स्थान प्राप्त हुआ",
+    "geolocationSuccessDesc": "आपका वर्तमान स्थान निर्धारित कर दिया गया है।",
+    "geolocationError": "जियोलोकेशन त्रुटि",
+    "geolocationErrorDesc": "आपका स्थान प्राप्त नहीं किया जा सका। कृपया अपना पता मैन्युअल रूप से दर्ज करें।",
+    "geolocationNotSupported": "जियोलोकेशन समर्थित नहीं है",
+    "geolocationNotSupportedDesc": "आपका ब्राउज़र जियोलोकेशन का समर्थन नहीं करता है।",
+    "pothole": "गड्ढा",
+    "streetlight_out": "स्ट्रीटलाइट बंद",
+    "trash_overflow": "कचरे का ढेर",
+    "graffiti": "भित्तिचित्र",
+    "abandoned_vehicle": "लावारिस वाहन",
+    "fallen_tree": "गिरा हुआ पेड़"
+  },
+  "Header": {
+    "reportIssue": "समस्या की रिपोर्ट करें",
+    "adminDashboard": "एडमिन डैशबोर्ड",
+    "logout": "लॉगआउट",
+    "appName": "सिविक लेंस"
+  },
+  "LoginPage": {
+    "title": "एडमिन लॉगइन",
+    "description": "डैशबोर्ड तक पहुंचने के लिए अपनी क्रेडेंशियल दर्ज करें।",
+    "usernameLabel": "उपयोगकर्ता नाम",
+    "usernamePlaceholder": "एडमिन",
+    "passwordLabel": "पासवर्ड",
+    "passwordPlaceholder": "एडमिन",
+    "loginButton": "लॉग इन करें",
+    "loggingInButton": "लॉग इन हो रहा है..."
+  },
+  "AdminDashboard": {
+    "title": "एडमिन डैशबोर्ड",
+    "filtersTitle": "फ़िल्टर",
+    "filterByStatus": "स्थिति के अनुसार फ़िल्टर करें",
+    "allStatuses": "सभी स्थितियाँ",
+    "filterByPriority": "प्राथमिकता के अनुसार फ़िल्टर करें",
+    "allPriorities": "सभी प्राथमिकताएँ",
+    "filterByCategory": "श्रेणी के अनुसार फ़िल्टर करें",
+    "allCategories": "सभी श्रेणियाँ",
+    "issueMapTitle": "समस्या मानचित्र",
+    "issueMapDescription": "रिपोर्ट की गई समस्याओं का लाइव मानचित्र।",
+    "reportedIssuesTitle": "रिपोर्ट की गई समस्याएँ",
+    "reportedIssuesDescription": "नागरिकों द्वारा रिपोर्ट की गई सभी समस्याओं की सूची।",
+    "priorityColumn": "प्राथमिकता",
+    "categoryColumn": "श्रेणी",
+    "addressColumn": "पता",
+    "descriptionColumn": "विवरण",
+    "reportedColumn": "रिपोर्ट किया गया",
+    "statusColumn": "स्थिति",
+    "actionsColumn": "कार्रवाइयाँ",
+    "acknowledgeAction": "स्वीकार करें",
+    "setInProgressAction": "प्रगति में सेट करें",
+    "resolveAction": "समाधान करें",
+    "noIssuesMessage": "वर्तमान फ़िल्टर से कोई समस्या मेल नहीं खाती।"
+  },
+  "LanguageSwitcher": {
+    "label": "भाषा",
+    "en": "अंग्रेज़ी",
+    "hi": "हिंदी"
+  }
+}
