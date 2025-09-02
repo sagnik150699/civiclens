@@ -130,26 +130,28 @@ export async function login(prevState: any, formData: FormData) {
 
   if (!validatedFields.success) {
     return {
+      success: false,
       message: 'Invalid data.',
     };
   }
   
   const { idToken } = validatedFields.data;
-
+  
   try {
     const decodedToken = await adminAuth.verifyIdToken(idToken);
     
     if (decodedToken.email !== process.env.ADMIN_EMAIL) {
-        return { message: 'You are not authorized to access this page.' };
+        return { success: false, message: 'You are not authorized to access this page.' };
     }
     
-    const sessionCookie = await adminAuth.createSessionCookie(idToken, { expiresIn: 60 * 60 * 24 * 5 * 1000 });
-    cookies().set('session', sessionCookie, { httpOnly: true, secure: process.env.NODE_ENV === 'production' });
+    const expiresIn = 60 * 60 * 24 * 5 * 1000; // 5 days
+    const sessionCookie = await adminAuth.createSessionCookie(idToken, { expiresIn });
+    cookies().set('session', sessionCookie, { maxAge: expiresIn, httpOnly: true, secure: process.env.NODE_ENV === 'production' });
     
-    redirect(`/admin`);
+    return { success: true };
   } catch (error) {
     console.error(error);
-    return { message: 'Invalid email or password.' };
+    return { success: false, message: 'Authentication failed. Please try again.' };
   }
 }
 
