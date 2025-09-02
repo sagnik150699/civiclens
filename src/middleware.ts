@@ -1,15 +1,21 @@
+import { NextResponse, type NextRequest } from 'next/server'
+ 
+export function middleware(request: NextRequest) {
+  const session = request.cookies.get('session')
+ 
+  // If the user is trying to access the admin page without a session, redirect to login
+  if (request.nextUrl.pathname.startsWith('/admin') && !session) {
+    return NextResponse.redirect(new URL('/login', request.url))
+  }
+ 
+  // If the user is logged in and tries to access the login page, redirect to admin
+  if (request.nextUrl.pathname.startsWith('/login') && session) {
+    return NextResponse.redirect(new URL('/admin', request.url))
+  }
+ 
+  return NextResponse.next()
+}
 
-import createMiddleware from 'next-intl/middleware';
- 
-export default createMiddleware({
-  // A list of all locales that are supported
-  locales: ['en', 'hi'],
- 
-  // Used when no locale matches
-  defaultLocale: 'en'
-});
- 
 export const config = {
-  // Match only internationalized pathnames
-  matcher: ['/', '/(hi|en)/:path*']
-};
+  matcher: ['/admin/:path*', '/login/:path*'],
+}

@@ -7,7 +7,6 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { submitIssue } from '@/lib/actions';
 import { useToast } from '@/hooks/use-toast';
-import { useTranslations } from 'next-intl';
 
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -47,17 +46,15 @@ const formSchema = z.object({
 
 function SubmitButton() {
   const { pending } = useFormStatus();
-  const t = useTranslations('IssueReportForm');
   return (
     <Button type="submit" className="w-full" disabled={pending}>
-      {pending ? t('submittingButton') : t('submitButton')}
+      {pending ? 'Submitting...' : 'Submit Report'}
       <Send className="ml-2 h-4 w-4" />
     </Button>
   );
 }
 
 export function IssueReportForm() {
-  const t = useTranslations('IssueReportForm');
   const { toast } = useToast();
   const [state, formAction] = useActionState(submitIssue, undefined);
   const [preview, setPreview] = useState<string | null>(null);
@@ -100,22 +97,22 @@ export function IssueReportForm() {
           }
           
           toast({
-            title: t('geolocationSuccess'),
-            description: t('geolocationSuccessDesc'),
+            title: "Location Acquired",
+            description: "Your current location has been set.",
           });
         },
         () => {
           toast({
-            title: t('geolocationError'),
-            description: t('geolocationErrorDesc'),
+            title: "Geolocation Error",
+            description: "Could not acquire your location. Please enter your address manually.",
             variant: 'destructive',
           });
         }
       );
     } else {
       toast({
-        title: t('geolocationNotSupported'),
-        description: t('geolocationNotSupportedDesc'),
+        title: "Geolocation Not Supported",
+        description: "Your browser does not support geolocation.",
         variant: 'destructive',
       });
     }
@@ -159,26 +156,26 @@ export function IssueReportForm() {
         // Use a key to force re-render on success and reset captcha
         key={num1 + num2}
       >
-        <h2 className="text-2xl font-bold font-headline text-center">{t('title')}</h2>
+        <h2 className="text-2xl font-bold font-headline text-center">Report an Issue</h2>
         
         <FormField
           control={form.control}
           name="category"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{t('categoryLabel')}</FormLabel>
+              <FormLabel>Category</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder={t('categoryPlaceholder')} />
+                    <SelectValue placeholder="Select an issue category" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {ISSUE_CATEGORIES.map(({ value, icon: Icon }) => (
+                  {ISSUE_CATEGORIES.map(({ value, label, icon: Icon }) => (
                     <SelectItem key={value} value={value}>
                       <div className="flex items-center gap-2">
                         <Icon className="h-4 w-4 text-muted-foreground" />
-                        <span>{t(value as any)}</span>
+                        <span>{label}</span>
                       </div>
                     </SelectItem>
                   ))}
@@ -194,10 +191,10 @@ export function IssueReportForm() {
           name="description"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{t('descriptionLabel')}</FormLabel>
+              <FormLabel>Description</FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder={t('descriptionPlaceholder')}
+                  placeholder="Tell us more about the issue..."
                   {...field}
                 />
               </FormControl>
@@ -211,11 +208,11 @@ export function IssueReportForm() {
           name="address"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{t('addressLabel')}</FormLabel>
+              <FormLabel>Address (Optional)</FormLabel>
               <FormControl>
                 <div className="relative">
                   <Input
-                    placeholder={t('addressPlaceholder')}
+                    placeholder="Enter the address or use geolocation"
                     {...field}
                   />
                   <Button
@@ -242,7 +239,7 @@ export function IssueReportForm() {
           name="photo"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{t('photoLabel')}</FormLabel>
+              <FormLabel>Photo</FormLabel>
               <FormControl>
                 <div className="relative">
                   <Input
@@ -291,10 +288,10 @@ export function IssueReportForm() {
           render={({ field }) => (
             <FormItem>
               <FormLabel>
-                {t('captchaLabel', {num1, num2})}
+                Security Question: What is {num1} + {num2}?
               </FormLabel>
               <FormControl>
-                <Input placeholder={t('captchaPlaceholder')} {...field} />
+                <Input placeholder="Your answer" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
