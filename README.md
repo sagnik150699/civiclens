@@ -1,6 +1,6 @@
 # CivicLens: Community Issue Reporting Platform
 
-CivicLens is a modern, full-stack web application designed to empower citizens to report civic issues directly to their local government. From potholes to broken streetlights, users can quickly submit reports with photos and location data. The platform features an administrative dashboard where municipal staff can view, manage, and prioritize these issues, facilitated by an AI-powered analysis of incoming reports.
+CivicLens is a modern, full-stack web application designed to empower citizens to report civic issues directly to their local government. From potholes to broken streetlights, users can quickly submit reports with photos and location data. The platform features an administrative dashboard where municipal staff can view, manage, and prioritize these issues.
 
 This project was built with Firebase Studio.
 
@@ -9,7 +9,6 @@ This project was built with Firebase Studio.
 *   **Public Issue Reporting**: An intuitive form for users to submit issues, including category, description, address, and a photo.
 *   **Geolocation**: Automatically detects the user's location to simplify address entry.
 *   **Image Uploads**: Securely uploads and stores user-submitted photos.
-*   **AI-Powered Prioritization**: Leverages a Genkit flow to analyze the report's content and photo, automatically assigning a priority level (High, Medium, or Low).
 *   **Secure Admin Dashboard**: A password-protected dashboard for staff to manage and track all reported issues.
 *   **Interactive Map**: Displays all reported issues on a map for easy visualization of problem areas.
 *   **Issue Filtering & Management**: Admins can filter issues by category, priority, and status, and update the status as work progresses.
@@ -18,7 +17,6 @@ This project was built with Firebase Studio.
 ## Tech Stack
 
 *   **Framework**: [Next.js](https://nextjs.org/) (with App Router)
-*   **AI Integration**: [Google AI & Genkit](https://firebase.google.com/docs/genkit)
 *   **UI**: [React](https://react.dev/), [TypeScript](https://www.typescriptlang.org/), [Tailwind CSS](https://tailwindcss.com/)
 *   **Components**: [shadcn/ui](https://ui.shadcn.com/) & [Lucide React](https://lucide.dev/guide/packages/lucide-react) for icons.
 *   **Backend & Database**: [Firebase](https://firebase.google.com/) (Firestore, Firebase Storage)

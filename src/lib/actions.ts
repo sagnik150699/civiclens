@@ -3,7 +3,6 @@
 
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import { prioritizeIssueReport } from '@/ai/flows/prioritize-issue-reports';
 import { addIssue, updateIssueStatus as dbUpdateIssueStatus, type IssuePriority, type IssueStatus } from '@/lib/data';
 import { admin } from '@/lib/firebase-admin';
 import { ISSUE_CATEGORIES, ISSUE_STATUSES } from './constants';
@@ -49,7 +48,6 @@ export async function submitIssue(prevState: any, formData: FormData | null) {
     const { description, category, photo, address, lat, lng } = validatedFields.data;
 
     const buffer = Buffer.from(await photo.arrayBuffer());
-    const photoDataUri = `data:${photo.type};base64,${buffer.toString('base64')}`;
     
     const bucket = admin.storage().bucket();
     const fileName = `issues/${Date.now()}-${photo.name}`;
@@ -64,8 +62,6 @@ export async function submitIssue(prevState: any, formData: FormData | null) {
     await file.makePublic();
     const photoUrl = file.publicUrl();
 
-    const aiResult = await prioritizeIssueReport({ description, photoDataUri });
-
     const location = {
       lat: lat ? parseFloat(lat) : 34.0522 + (Math.random() - 0.5) * 0.1,
       lng: lng ? parseFloat(lng) : -118.2437 + (Math.random() - 0.5) * 0.1,
@@ -77,8 +73,8 @@ export async function submitIssue(prevState: any, formData: FormData | null) {
       location,
       photoUrl,
       status: 'Submitted',
-      priority: (aiResult.priority as IssuePriority) || 'Medium',
-      reason: aiResult.reason || 'AI analysis failed.',
+      priority: 'Medium',
+      reason: 'Awaiting review.',
       address: address,
     });
 
