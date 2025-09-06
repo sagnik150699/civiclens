@@ -6,9 +6,10 @@ import { revalidatePath } from 'next/cache';
 import { ISSUE_CATEGORIES, ISSUE_STATUSES } from './constants';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { collection, getDocs, query, orderBy, Timestamp, addDoc, doc, updateDoc } from 'firebase/firestore';
+import { Timestamp } from 'firebase-admin/firestore';
 import type { IssueReport, IssueStatus } from '@/lib/data';
-import { getAdminDb, getAdminStorage } from '@/lib/firebase-admin';
+import { getAdminStorage } from '@/lib/firebase-admin';
+import { adminDb } from '@/lib/adminDb';
 
 
 const issueSchema = z.object({
@@ -45,7 +46,7 @@ export async function submitIssue(prevState: any, formData: FormData | null) {
     }
   
   try {
-    const adminDb = getAdminDb();
+    const db = adminDb();
     const { description, category, photo, address, lat, lng } = validatedFields.data;
     let photoUrl = null;
 
@@ -88,7 +89,7 @@ export async function submitIssue(prevState: any, formData: FormData | null) {
         createdAt: Timestamp.now(),
     };
 
-    await addDoc(collection(adminDb, 'issues'), newIssue);
+    await db.collection('issues').add(newIssue);
 
     revalidatePath('/');
     revalidatePath('/admin');
@@ -114,9 +115,9 @@ export async function updateIssueStatus(id: string, status: IssueStatus) {
     }
 
     try {
-        const adminDb = getAdminDb();
-        const issueRef = doc(adminDb, 'issues', id);
-        await updateDoc(issueRef, { status });
+        const db = adminDb();
+        const issueRef = db.collection('issues').doc(id);
+        await issueRef.update({ status });
         
         revalidatePath('/admin');
         return { success: true, message: `Status updated to ${status}`};
@@ -149,17 +150,17 @@ export async function logout() {
 
 export const getIssues = async (): Promise<IssueReport[]> => {
     try {
-      const adminDb = getAdminDb();
-      const issuesCollection = collection(adminDb, 'issues');
-      const q = query(issuesCollection, orderBy('createdAt', 'desc'));
-      const issuesSnapshot = await getDocs(q);
+      const db = adminDb();
+      const issuesCollection = db.collection('issues');
+      const q = issuesCollection.orderBy('createdAt', 'desc');
+      const issuesSnapshot = await q.get();
       const issuesList = issuesSnapshot.docs.map(doc => {
         const data = doc.data();
         return {
           id: doc.id,
           ...data,
           createdAt: (data.createdAt as Timestamp).toDate(),
-        } as IssueReport;
+        } as unknown as IssueReport;
       });
       return issuesList;
     } catch (error) {

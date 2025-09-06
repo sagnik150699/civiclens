@@ -1,3 +1,4 @@
+
 'use server';
 
 import { initializeApp, getApps, App, cert, applicationDefault } from 'firebase-admin/app';
@@ -49,10 +50,6 @@ function getAdminApp(): App {
   return initializeApp({ credential: buildCredential() });
 }
 
-function getAdminDb() {
-  return getFirestore(getAdminApp());
-}
-
 function getAdminStorage() {
   return getStorage(getAdminApp());
 }
@@ -61,4 +58,4 @@ function getAdminAuth() {
   return getAuth(getAdminApp());
 }
 
-export { getAdminApp, getAdminDb, getAdminStorage, getAdminAuth };
+export { getAdminApp, getAdminStorage, getAdminAuth };
