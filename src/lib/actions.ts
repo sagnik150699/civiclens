@@ -13,16 +13,18 @@ import { redirect } from 'next/navigation';
 
 const issueSchema = z.object({
   description: z.string().min(10, 'Please provide a more detailed description.'),
-  category: z.enum(ISSUE_CATEGORIES.map(c => c.value) as [string, ...string[]]),
-  photo: z.any().refine(file => file?.size > 0, 'A photo is required.'),
+  category: z.enum(ISSUE_CATEGORIES.map(c => c.value) as [string, ...string[]], {
+    errorMap: () => ({ message: "Please select a category." }),
+  }),
+  photo: z.any().refine(file => file?.size > 0, 'A photo is required.').refine(file => file?.size < 4 * 1024 * 1024, 'Photo must be less than 4MB.'),
   address: z.string().min(1, 'Address is required.'),
   lat: z.string().optional(),
   lng: z.string().optional(),
 });
 
-export async function submitIssue(prevState: any, formData: FormData | null) {
+export async function submitIssue(prevState: any, formData: FormData) {
   // Gracefully handle the initial render state on the server.
-  if (formData === null) {
+  if (!formData.has('description')) {
     return { success: false, message: '', errors: {} };
   }
 
