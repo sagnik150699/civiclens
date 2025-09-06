@@ -77,7 +77,8 @@ export function IssueReportForm() {
           setDialogTitle('Geolocation Error');
           setDialogDescription('Could not acquire your location. Please enter your address manually.');
           setIsDialogOpen(true);
-        }
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
       );
     } else {
       setDialogTitle('Geolocation Not Supported');
