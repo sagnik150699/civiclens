@@ -4,7 +4,7 @@
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { addIssue, updateIssueStatus as dbUpdateIssueStatus, type IssueStatus } from '@/lib/data';
-import { admin, adminDb } from '@/lib/firebase-admin';
+import { admin } from '@/lib/firebase-admin';
 import { ISSUE_CATEGORIES, ISSUE_STATUSES } from './constants';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
@@ -47,7 +47,7 @@ export async function submitIssue(prevState: any, formData: FormData | null) {
   try {
     const { description, category, photo, address, lat, lng } = validatedFields.data;
 
-    if (!adminDb) {
+    if (!admin.apps.length) {
       throw new Error('Firebase not configured');
     }
 
