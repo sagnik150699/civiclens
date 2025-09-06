@@ -50,7 +50,6 @@ export async function submitIssue(prevState: any, formData: FormData | null) {
     const buffer = Buffer.from(await photo.arrayBuffer());
     const photoDataUri = `data:${photo.type};base64,${buffer.toString('base64')}`;
     
-    // Use Admin SDK for server-side storage operations
     const bucket = admin.storage().bucket(process.env.FIREBASE_STORAGE_BUCKET);
     const fileName = `issues/${Date.now()}-${photo.name}`;
     const file = bucket.file(fileName);
