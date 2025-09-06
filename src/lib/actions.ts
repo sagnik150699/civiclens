@@ -24,7 +24,7 @@ const issueSchema = z.object({
 export async function submitIssue(prevState: any, formData: FormData) {
   // This is the initial state call from useActionState.
   // It should not proceed to validation if form data is not present.
-  if (!formData.get('description')) {
+  if (!formData) {
     return { success: false, message: '', errors: {} };
   }
 
