@@ -4,8 +4,6 @@
 import { useEffect, useState, useRef, useActionState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { submitIssue } from '@/lib/actions';
-import { storage } from '@/lib/firebase-client';
-import { ref, uploadBytesResumable, getDownloadURL, type UploadTask } from 'firebase/storage';
 
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -31,6 +29,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { useImageUpload } from '@/hooks/use-image-upload';
 
 function SubmitButton({ isUploading }: { isUploading: boolean }) {
   const { pending } = useFormStatus();
@@ -47,16 +46,12 @@ function SubmitButton({ isUploading }: { isUploading: boolean }) {
 
 export function IssueReportForm() {
   const [state, formAction, isPending] = useActionState(submitIssue, { success: false, message: '', errors: {} });
+  const { start: startUpload, progress: uploadProgress, status: uploadStatus, url: photoUrl } = useImageUpload();
   
-  const [preview, setPreview] = useState<string | null>(null);
-  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [address, setAddress] = useState('');
   const [lat, setLat] = useState('');
   const [lng, setLng] = useState('');
   
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [uploadStatus, setUploadStatus] = useState<'idle' | 'running' | 'done' | 'error'>('idle');
-
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [dialogTitle, setDialogTitle] = useState('');
   const [dialogDescription, setDialogDescription] = useState('');
@@ -64,35 +59,16 @@ export function IssueReportForm() {
   
   const formRef = useRef<HTMLFormElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const uploadTaskRef = useRef<UploadTask | null>(null);
-  const watchdog = useRef<number | null>(null);
-  const lastBytes = useRef<number>(0);
-
-  // Cleanup upload task on component unmount
-  useEffect(() => {
-    return () => {
-      if (uploadTaskRef.current) {
-        uploadTaskRef.current.cancel();
-      }
-      if (watchdog.current) {
-        window.clearInterval(watchdog.current);
-      }
-    };
-  }, []);
-
 
   const resetForm = () => {
     formRef.current?.reset();
-    setPreview(null);
-    setPhotoUrl(null);
     setAddress('');
     setLat('');
     setLng('');
-    setUploadProgress(0);
-    setUploadStatus('idle');
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
+    // The useImageUpload hook will reset itself on new upload
   }
 
   const handleGeolocation = () => {
@@ -143,66 +119,11 @@ export function IssueReportForm() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!file.type.startsWith('image/')) {
-        setDialogTitle('Invalid File Type');
-        setDialogDescription('Please select an image file.');
+    startUpload(file).catch((err) => {
+        setDialogTitle('Upload Error');
+        setDialogDescription(err.message || 'Could not start upload.');
         setIsDialogOpen(true);
-        return;
-    }
-    if (file.size > 10 * 1024 * 1024) { // 10MB limit
-        setDialogTitle('File Too Large');
-        setDialogDescription('Please select an image smaller than 10MB.');
-        setIsDialogOpen(true);
-        return;
-    }
-
-    // Cleanup previous upload artifacts before starting a new one
-    uploadTaskRef.current?.cancel();
-    if(watchdog.current) window.clearInterval(watchdog.current);
-
-    setPreview(URL.createObjectURL(file));
-    setUploadProgress(0);
-    setPhotoUrl(null);
-    setUploadStatus('running');
-
-    const storageRef = ref(storage, `issues/${Date.now()}-${file.name}`);
-    const uploadTask = uploadBytesResumable(storageRef, file);
-    uploadTaskRef.current = uploadTask;
-
-    // Watchdog: cancel if bytesTransferred doesn't change for 15s
-    watchdog.current = window.setInterval(() => {
-        const b = uploadTask.snapshot.bytesTransferred;
-        if (b === lastBytes.current && uploadTask.snapshot.state === 'running') {
-            console.warn('Upload stuck; canceling');
-            uploadTask.cancel();
-        }
-        lastBytes.current = b;
-    }, 15000) as unknown as number;
-
-    uploadTask.on(
-        'state_changed',
-        (snapshot) => {
-            console.log('state:', snapshot.state, snapshot.bytesTransferred, '/', snapshot.totalBytes);
-            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-            setUploadProgress(progress);
-        },
-        (error) => {
-            if (watchdog.current) window.clearInterval(watchdog.current);
-            console.error('Storage upload error:', { code: err?.code, message: err?.message });
-            setUploadStatus('error');
-            setDialogTitle('Upload Error');
-            setDialogDescription(`Failed to upload image: ${error.message}`);
-            setIsDialogOpen(true);
-            setPreview(null);
-        },
-        () => {
-            if (watchdog.current) window.clearInterval(watchdog.current);
-            getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
-                setPhotoUrl(downloadURL);
-                setUploadStatus('done');
-            });
-        }
-    );
+    });
   };
 
 
@@ -222,6 +143,14 @@ export function IssueReportForm() {
       }
     }
   }, [state, isPending]);
+
+  useEffect(() => {
+    if (uploadStatus === 'error') {
+        setDialogTitle('Upload Failed');
+        setDialogDescription('The image could not be uploaded. Please try a different file or check your connection.');
+        setIsDialogOpen(true);
+    }
+  }, [uploadStatus]);
 
   const isUploading = uploadStatus === 'running';
 
@@ -315,17 +244,17 @@ export function IssueReportForm() {
           {state?.errors?.photoUrl && <p className="text-sm font-medium text-destructive">{state.errors.photoUrl[0]}</p>}
         </div>
         
-        {uploadStatus !== 'idle' && (
+        {uploadStatus !== 'idle' && uploadStatus !== 'done' && (
             <div className="space-y-1">
-                <Label>Upload progress: {Math.round(uploadProgress)}% ({uploadStatus})</Label>
+                <Label>Upload progress: {uploadProgress}% ({uploadStatus})</Label>
                 <Progress value={uploadProgress} className="w-full" />
             </div>
         )}
 
-        {preview && (
+        {photoUrl && uploadStatus === 'done' && (
           <div className="relative h-48 w-full">
             <Image
-              src={preview}
+              src={photoUrl}
               alt="Image preview"
               fill
               style={{ objectFit: 'cover' }}
