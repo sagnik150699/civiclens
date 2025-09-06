@@ -5,6 +5,7 @@ if (!admin.apps.length) {
         admin.initializeApp({
             credential: admin.credential.applicationDefault(),
             databaseURL: `https://${process.env.GCLOUD_PROJECT}.firebaseio.com`,
+            storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
         });
     } catch (error) {
         console.log('Firebase admin initialization error', error);
@@ -12,3 +13,4 @@ if (!admin.apps.length) {
 }
 
 export const adminDb = admin.firestore();
+export { admin };

@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { prioritizeIssueReport } from '@/ai/flows/prioritize-issue-reports';
 import { addIssue, updateIssueStatus as dbUpdateIssueStatus, type IssuePriority, type IssueStatus } from '@/lib/data';
-import { getStorage } from 'firebase-admin/storage';
+import { admin } from '@/lib/firebase-admin';
 import { ISSUE_CATEGORIES, ISSUE_STATUSES } from './constants';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
@@ -22,7 +22,6 @@ const issueSchema = z.object({
 });
 
 export async function submitIssue(prevState: any, formData: FormData | null) {
-  // Gracefully handle the initial render state on the server.
   if (!formData) {
     return { success: false, message: '', errors: {} };
   }
@@ -52,7 +51,7 @@ export async function submitIssue(prevState: any, formData: FormData | null) {
     const photoDataUri = `data:${photo.type};base64,${buffer.toString('base64')}`;
     
     // Use Admin SDK for server-side storage operations
-    const bucket = getStorage().bucket(process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET);
+    const bucket = admin.storage().bucket(process.env.FIREBASE_STORAGE_BUCKET);
     const fileName = `issues/${Date.now()}-${photo.name}`;
     const file = bucket.file(fileName);
 
@@ -62,7 +61,6 @@ export async function submitIssue(prevState: any, formData: FormData | null) {
         },
     });
 
-    // Make file public to get a download URL
     await file.makePublic();
     const photoUrl = file.publicUrl();
 
