@@ -84,12 +84,12 @@ export async function submitIssue(prevState: any, formData: FormData | null) {
 
     revalidatePath('/');
     revalidatePath('/admin');
-    return { success: true, message: 'Issue reported successfully!', errors: {} };
+    return { success: true, message: 'Issue reported successfully! Our team will review it shortly.', errors: {} };
 
   } catch (error) {
     console.error("Error submitting issue:", error);
     const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred.';
-    return { success: false, message: errorMessage, errors: {} };
+    return { success: false, message: `Submission failed: ${errorMessage}`, errors: {} };
   }
 }
 

@@ -8,8 +8,8 @@ This project was built with Firebase Studio.
 
 *   **Public Issue Reporting**: An intuitive form for users to submit issues, including category, description, address, and a photo.
 *   **Geolocation**: Automatically detects the user's location to simplify address entry.
-*   **Image Uploads**: Securely uploads and stores user-submitted photos with Firebase Storage.
-*   **AI-Powered Prioritization**: Leverages a Google Genkit flow to analyze the report's content and photo, automatically assigning a priority level (High, Medium, or Low).
+*   **Image Uploads**: Securely uploads and stores user-submitted photos.
+*   **AI-Powered Prioritization**: Leverages a Genkit flow to analyze the report's content and photo, automatically assigning a priority level (High, Medium, or Low).
 *   **Secure Admin Dashboard**: A password-protected dashboard for staff to manage and track all reported issues.
 *   **Interactive Map**: Displays all reported issues on a map for easy visualization of problem areas.
 *   **Issue Filtering & Management**: Admins can filter issues by category, priority, and status, and update the status as work progresses.
@@ -21,7 +21,7 @@ This project was built with Firebase Studio.
 *   **AI Integration**: [Google AI & Genkit](https://firebase.google.com/docs/genkit)
 *   **UI**: [React](https://react.dev/), [TypeScript](https://www.typescriptlang.org/), [Tailwind CSS](https://tailwindcss.com/)
 *   **Components**: [shadcn/ui](https://ui.shadcn.com/) & [Lucide React](https://lucide.dev/guide/packages/lucide-react) for icons.
-*   **Backend & Database**: [Firebase](https://firebase.google.com/) (Firestore, Firebase Storage, Firebase Authentication)
+*   **Backend & Database**: [Firebase](https://firebase.google.com/) (Firestore, Firebase Storage)
 
 ---
 
@@ -44,10 +44,13 @@ This project was built with Firebase Studio.
         rules_version = '2';
         service cloud.firestore {
           match /databases/{database}/documents {
+            // Allow public read of all issues
             match /issues/{issueId} {
-              allow read: if false;
-              allow create: if true;
-              allow update, delete: if false;
+              allow read: if true;
+              allow create: if true; // Allow anyone to submit an issue
+              
+              // Only allow admins to update or delete
+              allow update, delete: if request.auth != null; 
             }
           }
         }
@@ -57,8 +60,13 @@ This project was built with Firebase Studio.
         rules_version = '2';
         service firebase.storage {
           match /b/{bucket}/o {
+            // Allow public read access to all files
             match /{allPaths=**} {
               allow read: if true;
+            }
+            
+            // Allow writes only for image files under 4MB
+            match /issues/{fileName} {
               allow write: if request.resource.size < 4 * 1024 * 1024
                            && request.resource.contentType.matches('image/.*');
             }

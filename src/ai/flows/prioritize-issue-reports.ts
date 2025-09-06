@@ -31,7 +31,7 @@ const PrioritizeIssueReportOutputSchema = z.object({
     .describe(
       'The priority of the issue report, can be High, Medium, or Low.'
     ),
-  reason: z.string().describe('The reason for the assigned priority.'),
+  reason: z.string().describe('A concise, one-sentence reason for the assigned priority, written for a city official.'),
 });
 
 export type PrioritizeIssueReportOutput = z.infer<typeof PrioritizeIssueReportOutputSchema>;
@@ -46,16 +46,19 @@ const prioritizeIssueReportPrompt = ai.definePrompt({
   name: 'prioritizeIssueReportPrompt',
   input: {schema: PrioritizeIssueReportInputSchema},
   output: {schema: PrioritizeIssueReportOutputSchema},
-  prompt: `You are an AI assistant that helps municipal staff prioritize issue reports.
+  prompt: `You are an AI assistant for municipal staff. Your task is to prioritize public issue reports based on urgency and potential impact. Analyze the description and photo to determine a priority level (High, Medium, or Low).
 
-  Given the following issue report description and attached photo (if available), determine the priority of the issue (High, Medium, or Low) and provide a reason for the assigned priority.
+  Prioritization Guidelines:
+  - High: Poses an immediate threat to public safety or can cause significant property damage (e.g., major water leak, fallen power lines, large sinkhole).
+  - Medium: Disrupts public services or quality of life but is not an immediate danger (e.g., overflowing trash, broken streetlight, large graffiti).
+  - Low: Minor cosmetic issues or inconveniences (e.g., small pothole, minor graffiti).
 
   Description: {{{description}}}
   {{#if photoDataUri}}
   Photo: {{media url=photoDataUri}}
   {{/if}}
 
-  Respond with a JSON object that contains the 'priority' (High, Medium, or Low) and 'reason' for the assigned priority.
+  Respond with a JSON object containing the 'priority' and a concise 'reason' for your decision.
 `,
 });
 
