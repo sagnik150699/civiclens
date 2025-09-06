@@ -4,7 +4,6 @@ import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { prioritizeIssueReport } from '@/ai/flows/prioritize-issue-reports';
 import { addIssue, updateIssueStatus as dbUpdateIssueStatus, type IssuePriority, type IssueStatus } from '@/lib/data';
-import { adminDb } from '@/lib/firebase-admin';
 import { getStorage } from 'firebase-admin/storage';
 import { ISSUE_CATEGORIES, ISSUE_STATUSES } from './constants';
 import { cookies } from 'next/headers';
@@ -21,9 +20,9 @@ const issueSchema = z.object({
   lng: z.string().optional(),
 });
 
-export async function submitIssue(prevState: any, formData: FormData) {
+export async function submitIssue(prevState: any, formData: FormData | null) {
   // Gracefully handle the initial render state on the server.
-  if (!formData.has('description')) {
+  if (!formData) {
     return { success: false, message: '', errors: {} };
   }
 
