@@ -79,6 +79,7 @@ export async function submitIssue(prevState: any, formData: FormData | null) {
       status: 'Submitted',
       priority: 'Medium', // Default priority
       address: address,
+      reason: 'Awaiting review'
     });
 
     revalidatePath('/');
