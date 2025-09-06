@@ -6,11 +6,25 @@ import admin from 'firebase-admin';
 // errors so that importing this module does not crash the app.
 try {
   if (!admin.apps.length) {
-    admin.initializeApp({
-      credential: admin.credential.applicationDefault(),
-      databaseURL: process.env.FIREBASE_DATABASE_URL,
-      storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
-    });
+    const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY_BASE64
+      ? Buffer.from(process.env.FIREBASE_SERVICE_ACCOUNT_KEY_BASE64, 'base64').toString('utf-8')
+      : undefined;
+
+    if (serviceAccountKey) {
+      // Running in a local or CI environment with a service account key
+      admin.initializeApp({
+        credential: admin.credential.cert(JSON.parse(serviceAccountKey)),
+        databaseURL: process.env.FIREBASE_DATABASE_URL,
+        storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
+      });
+    } else {
+      // Running in a Google Cloud environment (e.g., App Hosting)
+      admin.initializeApp({
+        credential: admin.credential.applicationDefault(),
+        databaseURL: process.env.FIREBASE_DATABASE_URL,
+        storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
+      });
+    }
   }
 } catch (error) {
   console.error('Failed to initialize Firebase Admin SDK:', error);
