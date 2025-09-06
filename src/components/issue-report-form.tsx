@@ -54,7 +54,6 @@ export function IssueReportForm() {
   const [lat, setLat] = useState('');
   const [lng, setLng] = useState('');
   
-  const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadStatus, setUploadStatus] = useState<'idle' | 'running' | 'done' | 'error'>('idle');
 
@@ -66,11 +65,18 @@ export function IssueReportForm() {
   const formRef = useRef<HTMLFormElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const uploadTaskRef = useRef<UploadTask | null>(null);
+  const watchdog = useRef<number | null>(null);
+  const lastBytes = useRef<number>(0);
 
   // Cleanup upload task on component unmount
   useEffect(() => {
     return () => {
-      uploadTaskRef.current?.cancel();
+      if (uploadTaskRef.current) {
+        uploadTaskRef.current.cancel();
+      }
+      if (watchdog.current) {
+        window.clearInterval(watchdog.current);
+      }
     };
   }, []);
 
@@ -83,7 +89,6 @@ export function IssueReportForm() {
     setLat('');
     setLng('');
     setUploadProgress(0);
-    setIsUploading(false);
     setUploadStatus('idle');
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
@@ -153,8 +158,9 @@ export function IssueReportForm() {
 
     // Cleanup previous upload artifacts before starting a new one
     uploadTaskRef.current?.cancel();
+    if(watchdog.current) window.clearInterval(watchdog.current);
+
     setPreview(URL.createObjectURL(file));
-    setIsUploading(true);
     setUploadProgress(0);
     setPhotoUrl(null);
     setUploadStatus('running');
@@ -163,15 +169,26 @@ export function IssueReportForm() {
     const uploadTask = uploadBytesResumable(storageRef, file);
     uploadTaskRef.current = uploadTask;
 
+    // Watchdog: cancel if bytesTransferred doesn't change for 15s
+    watchdog.current = window.setInterval(() => {
+        const b = uploadTask.snapshot.bytesTransferred;
+        if (b === lastBytes.current && uploadTask.snapshot.state === 'running') {
+            console.warn('Upload stuck; canceling');
+            uploadTask.cancel();
+        }
+        lastBytes.current = b;
+    }, 15000) as unknown as number;
+
     uploadTask.on(
         'state_changed',
         (snapshot) => {
+            console.log('state:', snapshot.state, snapshot.bytesTransferred, '/', snapshot.totalBytes);
             const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
             setUploadProgress(progress);
         },
         (error) => {
-            console.error('Upload failed:', error);
-            setIsUploading(false);
+            if (watchdog.current) window.clearInterval(watchdog.current);
+            console.error('Storage upload error:', { code: err?.code, message: err?.message });
             setUploadStatus('error');
             setDialogTitle('Upload Error');
             setDialogDescription(`Failed to upload image: ${error.message}`);
@@ -179,9 +196,9 @@ export function IssueReportForm() {
             setPreview(null);
         },
         () => {
+            if (watchdog.current) window.clearInterval(watchdog.current);
             getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
                 setPhotoUrl(downloadURL);
-                setIsUploading(false);
                 setUploadStatus('done');
             });
         }
@@ -205,6 +222,8 @@ export function IssueReportForm() {
       }
     }
   }, [state, isPending]);
+
+  const isUploading = uploadStatus === 'running';
 
   return (
     <>
@@ -296,7 +315,7 @@ export function IssueReportForm() {
           {state?.errors?.photoUrl && <p className="text-sm font-medium text-destructive">{state.errors.photoUrl[0]}</p>}
         </div>
         
-        {isUploading && (
+        {uploadStatus !== 'idle' && (
             <div className="space-y-1">
                 <Label>Upload progress: {Math.round(uploadProgress)}% ({uploadStatus})</Label>
                 <Progress value={uploadProgress} className="w-full" />
