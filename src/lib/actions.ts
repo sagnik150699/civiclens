@@ -20,16 +20,22 @@ const initializeFirebaseAdmin = () => {
   if (!serviceAccountKeyBase64) {
     throw new Error('FIREBASE_SERVICE_ACCOUNT_KEY_BASE64 environment variable is not set. Please check your .env file.');
   }
-  
-  const serviceAccountJson = Buffer.from(serviceAccountKeyBase64, 'base64').toString('utf-8');
-  // The line below is the fix: It escapes the newline characters in the private key.
-  const escapedServiceAccountJson = serviceAccountJson.replace(/\\n/g, '\\\\n');
-  const serviceAccount = JSON.parse(escapedServiceAccountJson);
 
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-    storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
-  });
+  try {
+    const serviceAccountJson = Buffer.from(serviceAccountKeyBase64, 'base64').toString('utf-8');
+    // The line below is the fix: It escapes the newline characters in the private key.
+    const escapedServiceAccountJson = serviceAccountJson.replace(/\\n/g, '\\\\n');
+    const serviceAccount = JSON.parse(escapedServiceAccountJson);
+
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount),
+      storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
+    });
+  } catch (error) {
+    console.error("Failed to initialize Firebase Admin SDK:", error);
+    // We throw the error to make it visible during development
+    throw new Error('Server configuration error: Could not initialize Firebase Admin SDK. Check server logs.');
+  }
 };
 
 const getAdminDb = () => {
