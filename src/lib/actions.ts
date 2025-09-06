@@ -15,7 +15,7 @@ const issueSchema = z.object({
   category: z.enum(ISSUE_CATEGORIES.map(c => c.value) as [string, ...string[]], {
     errorMap: () => ({ message: "Please select a category." }),
   }),
-  photo: z.any().refine(file => file?.size > 0, 'A photo is required.').refine(file => file?.size < 4 * 1024 * 1024, 'Photo must be less than 4MB.'),
+  photo: z.instanceof(File, {message: 'A photo is required.'}).refine(file => file.size > 0, 'A photo is required.').refine(file => file.size < 4 * 1024 * 1024, 'Photo must be less than 4MB.'),
   address: z.string().min(1, 'Address is required.'),
   lat: z.string().optional(),
   lng: z.string().optional(),
@@ -46,8 +46,7 @@ export async function submitIssue(prevState: any, formData: FormData) {
   }
   
   try {
-    const { description, category, address, lat, lng } = validatedFields.data;
-    const photo = formData.get('photo') as File;
+    const { description, category, photo, address, lat, lng } = validatedFields.data;
 
     const buffer = Buffer.from(await photo.arrayBuffer());
     const photoDataUri = `data:${photo.type};base64,${buffer.toString('base64')}`;
