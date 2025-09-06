@@ -6,7 +6,7 @@ import { revalidatePath } from 'next/cache';
 import { ISSUE_CATEGORIES, ISSUE_STATUSES } from './constants';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { collection, getDocs, query, orderBy, Timestamp, addDoc, doc, updateDoc, getFirestore } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, Timestamp, addDoc, doc, updateDoc } from 'firebase/firestore';
 import type { IssueReport, IssueStatus } from '@/lib/data';
 import admin from 'firebase-admin';
 
@@ -23,9 +23,7 @@ const initializeFirebaseAdmin = () => {
 
   try {
     const serviceAccountJson = Buffer.from(serviceAccountKeyBase64, 'base64').toString('utf-8');
-    // The line below is the fix: It escapes the newline characters in the private key.
-    const escapedServiceAccountJson = serviceAccountJson.replace(/\\n/g, '\\\\n');
-    const serviceAccount = JSON.parse(escapedServiceAccountJson);
+    const serviceAccount = JSON.parse(serviceAccountJson);
 
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
