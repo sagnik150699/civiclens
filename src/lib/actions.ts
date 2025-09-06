@@ -8,16 +8,14 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { Timestamp } from 'firebase-admin/firestore';
 import type { IssueReport, IssueStatus } from '@/lib/data';
-import { getAdminStorage } from '@/lib/firebase-admin';
 import { adminDb } from '@/lib/adminDb';
-
 
 const issueSchema = z.object({
   description: z.string().min(10, 'Please provide a more detailed description.'),
   category: z.enum(ISSUE_CATEGORIES.map(c => c.value) as [string, ...string[]], {
     errorMap: () => ({ message: "Please select a category." }),
   }),
-  photo: z.instanceof(File).optional(),
+  photoUrl: z.string().url().optional().nullable(),
   address: z.string().min(1, 'Address is required.'),
   lat: z.string().optional(),
   lng: z.string().optional(),
@@ -31,7 +29,7 @@ export async function submitIssue(prevState: any, formData: FormData | null) {
     const validatedFields = issueSchema.safeParse({
         description: formData.get('description'),
         category: formData.get('category'),
-        photo: formData.get('photo'),
+        photoUrl: formData.get('photoUrl'),
         address: formData.get('address'),
         lat: formData.get('lat'),
         lng: formData.get('lng'),
@@ -47,30 +45,7 @@ export async function submitIssue(prevState: any, formData: FormData | null) {
   
   try {
     const db = adminDb();
-    const { description, category, photo, address, lat, lng } = validatedFields.data;
-    let photoUrl = null;
-
-    if (photo && photo.size > 0) {
-      const storage = getAdminStorage();
-      
-      const buffer = Buffer.from(await photo.arrayBuffer());
-      const bucketName = process.env.FIREBASE_STORAGE_BUCKET;
-      if (!bucketName) {
-        throw new Error('FIREBASE_STORAGE_BUCKET environment variable not set.');
-      }
-      const bucket = storage.bucket(bucketName);
-      const fileName = `issues/${Date.now()}-${photo.name}`;
-      const file = bucket.file(fileName);
-
-      await file.save(buffer, {
-          metadata: {
-              contentType: photo.type,
-          },
-      });
-
-      await file.makePublic();
-      photoUrl = file.publicUrl();
-    }
+    const { description, category, photoUrl, address, lat, lng } = validatedFields.data;
 
     const location = {
       lat: lat ? parseFloat(lat) : 34.0522 + (Math.random() - 0.5) * 0.1,

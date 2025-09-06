@@ -4,6 +4,8 @@
 import { useEffect, useState, useRef, useActionState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { submitIssue } from '@/lib/actions';
+import { storage } from '@/lib/firebase';
+import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -16,8 +18,9 @@ import {
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { Progress } from '@/components/ui/progress';
 import Image from 'next/image';
-import { CameraIcon, Send, LocateIcon, Loader2 } from 'lucide-react';
+import { CameraIcon, Send, LocateIcon, Loader2, UploadCloud } from 'lucide-react';
 import { ISSUE_CATEGORIES } from '@/lib/constants';
 import {
   AlertDialog,
@@ -29,30 +32,52 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 
-function SubmitButton() {
+function SubmitButton({ isUploading }: { isUploading: boolean }) {
   const { pending } = useFormStatus();
+  const isDisabled = pending || isUploading;
+
   return (
-    <Button type="submit" className="w-full" disabled={pending}>
-      {pending ? 'Submitting...' : 'Submit Report'}
-      <Send className="ml-2 h-4 w-4" />
+    <Button type="submit" className="w-full" disabled={isDisabled}>
+      {isUploading && <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Uploading Image...</>}
+      {pending && !isUploading && 'Submitting Report...'}
+      {!pending && !isUploading && <>Submit Report <Send className="ml-2 h-4 w-4" /></>}
     </Button>
   );
 }
 
 export function IssueReportForm() {
   const [state, formAction, isPending] = useActionState(submitIssue, { success: false, message: '', errors: {} });
+  
   const [preview, setPreview] = useState<string | null>(null);
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [address, setAddress] = useState('');
   const [lat, setLat] = useState('');
   const [lng, setLng] = useState('');
+  
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [dialogTitle, setDialogTitle] = useState('');
   const [dialogDescription, setDialogDescription] = useState('');
   const [isLocating, setIsLocating] = useState(false);
+  
   const formRef = useRef<HTMLFormElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleGeolocation = async () => {
+  const resetForm = () => {
+    formRef.current?.reset();
+    setPreview(null);
+    setPhotoUrl(null);
+    setAddress('');
+    setLat('');
+    setLng('');
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  }
+
+  const handleGeolocation = () => {
     if (navigator.geolocation) {
       setIsLocating(true);
       navigator.geolocation.getCurrentPosition(
@@ -84,7 +109,7 @@ export function IssueReportForm() {
         () => {
           setIsLocating(false);
           setDialogTitle('Geolocation Error');
-          setDialogDescription('Could not acquire your location. Please check browser permissions and try again. This feature works best on a secure (HTTPS) connection.');
+          setDialogDescription('Could not acquire your location. Please check browser permissions and try again.');
           setIsDialogOpen(true);
         },
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
@@ -95,6 +120,48 @@ export function IssueReportForm() {
       setIsDialogOpen(true);
     }
   };
+  
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+        setDialogTitle('Invalid File Type');
+        setDialogDescription('Please select an image file.');
+        setIsDialogOpen(true);
+        return;
+    }
+
+    setPreview(URL.createObjectURL(file));
+    setIsUploading(true);
+    setUploadProgress(0);
+
+    const storageRef = ref(storage, `issues/${Date.now()}-${file.name}`);
+    const uploadTask = uploadBytesResumable(storageRef, file);
+
+    uploadTask.on(
+        'state_changed',
+        (snapshot) => {
+            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            setUploadProgress(progress);
+        },
+        (error) => {
+            console.error('Upload failed:', error);
+            setIsUploading(false);
+            setDialogTitle('Upload Error');
+            setDialogDescription(`Failed to upload image: ${error.message}`);
+            setIsDialogOpen(true);
+            setPreview(null);
+        },
+        () => {
+            getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+                setPhotoUrl(downloadURL);
+                setIsUploading(false);
+            });
+        }
+    );
+  };
+
 
   useEffect(() => {
     if (isPending) return;
@@ -104,16 +171,9 @@ export function IssueReportForm() {
         setDialogTitle('Success!');
         setDialogDescription(state.message);
         setIsDialogOpen(true);
-        formRef.current?.reset();
-        setPreview(null);
-        setAddress('');
-        setLat('');
-        setLng('');
-        if (fileInputRef.current) {
-          fileInputRef.current.value = '';
-        }
-      } else if (!state.success && (state.message || Object.keys(state.errors ?? {}).length > 0)) {
-        setDialogTitle('Error');
+        resetForm();
+      } else if (!state.success) {
+        setDialogTitle('Submission Error');
         setDialogDescription(state.message || 'An unknown error occurred.');
         setIsDialogOpen(true);
       }
@@ -155,6 +215,7 @@ export function IssueReportForm() {
                 id="description"
                 name="description"
                 placeholder="Tell us more about the issue..."
+                required
             />
             {state?.errors?.description && <p className="text-sm font-medium text-destructive">{state.errors.description[0]}</p>}
         </div>
@@ -168,6 +229,7 @@ export function IssueReportForm() {
                     placeholder="Enter the address or use geolocation"
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
+                    required
                 />
                 <Button
                     type="button"
@@ -188,6 +250,7 @@ export function IssueReportForm() {
         </div>
         <input type="hidden" name="lat" value={lat} />
         <input type="hidden" name="lng" value={lng} />
+        <input type="hidden" name="photoUrl" value={photoUrl || ''} />
 
         <div className="space-y-2">
           <Label htmlFor="photo">Photo (Optional)</Label>
@@ -199,38 +262,35 @@ export function IssueReportForm() {
               accept="image/*"
               className="pl-10"
               ref={fileInputRef}
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) {
-                  const reader = new FileReader();
-                  reader.onloadend = () => {
-                    setPreview(reader.result as string);
-                  };
-                  reader.readAsDataURL(file);
-                } else {
-                  setPreview(null);
-                }
-              }}
+              onChange={handleFileChange}
+              disabled={isUploading}
             />
             <CameraIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
           </div>
-          {state?.errors?.photo && <p className="text-sm font-medium text-destructive">{state.errors.photo[0]}</p>}
+          {state?.errors?.photoUrl && <p className="text-sm font-medium text-destructive">{state.errors.photoUrl[0]}</p>}
         </div>
         
-        {preview && (
+        {isUploading && (
+            <div className="space-y-1">
+                <Label>Upload progress</Label>
+                <Progress value={uploadProgress} className="w-full" />
+            </div>
+        )}
+
+        {preview && !isUploading && (
           <div className="relative h-48 w-full">
             <Image
               src={preview}
               alt="Image preview"
               fill
-              objectFit="cover"
+              style={{ objectFit: 'cover' }}
               className="rounded-md"
               data-ai-hint="user uploaded image"
             />
           </div>
         )}
 
-        <SubmitButton />
+        <SubmitButton isUploading={isUploading} />
       </form>
 
       <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
