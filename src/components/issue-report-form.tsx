@@ -40,7 +40,7 @@ function SubmitButton() {
 }
 
 export function IssueReportForm() {
-  const [state, formAction] = useActionState(submitIssue, { success: false, message: '', errors: {} });
+  const [state, formAction, isPending] = useActionState(submitIssue, { success: false, message: '', errors: {} });
   const [preview, setPreview] = useState<string | null>(null);
   const [address, setAddress] = useState('');
   const [lat, setLat] = useState('');
@@ -88,6 +88,8 @@ export function IssueReportForm() {
   };
 
   useEffect(() => {
+    if (isPending) return;
+
     if (state?.message) {
       if (state.success) {
         setDialogTitle('Success!');
@@ -103,11 +105,11 @@ export function IssueReportForm() {
         }
       } else if (!state.success && (state.message || Object.keys(state.errors ?? {}).length > 0)) {
         setDialogTitle('Error');
-        setDialogDescription(state.message);
+        setDialogDescription(state.message || 'An unknown error occurred.');
         setIsDialogOpen(true);
       }
     }
-  }, [state]);
+  }, [state, isPending]);
 
   return (
     <>
