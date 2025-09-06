@@ -37,27 +37,6 @@ export interface IssueReportFirestore {
   createdAt: Timestamp;
 }
 
-export const getIssues = async (): Promise<IssueReport[]> => {
-  try {
-    if (!adminDb) throw new Error('Firestore not initialized');
-    const db = adminDb as any;
-    const issuesCollection = collection(db, 'issues');
-    const q = query(issuesCollection, orderBy('createdAt', 'desc'));
-    const issuesSnapshot = await getDocs(q);
-    const issuesList = issuesSnapshot.docs.map(doc => {
-      const data = doc.data() as IssueReportFirestore;
-      return {
-        id: doc.id,
-        ...data,
-        createdAt: data.createdAt.toDate(),
-      };
-    });
-    return issuesList;
-  } catch (error) {
-    console.error('Error fetching issues from Firestore: ', error);
-    return [];
-  }
-};
 
 export const addIssue = async (issue: Omit<IssueReport, 'id' | 'createdAt'>) => {
     if (!adminDb) throw new Error('Firestore not initialized');

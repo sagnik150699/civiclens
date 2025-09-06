@@ -8,9 +8,7 @@ try {
   if (!admin.apps.length) {
     admin.initializeApp({
       credential: admin.credential.applicationDefault(),
-      databaseURL: process.env.GCLOUD_PROJECT
-        ? `https://${process.env.GCLOUD_PROJECT}.firebaseio.com`
-        : undefined,
+      databaseURL: process.env.FIREBASE_DATABASE_URL,
       storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
     });
   }

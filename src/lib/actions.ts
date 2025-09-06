@@ -3,11 +3,13 @@
 
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import { addIssue, updateIssueStatus as dbUpdateIssueStatus, type IssueStatus } from '@/lib/data';
+import { addIssue, updateIssueStatus as dbUpdateIssueStatus, type IssueStatus, type IssueReportFirestore, type IssueReport } from '@/lib/data';
 import { admin } from '@/lib/firebase-admin';
 import { ISSUE_CATEGORIES, ISSUE_STATUSES } from './constants';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
+import { collection, getDocs, query, orderBy, Timestamp } from 'firebase/firestore';
+import { adminDb } from './firebase-admin';
 
 const issueSchema = z.object({
   description: z.string().min(10, 'Please provide a more detailed description.'),
@@ -136,3 +138,25 @@ export async function logout() {
   cookies().set('session', '', { expires: new Date(0) });
   redirect(`/login`);
 }
+
+export const getIssues = async (): Promise<IssueReport[]> => {
+    try {
+      if (!adminDb) throw new Error('Firestore not initialized');
+      const db = adminDb as any;
+      const issuesCollection = collection(db, 'issues');
+      const q = query(issuesCollection, orderBy('createdAt', 'desc'));
+      const issuesSnapshot = await getDocs(q);
+      const issuesList = issuesSnapshot.docs.map(doc => {
+        const data = doc.data() as IssueReportFirestore;
+        return {
+          id: doc.id,
+          ...data,
+          createdAt: data.createdAt.toDate(),
+        };
+      });
+      return issuesList;
+    } catch (error) {
+      console.error('Error fetching issues from Firestore: ', error);
+      return [];
+    }
+  };

@@ -39,11 +39,10 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import type { IssueReport, IssueStatus, IssuePriority } from '@/lib/data';
-import { getIssues } from '@/lib/data';
+import { getIssues, updateIssueStatus } from '@/lib/actions';
 import { ISSUE_CATEGORIES, ISSUE_PRIORITIES, ISSUE_STATUSES, ICONS } from '@/lib/constants';
 import { MoreHorizontal, MapPin } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-import { updateIssueStatus } from '@/lib/actions';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from './ui/skeleton';
 

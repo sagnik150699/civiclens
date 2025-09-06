@@ -1,5 +1,5 @@
 import { AdminDashboard } from '@/components/admin-dashboard';
-import { getIssues } from '@/lib/data';
+import { getIssues } from '@/lib/actions';
 
 export default async function AdminPage() {
   const issues = await getIssues();
