@@ -9,12 +9,14 @@ import { login } from '@/lib/actions';
 import { MountainIcon } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isAuthenticating, setIsAuthenticating] = useState(false);
     const { toast } = useToast();
+    const router = useRouter();
 
     const handleLogin = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -32,17 +34,16 @@ export default function LoginPage() {
 
         const result = await login(email, password);
 
-        // A successful login will redirect, so this code will only be reached on failure.
-        if (result && !result.success) {
+        if (result && result.success) {
+            router.push('/admin');
+        } else {
              toast({
                 title: 'Login Failed',
                 description: result.message || 'An unknown error occurred.',
                 variant: 'destructive',
             });
+            setIsAuthenticating(false);
         }
-        
-        // Always reset loading state after the attempt if it fails.
-        setIsAuthenticating(false);
     };
     
   return (

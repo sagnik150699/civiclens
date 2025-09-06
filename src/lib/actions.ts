@@ -58,7 +58,6 @@ export async function submitIssue(prevState: any, formData: FormData) {
     const buffer = Buffer.from(await photo.arrayBuffer());
     const photoDataUri = `data:${photo.type};base64,${buffer.toString('base64')}`;
     
-    // Upload image to Firebase Storage
     const storageRef = ref(storage, `issues/${Date.now()}-${photo.name}`);
     const uploadResult = await uploadBytes(storageRef, buffer, {
         contentType: photo.type,
@@ -123,7 +122,7 @@ export async function login(email: string, password: string): Promise<{ success:
     const sessionData = { user: 'admin', loggedIn: true };
     const expiresIn = 60 * 60 * 24 * 5 * 1000; // 5 days
     cookies().set('session', JSON.stringify(sessionData), { maxAge: expiresIn, httpOnly: true, secure: process.env.NODE_ENV === 'production' });
-    redirect('/admin');
+    return { success: true, message: 'Login successful.' };
   }
   
   return { success: false, message: 'Invalid username or password.' };
