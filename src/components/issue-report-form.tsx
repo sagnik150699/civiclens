@@ -84,7 +84,7 @@ export function IssueReportForm() {
         () => {
           setIsLocating(false);
           setDialogTitle('Geolocation Error');
-          setDialogDescription('Could not acquire your location. Please check browser permissions and try again.');
+          setDialogDescription('Could not acquire your location. Please check browser permissions and try again. This feature works best on a secure (HTTPS) connection.');
           setIsDialogOpen(true);
         },
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
