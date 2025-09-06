@@ -1,13 +1,24 @@
 
 import admin from 'firebase-admin';
 
-if (!admin.apps.length) {
+// Firebase Admin SDK requires valid credentials which may not always be
+// available in local/test environments. Attempt initialization but swallow any
+// errors so that importing this module does not crash the app.
+try {
+  if (!admin.apps.length) {
     admin.initializeApp({
-        credential: admin.credential.applicationDefault(),
-        databaseURL: `https://${process.env.GCLOUD_PROJECT}.firebaseio.com`,
-        storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
+      credential: admin.credential.applicationDefault(),
+      databaseURL: process.env.GCLOUD_PROJECT
+        ? `https://${process.env.GCLOUD_PROJECT}.firebaseio.com`
+        : undefined,
+      storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
     });
+  }
+} catch (error) {
+  console.error('Failed to initialize Firebase Admin SDK:', error);
 }
 
-export const adminDb = admin.firestore();
+// If initialization failed, admin.apps will be empty and firestore() will
+// throw. Guard against this and export `null` instead.
+export const adminDb = admin.apps.length ? admin.firestore() : null;
 export { admin };
