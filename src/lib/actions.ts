@@ -1,4 +1,3 @@
-
 'use server';
 
 import { z } from 'zod';
@@ -46,8 +45,7 @@ export async function submitIssue(prevState: any, formData: FormData | null) {
   try {
     const db = adminDb();
     const { description, category, address, lat, lng } = validatedFields.data;
-    // Handle empty string for photoUrl
-    const photoUrl = validatedFields.data.photoUrl ? validatedFields.data.photoUrl : null;
+    const photoUrl = validatedFields.data.photoUrl || null;
 
     const location = {
       lat: lat ? parseFloat(lat) : 34.0522 + (Math.random() - 0.5) * 0.1,

@@ -1,9 +1,9 @@
-
 'use client';
 
-import { useEffect, useState, useRef, useActionState } from 'react';
-import { useFormStatus } from 'react-dom';
+import { useEffect, useState, useRef } from 'react';
+import { useFormState, useFormStatus } from 'react-dom';
 import { submitIssue } from '@/lib/actions';
+import { useImageUpload } from '@/hooks/use-image-upload';
 
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -16,7 +16,6 @@ import {
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { Progress } from '@/components/ui/progress';
 import Image from 'next/image';
 import { CameraIcon, Send, LocateIcon, Loader2 } from 'lucide-react';
 import { ISSUE_CATEGORIES } from '@/lib/constants';
@@ -29,6 +28,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Progress } from './ui/progress';
 
 function SubmitButton({ isUploading }: { isUploading: boolean }) {
   const { pending } = useFormStatus();
@@ -36,7 +36,7 @@ function SubmitButton({ isUploading }: { isUploading: boolean }) {
 
   return (
     <Button type="submit" className="w-full" disabled={isDisabled}>
-      {isUploading && <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Uploading Image...</>}
+      {isUploading && <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Uploading...</>}
       {pending && !isUploading && 'Submitting Report...'}
       {!pending && !isUploading && <>Submit Report <Send className="ml-2 h-4 w-4" /></>}
     </Button>
@@ -44,14 +44,13 @@ function SubmitButton({ isUploading }: { isUploading: boolean }) {
 }
 
 export function IssueReportForm() {
-  const [state, formAction, isPending] = useActionState(submitIssue, { success: false, message: '', errors: {} });
+  const [state, formAction] = useFormState(submitIssue, { success: false, message: '', errors: {} });
+  const { start: startUpload, progress, status, url: photoUrl, lastError } = useImageUpload();
   
   const [address, setAddress] = useState('');
   const [lat, setLat] = useState('');
   const [lng, setLng] = useState('');
-  const [photoUrl, setPhotoUrl] = useState('');
-  
-  const [isUploading, setIsUploading] = useState(false);
+  const [hiddenPhotoUrl, setHiddenPhotoUrl] = useState('');
   
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [dialogTitle, setDialogTitle] = useState('');
@@ -66,8 +65,7 @@ export function IssueReportForm() {
     setAddress('');
     setLat('');
     setLng('');
-    setPhotoUrl('');
-    setIsUploading(false);
+    setHiddenPhotoUrl('');
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -84,11 +82,8 @@ export function IssueReportForm() {
           setLng(lngCoord.toString());
 
           try {
-            // Using a User-Agent is good practice and sometimes required by APIs like Nominatim
             const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latCoord}&lon=${lngCoord}`, {
-                headers: {
-                    'User-Agent': 'CivicLens/1.0'
-                }
+                headers: { 'User-Agent': 'CivicLens/1.0' }
             });
             const data = await response.json();
             if (data && data.display_name) {
@@ -109,7 +104,6 @@ export function IssueReportForm() {
           setDialogDescription('Could not acquire your location. Please check browser permissions and try again.');
           setIsDialogOpen(true);
         },
-        // More robust options for geolocation
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
       );
     } else {
@@ -123,39 +117,30 @@ export function IssueReportForm() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setIsUploading(true);
-    setPhotoUrl('');
-
-    const formData = new FormData();
-    formData.append('file', file);
-
     try {
-        const response = await fetch('/api/upload', {
-            method: 'POST',
-            body: formData,
-        });
-
-        const result = await response.json();
-
-        if (!response.ok) {
-            throw new Error(result.error || 'Upload failed');
-        }
-        
-        setPhotoUrl(result.url);
-
+        await startUpload(file);
     } catch (err: any) {
         setDialogTitle('Upload Failed');
         setDialogDescription(err.message || 'The image could not be uploaded. Please try a different file or check your connection.');
         setIsDialogOpen(true);
-    } finally {
-        setIsUploading(false);
     }
   };
 
+  useEffect(() => {
+    if (status === 'done' && photoUrl) {
+      setHiddenPhotoUrl(photoUrl);
+    }
+  }, [status, photoUrl]);
 
   useEffect(() => {
-    if (isPending) return;
+    if (status === 'error') {
+      setDialogTitle('Upload Failed');
+      setDialogDescription(lastError || 'An unknown error occurred during upload.');
+      setIsDialogOpen(true);
+    }
+  }, [status, lastError]);
 
+  useEffect(() => {
     if (state?.message) {
       if (state.success) {
         setDialogTitle('Success!');
@@ -168,7 +153,7 @@ export function IssueReportForm() {
         setIsDialogOpen(true);
       }
     }
-  }, [state, isPending]);
+  }, [state]);
 
 
   return (
@@ -241,7 +226,7 @@ export function IssueReportForm() {
         </div>
         <input type="hidden" name="lat" value={lat} />
         <input type="hidden" name="lng" value={lng} />
-        <input type="hidden" name="photoUrl" value={photoUrl || ''} />
+        <input type="hidden" name="photoUrl" value={hiddenPhotoUrl || ''} />
 
         <div className="space-y-2">
           <Label htmlFor="photo">Photo (Optional)</Label>
@@ -254,21 +239,21 @@ export function IssueReportForm() {
               className="pl-10"
               ref={fileInputRef}
               onChange={handleFileChange}
-              disabled={isUploading}
+              disabled={status === 'running'}
             />
             <CameraIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
           </div>
           {state?.errors?.photoUrl && <p className="text-sm font-medium text-destructive">{state.errors.photoUrl[0]}</p>}
         </div>
         
-        {isUploading && (
-            <div className="space-y-1">
-                <Label>Uploading image...</Label>
-                <Progress value={undefined} className="w-full" />
-            </div>
+        {status === 'running' && (
+          <div className="space-y-2">
+            <Label>Upload Progress: {progress}%</Label>
+            <Progress value={progress} />
+          </div>
         )}
 
-        {photoUrl && !isUploading && (
+        {status === 'done' && photoUrl && (
           <div className="relative h-48 w-full">
             <Image
               src={photoUrl}
@@ -281,7 +266,7 @@ export function IssueReportForm() {
           </div>
         )}
 
-        <SubmitButton isUploading={isUploading} />
+        <SubmitButton isUploading={status === 'running'} />
       </form>
 
       <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
