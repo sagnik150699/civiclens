@@ -1,8 +1,10 @@
 import { Lightbulb, SprayCan, Trash2, type LucideIcon, MapPin, X, Car, TreeDeciduous, Footprints, Signpost, Droplets } from 'lucide-react';
 import { PotholeIcon } from '@/components/icons/pothole-icon';
 
+const PotholeLucide = PotholeIcon as unknown as LucideIcon;
+
 export const ISSUE_CATEGORIES: { value: string; label: string; icon: LucideIcon }[] = [
-  { value: 'pothole', label: 'Pothole', icon: PotholeIcon },
+  { value: 'pothole', label: 'Pothole', icon: PotholeLucide },
   { value: 'streetlight_out', label: 'Streetlight Out', icon: Lightbulb },
   { value: 'trash_overflow', label: 'Trash Overflow', icon: Trash2 },
   { value: 'graffiti', label: 'Graffiti', icon: SprayCan },
@@ -17,7 +19,7 @@ export const ISSUE_STATUSES = ["Submitted", "Acknowledged", "In Progress", "Reso
 export const ISSUE_PRIORITIES = ["Low", "Medium", "High"] as const;
 
 export const ICONS = {
-    pothole: PotholeIcon,
+    pothole: PotholeLucide,
     streetlight_out: Lightbulb,
     trash_overflow: Trash2,
     graffiti: SprayCan,

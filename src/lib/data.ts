@@ -1,5 +1,5 @@
-import { adminDb } from './firebase-admin';
-import { collection, getDocs, addDoc, updateDoc, doc, query, orderBy, Timestamp } from 'firebase/firestore';
+import { adminDb, admin } from './firebase-admin';
+import type { Timestamp } from 'firebase-admin/firestore';
 import type { ISSUE_CATEGORIES, ISSUE_STATUSES, ISSUE_PRIORITIES } from './constants';
 
 export type IssueCategory = (typeof ISSUE_CATEGORIES)[number]['value'];
@@ -39,40 +39,47 @@ export interface IssueReportFirestore {
 
 export const getIssues = async (): Promise<IssueReport[]> => {
   try {
-    const issuesCollection = collection(adminDb, 'issues');
-    const q = query(issuesCollection, orderBy('createdAt', 'desc'));
-    const issuesSnapshot = await getDocs(q);
-    const issuesList = issuesSnapshot.docs.map(doc => {
+    if (!adminDb) throw new Error('Firestore not initialized');
+    const snapshot = await adminDb
+      .collection('issues')
+      .orderBy('createdAt', 'desc')
+      .get();
+    const issuesList = snapshot.docs.map((doc) => {
       const data = doc.data() as IssueReportFirestore;
       return {
         id: doc.id,
         ...data,
         createdAt: data.createdAt.toDate(),
-      }
+      };
     });
     return issuesList;
   } catch (error) {
-    console.error("Error fetching issues from Firestore: ", error);
+    console.error('Error fetching issues from Firestore: ', error);
     return [];
   }
 };
 
 export const addIssue = async (issue: Omit<IssueReport, 'id' | 'createdAt'>) => {
-    const newIssue = {
-        ...issue,
-        createdAt: Timestamp.now(),
-    };
-    const docRef = await addDoc(collection(adminDb, 'issues'), newIssue);
-    return { ...newIssue, id: docRef.id, createdAt: newIssue.createdAt.toDate() };
-}
+  if (!adminDb) throw new Error('Firestore not initialized');
+  const newIssue = {
+    ...issue,
+    createdAt: admin.firestore.Timestamp.now(),
+  };
+  const docRef = await adminDb.collection('issues').add(newIssue);
+  return { ...newIssue, id: docRef.id, createdAt: newIssue.createdAt.toDate() };
+};
 
 export const updateIssueStatus = async (id: string, status: IssueStatus): Promise<boolean> => {
-    const issueRef = doc(adminDb, 'issues', id);
-    try {
-        await updateDoc(issueRef, { status });
-        return true;
-    } catch (error) {
-        console.error("Error updating status in Firestore: ", error);
-        return false;
-    }
-}
+  if (!adminDb) {
+    console.error('Firestore not initialized');
+    return false;
+  }
+  const issueRef = adminDb.collection('issues').doc(id);
+  try {
+    await issueRef.update({ status });
+    return true;
+  } catch (error) {
+    console.error('Error updating status in Firestore: ', error);
+    return false;
+  }
+};

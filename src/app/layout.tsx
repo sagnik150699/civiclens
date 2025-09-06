@@ -11,12 +11,12 @@ export const metadata: Metadata = {
   description: 'Report civic issues and improve your community.',
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const sessionCookie = cookieStore.get('session');
   let isLoggedIn = false;
   if (sessionCookie?.value) {

@@ -4,7 +4,7 @@
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { addIssue, updateIssueStatus as dbUpdateIssueStatus, type IssueStatus } from '@/lib/data';
-import { admin } from '@/lib/firebase-admin';
+import { admin, adminDb } from '@/lib/firebase-admin';
 import { ISSUE_CATEGORIES, ISSUE_STATUSES } from './constants';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
@@ -47,8 +47,12 @@ export async function submitIssue(prevState: any, formData: FormData | null) {
   try {
     const { description, category, photo, address, lat, lng } = validatedFields.data;
 
+    if (!adminDb) {
+      throw new Error('Firebase not configured');
+    }
+
     const buffer = Buffer.from(await photo.arrayBuffer());
-    
+
     const bucket = admin.storage().bucket();
     const fileName = `issues/${Date.now()}-${photo.name}`;
     const file = bucket.file(fileName);
@@ -121,7 +125,12 @@ export async function login(prevState: any, formData: FormData) {
   if (email === 'admin' && password === 'admin') {
     const sessionData = { user: 'admin', loggedIn: true };
     const expiresIn = 60 * 60 * 24 * 5 * 1000; // 5 days
-    cookies().set('session', JSON.stringify(sessionData), { maxAge: expiresIn, httpOnly: true, secure: process.env.NODE_ENV === 'production' });
+    const cookieStore = await cookies();
+    cookieStore.set('session', JSON.stringify(sessionData), {
+      maxAge: expiresIn,
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+    });
     redirect('/admin');
   } else {
       return { success: false, message: 'Invalid username or password.' };
@@ -129,6 +138,7 @@ export async function login(prevState: any, formData: FormData) {
 }
 
 export async function logout() {
-  cookies().set('session', '', { expires: new Date(0) });
+  const cookieStore = await cookies();
+  cookieStore.set('session', '', { expires: new Date(0) });
   redirect(`/login`);
 }

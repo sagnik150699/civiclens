@@ -61,7 +61,9 @@ export function IssueReportForm() {
           setLng(lngCoord.toString());
 
           try {
-            const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latCoord}&lon=${lngCoord}`);
+            const response = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latCoord}&lon=${lngCoord}`
+            );
             const data = await response.json();
             if (data && data.display_name) {
               setAddress(data.display_name);
