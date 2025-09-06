@@ -1,4 +1,4 @@
-import { db } from './firebase';
+import { adminDb } from './firebase-admin';
 import { collection, getDocs, addDoc, updateDoc, doc, query, orderBy, Timestamp } from 'firebase/firestore';
 import type { ISSUE_CATEGORIES, ISSUE_STATUSES, ISSUE_PRIORITIES } from './constants';
 
@@ -39,7 +39,7 @@ export interface IssueReportFirestore {
 
 export const getIssues = async (): Promise<IssueReport[]> => {
   try {
-    const issuesCollection = collection(db, 'issues');
+    const issuesCollection = collection(adminDb, 'issues');
     const q = query(issuesCollection, orderBy('createdAt', 'desc'));
     const issuesSnapshot = await getDocs(q);
     const issuesList = issuesSnapshot.docs.map(doc => {
@@ -62,12 +62,12 @@ export const addIssue = async (issue: Omit<IssueReport, 'id' | 'createdAt'>) => 
         ...issue,
         createdAt: Timestamp.now(),
     };
-    const docRef = await addDoc(collection(db, 'issues'), newIssue);
+    const docRef = await addDoc(collection(adminDb, 'issues'), newIssue);
     return { ...newIssue, id: docRef.id, createdAt: newIssue.createdAt.toDate() };
 }
 
 export const updateIssueStatus = async (id: string, status: IssueStatus): Promise<boolean> => {
-    const issueRef = doc(db, 'issues', id);
+    const issueRef = doc(adminDb, 'issues', id);
     try {
         await updateDoc(issueRef, { status });
         return true;

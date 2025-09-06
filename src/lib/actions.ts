@@ -1,12 +1,11 @@
-
 'use server';
 
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { prioritizeIssueReport } from '@/ai/flows/prioritize-issue-reports';
 import { addIssue, updateIssueStatus as dbUpdateIssueStatus, type IssuePriority, type IssueStatus } from '@/lib/data';
-import { storage } from '@/lib/firebase';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { adminDb } from '@/lib/firebase-admin';
+import { getStorage } from 'firebase-admin/storage';
 import { ISSUE_CATEGORIES, ISSUE_STATUSES } from './constants';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
@@ -52,11 +51,20 @@ export async function submitIssue(prevState: any, formData: FormData) {
     const buffer = Buffer.from(await photo.arrayBuffer());
     const photoDataUri = `data:${photo.type};base64,${buffer.toString('base64')}`;
     
-    const storageRef = ref(storage, `issues/${Date.now()}-${photo.name}`);
-    const uploadResult = await uploadBytes(storageRef, buffer, {
-        contentType: photo.type,
+    // Use Admin SDK for server-side storage operations
+    const bucket = getStorage().bucket(process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET);
+    const fileName = `issues/${Date.now()}-${photo.name}`;
+    const file = bucket.file(fileName);
+
+    await file.save(buffer, {
+        metadata: {
+            contentType: photo.type,
+        },
     });
-    const photoUrl = await getDownloadURL(uploadResult.ref);
+
+    // Make file public to get a download URL
+    await file.makePublic();
+    const photoUrl = file.publicUrl();
 
     const aiResult = await prioritizeIssueReport({ description, photoDataUri });
 
