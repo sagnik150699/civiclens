@@ -8,56 +8,7 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { collection, getDocs, query, orderBy, Timestamp, addDoc, doc, updateDoc } from 'firebase/firestore';
 import type { IssueReport, IssueStatus } from '@/lib/data';
-import admin from 'firebase-admin';
-
-// --- Firebase Admin Initialization ---
-const initializeFirebaseAdmin = () => {
-  if (admin.apps.length > 0) {
-    return;
-  }
-
-  const serviceAccountKeyBase64 = process.env.FIREBASE_SERVICE_ACCOUNT_KEY_BASE64;
-  if (!serviceAccountKeyBase64) {
-    console.error("FIREBASE_SERVICE_ACCOUNT_KEY_BASE64 env var is not set.");
-    return;
-  }
-
-  try {
-    const serviceAccountJson = Buffer.from(serviceAccountKeyBase64, 'base64').toString('utf-8');
-    const serviceAccount = JSON.parse(serviceAccountJson);
-
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount),
-    });
-  } catch (error) {
-    console.error("Failed to initialize Firebase Admin SDK:", error);
-    // Let the original error bubble up for clearer debugging
-    throw error;
-  }
-};
-
-const getAdminDb = () => {
-  if (admin.apps.length === 0) {
-    initializeFirebaseAdmin();
-  }
-  // Check again in case initialization failed
-  if (admin.apps.length === 0) {
-    return null;
-  }
-  return admin.firestore();
-};
-
-const getAdminStorage = () => {
-    if (admin.apps.length === 0) {
-        initializeFirebaseAdmin();
-    }
-    // Check again in case initialization failed
-    if (admin.apps.length === 0) {
-        return null;
-    }
-    return admin.storage();
-}
-// --- End of Firebase Admin Initialization ---
+import { getAdminDb, getAdminStorage } from '@/lib/firebase-admin';
 
 
 const issueSchema = z.object({
@@ -76,11 +27,6 @@ export async function submitIssue(prevState: any, formData: FormData | null) {
     return { success: false, message: '', errors: {} };
   }
   
-  const adminDb = getAdminDb();
-  if (!adminDb) {
-    return { success: false, message: 'Server configuration error: Database not available.', errors: {} };
-  }
-
   const validatedFields = issueSchema.safeParse({
     description: formData.get('description'),
     category: formData.get('category'),
@@ -99,17 +45,19 @@ export async function submitIssue(prevState: any, formData: FormData | null) {
   }
   
   try {
+    const adminDb = getAdminDb();
     const { description, category, photo, address, lat, lng } = validatedFields.data;
     let photoUrl = null;
 
     if (photo && photo.size > 0) {
       const storage = getAdminStorage();
-      if (!storage) {
-        throw new Error('Server configuration error: Storage not available.');
-      }
       
       const buffer = Buffer.from(await photo.arrayBuffer());
-      const bucket = storage.bucket();
+      const bucketName = process.env.FIREBASE_STORAGE_BUCKET;
+      if (!bucketName) {
+        throw new Error('FIREBASE_STORAGE_BUCKET environment variable not set.');
+      }
+      const bucket = storage.bucket(bucketName);
       const fileName = `issues/${Date.now()}-${photo.name}`;
       const file = bucket.file(fileName);
 
@@ -159,10 +107,6 @@ const updateStatusSchema = z.object({
 })
 
 export async function updateIssueStatus(id: string, status: IssueStatus) {
-    const adminDb = getAdminDb();
-    if (!adminDb) {
-      return { success: false, message: 'Server configuration error: Database not available.' };
-    }
     const validated = updateStatusSchema.safeParse({id, status});
 
     if (!validated.success) {
@@ -170,6 +114,7 @@ export async function updateIssueStatus(id: string, status: IssueStatus) {
     }
 
     try {
+        const adminDb = getAdminDb();
         const issueRef = doc(adminDb, 'issues', id);
         await updateDoc(issueRef, { status });
         
@@ -203,12 +148,8 @@ export async function logout() {
 }
 
 export const getIssues = async (): Promise<IssueReport[]> => {
-    const adminDb = getAdminDb();
-    if (!adminDb) {
-      console.error('Database not available, cannot fetch issues.');
-      return [];
-    }
     try {
+      const adminDb = getAdminDb();
       const issuesCollection = collection(adminDb, 'issues');
       const q = query(issuesCollection, orderBy('createdAt', 'desc'));
       const issuesSnapshot = await getDocs(q);
