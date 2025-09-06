@@ -6,51 +6,42 @@ import { revalidatePath } from 'next/cache';
 import { ISSUE_CATEGORIES, ISSUE_STATUSES } from './constants';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { collection, getDocs, query, orderBy, Timestamp, addDoc, doc, updateDoc } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, Timestamp, addDoc, doc, updateDoc, getFirestore } from 'firebase/firestore';
 import type { IssueReport, IssueStatus } from '@/lib/data';
 import admin from 'firebase-admin';
 
-// --- Start of Firebase Admin Initialization ---
-// This function ensures Firebase Admin is initialized, but only once.
+// --- Firebase Admin Initialization ---
 const initializeFirebaseAdmin = () => {
-  if (!admin.apps.length) {
-    try {
-      const serviceAccountKeyBase64 = process.env.FIREBASE_SERVICE_ACCOUNT_KEY_BASE64;
-      if (!serviceAccountKeyBase64) {
-        throw new Error('FIREBASE_SERVICE_ACCOUNT_KEY_BASE64 environment variable is not set.');
-      }
-      
-      const serviceAccount = JSON.parse(
-        Buffer.from(serviceAccountKeyBase64, 'base64').toString('utf-8')
-      );
-
-      admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount),
-        storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
-      });
-    } catch (error) {
-      console.error('Failed to initialize Firebase Admin SDK:', error);
-      // We're not re-throwing the error to avoid crashing the server on every request.
-      // Functions that use adminDb will handle the uninitialized state.
-    }
+  if (admin.apps.length > 0) {
+    return;
   }
+
+  const serviceAccountKeyBase64 = process.env.FIREBASE_SERVICE_ACCOUNT_KEY_BASE64;
+  if (!serviceAccountKeyBase64) {
+    throw new Error('FIREBASE_SERVICE_ACCOUNT_KEY_BASE64 environment variable is not set. Please check your .env file.');
+  }
+  
+  const serviceAccountJson = Buffer.from(serviceAccountKeyBase64, 'base64').toString('utf-8');
+  // The line below is the fix: It escapes the newline characters in the private key.
+  const escapedServiceAccountJson = serviceAccountJson.replace(/\\n/g, '\\\\n');
+  const serviceAccount = JSON.parse(escapedServiceAccountJson);
+
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount),
+    storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
+  });
 };
 
-// Call the initialization function
-initializeFirebaseAdmin();
-
-// This getter function ensures we have the latest instance of Firestore.
 const getAdminDb = () => {
-  if (!admin.apps.length) {
-    // This can happen if initialization failed.
-    return null;
+  if (admin.apps.length === 0) {
+    initializeFirebaseAdmin();
   }
   return admin.firestore();
 };
 
 const getAdminStorage = () => {
-    if (!admin.apps.length) {
-        return null;
+    if (admin.apps.length === 0) {
+        initializeFirebaseAdmin();
     }
     return admin.storage();
 }
