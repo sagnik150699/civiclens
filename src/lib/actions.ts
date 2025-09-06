@@ -15,7 +15,7 @@ const issueSchema = z.object({
   category: z.enum(ISSUE_CATEGORIES.map(c => c.value) as [string, ...string[]], {
     errorMap: () => ({ message: "Please select a category." }),
   }),
-  photoUrl: z.string().url().optional().nullable(),
+  photoUrl: z.string().url('Invalid URL format.').optional().or(z.literal('')),
   address: z.string().min(1, 'Address is required.'),
   lat: z.string().optional(),
   lng: z.string().optional(),
@@ -45,7 +45,8 @@ export async function submitIssue(prevState: any, formData: FormData | null) {
   
   try {
     const db = adminDb();
-    const { description, category, photoUrl, address, lat, lng } = validatedFields.data;
+    const { description, category, address, lat, lng } = validatedFields.data;
+    const photoUrl = validatedFields.data.photoUrl || null;
 
     const location = {
       lat: lat ? parseFloat(lat) : 34.0522 + (Math.random() - 0.5) * 0.1,
