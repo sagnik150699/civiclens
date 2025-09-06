@@ -47,8 +47,12 @@ export async function submitIssue(prevState: any, formData: FormData | null) {
   try {
     const { description, category, photo, address, lat, lng } = validatedFields.data;
 
+    if (!admin.apps.length) {
+      throw new Error('Firebase not configured');
+    }
+
     const buffer = Buffer.from(await photo.arrayBuffer());
-    
+
     const bucket = admin.storage().bucket();
     const fileName = `issues/${Date.now()}-${photo.name}`;
     const file = bucket.file(fileName);
