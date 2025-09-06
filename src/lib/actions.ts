@@ -3,7 +3,7 @@
 
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import { addIssue, updateIssueStatus as dbUpdateIssueStatus, type IssuePriority, type IssueStatus } from '@/lib/data';
+import { addIssue, updateIssueStatus as dbUpdateIssueStatus, type IssueStatus } from '@/lib/data';
 import { admin } from '@/lib/firebase-admin';
 import { ISSUE_CATEGORIES, ISSUE_STATUSES } from './constants';
 import { cookies } from 'next/headers';
@@ -73,8 +73,8 @@ export async function submitIssue(prevState: any, formData: FormData | null) {
       location,
       photoUrl,
       status: 'Submitted',
-      priority: 'Medium',
-      reason: 'Awaiting review.',
+      priority: 'Medium', // Default priority
+      reason: 'Awaiting review.', // Default reason
       address: address,
     });
 
