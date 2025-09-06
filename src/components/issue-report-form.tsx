@@ -56,6 +56,7 @@ export function IssueReportForm() {
   
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadStatus, setUploadStatus] = useState<'idle' | 'running' | 'done' | 'error'>('idle');
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [dialogTitle, setDialogTitle] = useState('');
@@ -65,11 +66,13 @@ export function IssueReportForm() {
   const formRef = useRef<HTMLFormElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const uploadTaskRef = useRef<UploadTask | null>(null);
+  const timeoutRef = useRef<number | null>(null);
 
-  // Cleanup upload task on component unmount
+  // Cleanup upload task and timeout on component unmount
   useEffect(() => {
     return () => {
       uploadTaskRef.current?.cancel();
+      if (timeoutRef.current) window.clearTimeout(timeoutRef.current);
     };
   }, []);
 
@@ -83,6 +86,7 @@ export function IssueReportForm() {
     setLng('');
     setUploadProgress(0);
     setIsUploading(false);
+    setUploadStatus('idle');
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -154,18 +158,21 @@ export function IssueReportForm() {
     setIsUploading(true);
     setUploadProgress(0);
     setPhotoUrl(null);
+    setUploadStatus('running');
 
     const storageRef = ref(storage, `issues/${Date.now()}-${file.name}`);
     const uploadTask = uploadBytesResumable(storageRef, file);
     uploadTaskRef.current = uploadTask;
 
-    const timeout = setTimeout(() => {
-        uploadTask.cancel();
-        setDialogTitle('Upload Timed Out');
-        setDialogDescription('The upload took too long and was cancelled. Please check your network connection and try again.');
-        setIsDialogOpen(true);
-        setIsUploading(false);
-    }, 30000); // 30 second timeout
+    // Safety timeout
+    let lastPct = 0;
+    timeoutRef.current = window.setInterval(() => {
+        if (uploadProgress === lastPct) {
+            console.warn('Upload appears stuck; canceling task');
+            uploadTask.cancel();
+        }
+        lastPct = uploadProgress;
+    }, 10000);
 
     uploadTask.on(
         'state_changed',
@@ -174,19 +181,21 @@ export function IssueReportForm() {
             setUploadProgress(progress);
         },
         (error) => {
-            clearTimeout(timeout);
+            if (timeoutRef.current) window.clearTimeout(timeoutRef.current);
             console.error('Upload failed:', error);
             setIsUploading(false);
+            setUploadStatus('error');
             setDialogTitle('Upload Error');
             setDialogDescription(`Failed to upload image: ${error.message}`);
             setIsDialogOpen(true);
             setPreview(null);
         },
         () => {
-            clearTimeout(timeout);
+            if (timeoutRef.current) window.clearTimeout(timeoutRef.current);
             getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
                 setPhotoUrl(downloadURL);
                 setIsUploading(false);
+                setUploadStatus('done');
             });
         }
     );
@@ -302,7 +311,7 @@ export function IssueReportForm() {
         
         {isUploading && (
             <div className="space-y-1">
-                <Label>Upload progress</Label>
+                <Label>Upload progress: {Math.round(uploadProgress)}% ({uploadStatus})</Label>
                 <Progress value={uploadProgress} className="w-full" />
             </div>
         )}
