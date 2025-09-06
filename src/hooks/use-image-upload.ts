@@ -10,17 +10,20 @@ export function useImageUpload() {
   const [url, setUrl] = useState('');
   const taskRef = useRef<UploadTask | null>(null);
   const lastBytes = useRef(0);
-  const timer = useRef<number | null>(null);
+  const watchdog = useRef<number | null>(null);
 
-  useEffect(() => () => { if (taskRef.current) taskRef.current.cancel(); if (timer.current) clearInterval(timer.current); }, []);
+  useEffect(() => () => {
+    taskRef.current?.cancel();
+    if (watchdog.current) clearInterval(watchdog.current);
+  }, []);
 
   async function start(file: File) {
     if (!file.type.startsWith('image/')) throw new Error('Only images allowed');
     if (file.size > 10 * 1024 * 1024) throw new Error('Max 10MB');
     
     const path = `issues/${crypto.randomUUID()}_${file.name}`;
-    const r = ref(storage, path);
-    const task = uploadBytesResumable(r, file, { contentType: file.type, cacheControl: 'public,max-age=31536000,immutable' });
+    const storageRef = ref(storage, path);
+    const task = uploadBytesResumable(storageRef, file, { contentType: file.type, cacheControl: 'public,max-age=31536000,immutable' });
     
     taskRef.current = task; 
     setProgress(0); 
@@ -28,7 +31,7 @@ export function useImageUpload() {
     setStatus('running');
 
     // Watchdog: if bytes don’t increase for 15s, cancel the task
-    timer.current = window.setInterval(() => {
+    watchdog.current = window.setInterval(() => {
       const b = task.snapshot.bytesTransferred;
       if (b === lastBytes.current && task.snapshot.state === 'running') { 
         console.warn('Upload stuck; canceling'); 
@@ -40,15 +43,15 @@ export function useImageUpload() {
     task.on('state_changed', (snap) => {
       const pct = Math.round((snap.bytesTransferred / snap.totalBytes) * 100);
       setProgress(pct);
-      console.log('storage state:', snap.state, snap.bytesTransferred, '/', snap.totalBytes);
     }, (err: any) => {
-      if (timer.current) clearInterval(timer.current);
+      if (watchdog.current) clearInterval(watchdog.current);
       console.error('Storage error:', { code: err?.code, message: err?.message });
       setStatus('error');
     }, async () => {
-      if (timer.current) clearInterval(timer.current);
+      if (watchdog.current) clearInterval(watchdog.current);
       const downloadURL = await getDownloadURL(task.snapshot.ref);
-      setUrl(downloadURL); setStatus('done');
+      setUrl(downloadURL); 
+      setStatus('done');
     });
   }
 
