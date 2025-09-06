@@ -72,7 +72,7 @@ export function IssueReportForm() {
   useEffect(() => {
     return () => {
       uploadTaskRef.current?.cancel();
-      if (timeoutRef.current) window.clearTimeout(timeoutRef.current);
+      if (timeoutRef.current) window.clearInterval(timeoutRef.current);
     };
   }, []);
 
@@ -167,7 +167,7 @@ export function IssueReportForm() {
     // Safety timeout
     let lastPct = 0;
     timeoutRef.current = window.setInterval(() => {
-        if (uploadProgress === lastPct) {
+        if (uploadProgress > 0 && uploadProgress === lastPct) {
             console.warn('Upload appears stuck; canceling task');
             uploadTask.cancel();
         }
@@ -181,7 +181,7 @@ export function IssueReportForm() {
             setUploadProgress(progress);
         },
         (error) => {
-            if (timeoutRef.current) window.clearTimeout(timeoutRef.current);
+            if (timeoutRef.current) window.clearInterval(timeoutRef.current);
             console.error('Upload failed:', error);
             setIsUploading(false);
             setUploadStatus('error');
@@ -191,7 +191,7 @@ export function IssueReportForm() {
             setPreview(null);
         },
         () => {
-            if (timeoutRef.current) window.clearTimeout(timeoutRef.current);
+            if (timeoutRef.current) window.clearInterval(timeoutRef.current);
             getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
                 setPhotoUrl(downloadURL);
                 setIsUploading(false);
