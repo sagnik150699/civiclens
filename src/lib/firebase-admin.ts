@@ -1,8 +1,9 @@
-// src/lib/firebase-admin.ts
-import { getApps, initializeApp, cert, App } from 'firebase-admin/app';
+'use server';
+
+import { initializeApp, getApps, App, cert, applicationDefault } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
-import admin from 'firebase-admin';
+import { getAuth } from 'firebase-admin/auth';
 
 const {
   FIREBASE_PROJECT_ID,
@@ -11,20 +12,13 @@ const {
   GOOGLE_APPLICATION_CREDENTIALS,
 } = process.env;
 
-function getAdminApp(): App {
-  if (getApps().length > 0) {
-    return getApps()[0];
+function buildCredential() {
+  // Use ADC if explicitly configured or available in environment
+  if (GOOGLE_APPLICATION_CREDENTIALS && GOOGLE_APPLICATION_CREDENTIALS.trim() !== '') {
+    return applicationDefault();
   }
 
-  const privateKey = FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
-
-  if (GOOGLE_APPLICATION_CREDENTIALS) {
-    // For deployed environments (like Firebase App Hosting or Cloud Run),
-    // rely on Application Default Credentials.
-    return initializeApp();
-  }
-
-  if (!FIREBASE_PROJECT_ID || !FIREBASE_CLIENT_EMAIL || !privateKey) {
+  if (!FIREBASE_PROJECT_ID || !FIREBASE_CLIENT_EMAIL || !FIREBASE_PRIVATE_KEY) {
     const missing = [
       !FIREBASE_PROJECT_ID && 'FIREBASE_PROJECT_ID',
       !FIREBASE_CLIENT_EMAIL && 'FIREBASE_CLIENT_EMAIL',
@@ -32,30 +26,39 @@ function getAdminApp(): App {
     ]
       .filter(Boolean)
       .join(', ');
-
     throw new Error(
-      `Firebase Admin credentials missing. Please set the following environment variables: ${missing}`
+      `Firebase Admin credentials missing: ${missing}. ` +
+      `Set GOOGLE_APPLICATION_CREDENTIALS for ADC or provide the three explicit env vars.`
     );
   }
 
-  return initializeApp({
-    credential: cert({
-      projectId: FIREBASE_PROJECT_ID,
-      clientEmail: FIREBASE_CLIENT_EMAIL,
-      privateKey: privateKey,
-    }),
+  const privateKey = FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n');
+
+  return cert({
+    projectId: FIREBASE_PROJECT_ID,
+    clientEmail: FIREBASE_CLIENT_EMAIL,
+    privateKey,
   });
 }
 
+function getAdminApp(): App {
+  const apps = getApps();
+  if (apps.length) {
+    return apps[0];
+  }
+  return initializeApp({ credential: buildCredential() });
+}
+
 function getAdminDb() {
-  const app = getAdminApp();
-  return getFirestore(app);
+  return getFirestore(getAdminApp());
 }
 
 function getAdminStorage() {
-  const app = getAdminApp();
-  return getStorage(app);
+  return getStorage(getAdminApp());
 }
 
+function getAdminAuth() {
+  return getAuth(getAdminApp());
+}
 
-export { getAdminApp, getAdminDb, getAdminStorage };
+export { getAdminApp, getAdminDb, getAdminStorage, getAdminAuth };

@@ -23,26 +23,26 @@ const issueSchema = z.object({
 });
 
 export async function submitIssue(prevState: any, formData: FormData | null) {
-  if (!formData) {
-    return { success: false, message: '', errors: {} };
-  }
-  
-  const validatedFields = issueSchema.safeParse({
-    description: formData.get('description'),
-    category: formData.get('category'),
-    photo: formData.get('photo'),
-    address: formData.get('address'),
-    lat: formData.get('lat'),
-    lng: formData.get('lng'),
-  });
+    if (!formData) {
+        return { success: false, message: '', errors: {} };
+    }
+    
+    const validatedFields = issueSchema.safeParse({
+        description: formData.get('description'),
+        category: formData.get('category'),
+        photo: formData.get('photo'),
+        address: formData.get('address'),
+        lat: formData.get('lat'),
+        lng: formData.get('lng'),
+    });
 
-  if (!validatedFields.success) {
-    return {
-      success: false,
-      message: "Validation failed. Please check your inputs.",
-      errors: validatedFields.error.flatten().fieldErrors,
-    };
-  }
+    if (!validatedFields.success) {
+        return {
+        success: false,
+        message: "Validation failed. Please check your inputs.",
+        errors: validatedFields.error.flatten().fieldErrors,
+        };
+    }
   
   try {
     const adminDb = getAdminDb();
