@@ -3,12 +3,58 @@
 
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import { admin, adminDb } from '@/lib/firebase-admin';
 import { ISSUE_CATEGORIES, ISSUE_STATUSES } from './constants';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { collection, getDocs, query, orderBy, Timestamp, addDoc, doc, updateDoc } from 'firebase/firestore';
 import type { IssueReport, IssueStatus } from '@/lib/data';
+import admin from 'firebase-admin';
+
+// --- Start of Firebase Admin Initialization ---
+// This function ensures Firebase Admin is initialized, but only once.
+const initializeFirebaseAdmin = () => {
+  if (!admin.apps.length) {
+    try {
+      const serviceAccountKeyBase64 = process.env.FIREBASE_SERVICE_ACCOUNT_KEY_BASE64;
+      if (!serviceAccountKeyBase64) {
+        throw new Error('FIREBASE_SERVICE_ACCOUNT_KEY_BASE64 environment variable is not set.');
+      }
+      
+      const serviceAccount = JSON.parse(
+        Buffer.from(serviceAccountKeyBase64, 'base64').toString('utf-8')
+      );
+
+      admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount),
+        storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
+      });
+    } catch (error) {
+      console.error('Failed to initialize Firebase Admin SDK:', error);
+      // We're not re-throwing the error to avoid crashing the server on every request.
+      // Functions that use adminDb will handle the uninitialized state.
+    }
+  }
+};
+
+// Call the initialization function
+initializeFirebaseAdmin();
+
+// This getter function ensures we have the latest instance of Firestore.
+const getAdminDb = () => {
+  if (!admin.apps.length) {
+    // This can happen if initialization failed.
+    return null;
+  }
+  return admin.firestore();
+};
+
+const getAdminStorage = () => {
+    if (!admin.apps.length) {
+        return null;
+    }
+    return admin.storage();
+}
+// --- End of Firebase Admin Initialization ---
 
 
 const issueSchema = z.object({
@@ -25,6 +71,11 @@ const issueSchema = z.object({
 export async function submitIssue(prevState: any, formData: FormData | null) {
   if (!formData) {
     return { success: false, message: '', errors: {} };
+  }
+  
+  const adminDb = getAdminDb();
+  if (!adminDb) {
+    return { success: false, message: 'Server configuration error: Database not available.', errors: {} };
   }
 
   const validatedFields = issueSchema.safeParse({
@@ -49,12 +100,13 @@ export async function submitIssue(prevState: any, formData: FormData | null) {
     let photoUrl = null;
 
     if (photo && photo.size > 0) {
-      if (!admin.apps.length) {
-        throw new Error('Firebase Admin SDK not configured for storage.');
+      const storage = getAdminStorage();
+      if (!storage) {
+        throw new Error('Server configuration error: Storage not available.');
       }
-
+      
       const buffer = Buffer.from(await photo.arrayBuffer());
-      const bucket = admin.storage().bucket();
+      const bucket = storage.bucket();
       const fileName = `issues/${Date.now()}-${photo.name}`;
       const file = bucket.file(fileName);
 
@@ -68,16 +120,10 @@ export async function submitIssue(prevState: any, formData: FormData | null) {
       photoUrl = file.publicUrl();
     }
 
-
     const location = {
       lat: lat ? parseFloat(lat) : 34.0522 + (Math.random() - 0.5) * 0.1,
       lng: lng ? parseFloat(lng) : -118.2437 + (Math.random() - 0.5) * 0.1,
     };
-
-    if (!adminDb) {
-      throw new Error('Firestore is not initialized. Check your server environment configuration.');
-    }
-    const db = adminDb;
 
     const newIssue = {
         description,
@@ -91,7 +137,7 @@ export async function submitIssue(prevState: any, formData: FormData | null) {
         createdAt: Timestamp.now(),
     };
 
-    await addDoc(collection(db, 'issues'), newIssue);
+    await addDoc(collection(adminDb, 'issues'), newIssue);
 
     revalidatePath('/');
     revalidatePath('/admin');
@@ -110,6 +156,10 @@ const updateStatusSchema = z.object({
 })
 
 export async function updateIssueStatus(id: string, status: IssueStatus) {
+    const adminDb = getAdminDb();
+    if (!adminDb) {
+      return { success: false, message: 'Server configuration error: Database not available.' };
+    }
     const validated = updateStatusSchema.safeParse({id, status});
 
     if (!validated.success) {
@@ -117,11 +167,7 @@ export async function updateIssueStatus(id: string, status: IssueStatus) {
     }
 
     try {
-        if (!adminDb) {
-            throw new Error('Firestore is not initialized. Check your server environment configuration.');
-        }
-        const db = adminDb;
-        const issueRef = doc(db, 'issues', id);
+        const issueRef = doc(adminDb, 'issues', id);
         await updateDoc(issueRef, { status });
         
         revalidatePath('/admin');
@@ -154,13 +200,13 @@ export async function logout() {
 }
 
 export const getIssues = async (): Promise<IssueReport[]> => {
+    const adminDb = getAdminDb();
+    if (!adminDb) {
+      console.error('Database not available, cannot fetch issues.');
+      return [];
+    }
     try {
-      if (!adminDb) {
-        console.error('Firestore not initialized. Check server environment.');
-        return [];
-      };
-      const db = adminDb;
-      const issuesCollection = collection(db, 'issues');
+      const issuesCollection = collection(adminDb, 'issues');
       const q = query(issuesCollection, orderBy('createdAt', 'desc'));
       const issuesSnapshot = await getDocs(q);
       const issuesList = issuesSnapshot.docs.map(doc => {
