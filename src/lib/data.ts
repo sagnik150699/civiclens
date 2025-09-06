@@ -1,4 +1,5 @@
 import { adminDb } from './firebase-admin';
+import { db as clientDb } from './firebase';
 import { collection, getDocs, addDoc, updateDoc, doc, query, orderBy, Timestamp } from 'firebase/firestore';
 import type { ISSUE_CATEGORIES, ISSUE_STATUSES, ISSUE_PRIORITIES } from './constants';
 
@@ -39,8 +40,8 @@ export interface IssueReportFirestore {
 
 export const getIssues = async (): Promise<IssueReport[]> => {
   try {
-    if (!adminDb) throw new Error('Firestore not initialized');
-    const db = adminDb as any;
+    const db = (adminDb ?? clientDb) as any;
+    if (!db) throw new Error('Firestore not initialized');
     const issuesCollection = collection(db, 'issues');
     const q = query(issuesCollection, orderBy('createdAt', 'desc'));
     const issuesSnapshot = await getDocs(q);
@@ -60,8 +61,8 @@ export const getIssues = async (): Promise<IssueReport[]> => {
 };
 
 export const addIssue = async (issue: Omit<IssueReport, 'id' | 'createdAt'>) => {
-    if (!adminDb) throw new Error('Firestore not initialized');
-    const db = adminDb as any;
+    const db = (adminDb ?? clientDb) as any;
+    if (!db) throw new Error('Firestore not initialized');
     const newIssue = {
         ...issue,
         createdAt: Timestamp.now(),
@@ -71,11 +72,11 @@ export const addIssue = async (issue: Omit<IssueReport, 'id' | 'createdAt'>) => 
 }
 
 export const updateIssueStatus = async (id: string, status: IssueStatus): Promise<boolean> => {
-    if (!adminDb) {
+    const db = (adminDb ?? clientDb) as any;
+    if (!db) {
         console.error('Firestore not initialized');
         return false;
     }
-    const db = adminDb as any;
     const issueRef = doc(db, 'issues', id);
     try {
         await updateDoc(issueRef, { status });

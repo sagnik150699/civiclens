@@ -5,6 +5,8 @@ import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { addIssue, updateIssueStatus as dbUpdateIssueStatus, type IssueStatus } from '@/lib/data';
 import { admin } from '@/lib/firebase-admin';
+import { storage } from '@/lib/firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { ISSUE_CATEGORIES, ISSUE_STATUSES } from './constants';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
@@ -47,24 +49,25 @@ export async function submitIssue(prevState: any, formData: FormData | null) {
   try {
     const { description, category, photo, address, lat, lng } = validatedFields.data;
 
-    if (!admin.apps.length) {
-      throw new Error('Firebase not configured');
-    }
-
     const buffer = Buffer.from(await photo.arrayBuffer());
-
-    const bucket = admin.storage().bucket();
     const fileName = `issues/${Date.now()}-${photo.name}`;
-    const file = bucket.file(fileName);
+    let photoUrl: string;
 
-    await file.save(buffer, {
+    if (admin.apps.length) {
+      const bucket = admin.storage().bucket();
+      const file = bucket.file(fileName);
+      await file.save(buffer, {
         metadata: {
-            contentType: photo.type,
+          contentType: photo.type,
         },
-    });
-
-    await file.makePublic();
-    const photoUrl = file.publicUrl();
+      });
+      await file.makePublic();
+      photoUrl = file.publicUrl();
+    } else {
+      const storageRef = ref(storage, fileName);
+      await uploadBytes(storageRef, buffer, { contentType: photo.type });
+      photoUrl = await getDownloadURL(storageRef);
+    }
 
     const location = {
       lat: lat ? parseFloat(lat) : 34.0522 + (Math.random() - 0.5) * 0.1,
