@@ -17,7 +17,7 @@ import {
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import Image from 'next/image';
-import { CameraIcon, Send, LocateIcon } from 'lucide-react';
+import { CameraIcon, Send, LocateIcon, Loader2 } from 'lucide-react';
 import { ISSUE_CATEGORIES } from '@/lib/constants';
 import {
   AlertDialog,
@@ -48,11 +48,13 @@ export function IssueReportForm() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [dialogTitle, setDialogTitle] = useState('');
   const [dialogDescription, setDialogDescription] = useState('');
+  const [isLocating, setIsLocating] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleGeolocation = async () => {
     if (navigator.geolocation) {
+      setIsLocating(true);
       navigator.geolocation.getCurrentPosition(
         async (position) => {
           const latCoord = position.coords.latitude;
@@ -61,7 +63,11 @@ export function IssueReportForm() {
           setLng(lngCoord.toString());
 
           try {
-            const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latCoord}&lon=${lngCoord}`);
+            const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latCoord}&lon=${lngCoord}`, {
+                headers: {
+                    'User-Agent': 'CivicLens/1.0'
+                }
+            });
             const data = await response.json();
             if (data && data.display_name) {
               setAddress(data.display_name);
@@ -71,11 +77,14 @@ export function IssueReportForm() {
           } catch (error) {
             console.error("Reverse geocoding failed", error);
             setAddress(`Near lat: ${latCoord.toFixed(4)}, lng: ${lngCoord.toFixed(4)}`);
+          } finally {
+            setIsLocating(false);
           }
         },
         () => {
+          setIsLocating(false);
           setDialogTitle('Geolocation Error');
-          setDialogDescription('Could not acquire your location. Please enter your address manually.');
+          setDialogDescription('Could not acquire your location. Please check browser permissions and try again.');
           setIsDialogOpen(true);
         },
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
@@ -166,8 +175,13 @@ export function IssueReportForm() {
                     variant="ghost"
                     className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8"
                     onClick={handleGeolocation}
+                    disabled={isLocating}
                 >
-                    <LocateIcon className="h-5 w-5 text-muted-foreground" />
+                    {isLocating ? (
+                        <Loader2 className="h-5 w-5 text-muted-foreground animate-spin" />
+                    ) : (
+                        <LocateIcon className="h-5 w-5 text-muted-foreground" />
+                    )}
                 </Button>
             </div>
             {state?.errors?.address && <p className="text-sm font-medium text-destructive">{state.errors.address[0]}</p>}
