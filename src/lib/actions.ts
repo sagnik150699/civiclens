@@ -117,12 +117,15 @@ export async function updateIssueStatus(id: string, status: IssueStatus) {
     }
 }
 
-export async function login(email: string, password: string): Promise<{ success: boolean; message: string }> {
+export async function login(previousState: any, formData: FormData) {
+  const email = formData.get('email') as string;
+  const password = formData.get('password') as string;
+
   if (email === 'admin' && password === 'admin') {
     const sessionData = { user: 'admin', loggedIn: true };
     const expiresIn = 60 * 60 * 24 * 5 * 1000; // 5 days
     cookies().set('session', JSON.stringify(sessionData), { maxAge: expiresIn, httpOnly: true, secure: process.env.NODE_ENV === 'production' });
-    return { success: true, message: 'Login successful.' };
+    redirect('/admin');
   }
   
   return { success: false, message: 'Invalid username or password.' };

@@ -1,6 +1,7 @@
 
 'use client';
-import { useState } from 'react';
+import { useActionState, useEffect, useState } from 'react';
+import { useFormStatus } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -9,42 +10,29 @@ import { login } from '@/lib/actions';
 import { MountainIcon } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
+
+function LoginButton() {
+  const { pending } = useFormStatus();
+  return (
+    <Button type="submit" className="w-full" disabled={pending}>
+      {pending ? 'Logging in...' : 'Login'}
+    </Button>
+  );
+}
 
 export default function LoginPage() {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [isAuthenticating, setIsAuthenticating] = useState(false);
     const { toast } = useToast();
-    const router = useRouter();
+    const [state, formAction] = useActionState(login, undefined);
 
-    const handleLogin = async (event: React.FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
-        setIsAuthenticating(true);
-
-        if (!email || !password) {
+    useEffect(() => {
+        if (state?.success === false && state.message) {
             toast({
                 title: 'Login Failed',
-                description: 'Username and password are required.',
+                description: state.message,
                 variant: 'destructive',
             });
-            setIsAuthenticating(false);
-            return;
         }
-
-        const result = await login(email, password);
-
-        if (result && result.success) {
-            router.push('/admin');
-        } else {
-             toast({
-                title: 'Login Failed',
-                description: result.message || 'An unknown error occurred.',
-                variant: 'destructive',
-            });
-            setIsAuthenticating(false);
-        }
-    };
+    }, [state, toast]);
     
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted/40">
@@ -58,7 +46,7 @@ export default function LoginPage() {
                     <CardDescription>Enter your credentials to access the dashboard.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <form onSubmit={handleLogin} className="space-y-4">
+                    <form action={formAction} className="space-y-4">
                         <div className="space-y-2">
                             <Label htmlFor="email">Username</Label>
                             <Input 
@@ -67,8 +55,6 @@ export default function LoginPage() {
                                 type="text" 
                                 placeholder="admin" 
                                 required 
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
                             />
                         </div>
                         <div className="space-y-2">
@@ -79,13 +65,9 @@ export default function LoginPage() {
                                 type="password" 
                                 placeholder="admin"
                                 required 
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
                             />
                         </div>
-                        <Button type="submit" className="w-full" disabled={isAuthenticating}>
-                          {isAuthenticating ? "Logging in..." : "Login"}
-                        </Button>
+                        <LoginButton />
                     </form>
                 </CardContent>
             </Card>
