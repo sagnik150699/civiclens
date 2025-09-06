@@ -66,13 +66,11 @@ export function IssueReportForm() {
   const formRef = useRef<HTMLFormElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const uploadTaskRef = useRef<UploadTask | null>(null);
-  const timeoutRef = useRef<number | null>(null);
 
-  // Cleanup upload task and timeout on component unmount
+  // Cleanup upload task on component unmount
   useEffect(() => {
     return () => {
       uploadTaskRef.current?.cancel();
-      if (timeoutRef.current) window.clearInterval(timeoutRef.current);
     };
   }, []);
 
@@ -155,7 +153,6 @@ export function IssueReportForm() {
 
     // Cleanup previous upload artifacts before starting a new one
     uploadTaskRef.current?.cancel();
-    if (timeoutRef.current) window.clearInterval(timeoutRef.current);
     setPreview(URL.createObjectURL(file));
     setIsUploading(true);
     setUploadProgress(0);
@@ -166,15 +163,6 @@ export function IssueReportForm() {
     const uploadTask = uploadBytesResumable(storageRef, file);
     uploadTaskRef.current = uploadTask;
 
-    let lastPct = 0;
-    timeoutRef.current = window.setInterval(() => {
-        if (uploadProgress > 0 && uploadProgress === lastPct) {
-            console.warn('Upload appears stuck; canceling task');
-            uploadTask.cancel();
-        }
-        lastPct = uploadProgress;
-    }, 10000);
-
     uploadTask.on(
         'state_changed',
         (snapshot) => {
@@ -182,7 +170,6 @@ export function IssueReportForm() {
             setUploadProgress(progress);
         },
         (error) => {
-            if (timeoutRef.current) window.clearInterval(timeoutRef.current);
             console.error('Upload failed:', error);
             setIsUploading(false);
             setUploadStatus('error');
@@ -192,7 +179,6 @@ export function IssueReportForm() {
             setPreview(null);
         },
         () => {
-            if (timeoutRef.current) window.clearInterval(timeoutRef.current);
             getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
                 setPhotoUrl(downloadURL);
                 setIsUploading(false);
