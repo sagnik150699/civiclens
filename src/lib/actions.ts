@@ -21,10 +21,10 @@ const issueSchema = z.object({
   captcha: z.string().min(1, { message: 'Please solve the captcha.' }),
 });
 
-export async function submitIssue(prevState: any, formData: FormData) {
-  // Gracefully handle the initial render state where formData is not available.
-  if (!formData.has('description')) {
-    return { success: true, message: '' }; 
+export async function submitIssue(prevState: any, formData: FormData | null) {
+  // Gracefully handle the initial render state on the server.
+  if (formData === null) {
+    return { success: false, message: '', errors: {} };
   }
 
   const validatedFields = issueSchema.safeParse({
