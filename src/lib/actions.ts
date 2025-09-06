@@ -21,7 +21,7 @@ const issueSchema = z.object({
   lng: z.string().optional(),
 });
 
-export async function submitIssue(prevState: any, formData: FormData | null) {
+export async function submitIssue(prevState: any, formData: FormData) {
   if (!formData) {
     return { success: false, message: '', errors: {} };
   }
@@ -50,7 +50,7 @@ export async function submitIssue(prevState: any, formData: FormData | null) {
     const buffer = Buffer.from(await photo.arrayBuffer());
     const photoDataUri = `data:${photo.type};base64,${buffer.toString('base64')}`;
     
-    const bucket = admin.storage().bucket(process.env.FIREBASE_STORAGE_BUCKET);
+    const bucket = admin.storage().bucket();
     const fileName = `issues/${Date.now()}-${photo.name}`;
     const file = bucket.file(fileName);
 
