@@ -153,7 +153,9 @@ export function IssueReportForm() {
         return;
     }
 
-
+    // Cleanup previous upload artifacts before starting a new one
+    uploadTaskRef.current?.cancel();
+    if (timeoutRef.current) window.clearInterval(timeoutRef.current);
     setPreview(URL.createObjectURL(file));
     setIsUploading(true);
     setUploadProgress(0);
@@ -164,7 +166,6 @@ export function IssueReportForm() {
     const uploadTask = uploadBytesResumable(storageRef, file);
     uploadTaskRef.current = uploadTask;
 
-    // Safety timeout
     let lastPct = 0;
     timeoutRef.current = window.setInterval(() => {
         if (uploadProgress > 0 && uploadProgress === lastPct) {
