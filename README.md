@@ -30,53 +30,11 @@ This project was built with Firebase Studio.
 *   Node.js (v18 or later)
 *   A Firebase project.
 
-### 1. Firebase Setup
-
-1.  **Create a Firebase Project**: If you don't have one already, create a new project in the [Firebase Console](https://console.firebase.google.com/).
-2.  **Enable Services**:
-    *   Go to **Build > Firestore Database** and create a database.
-    *   Go to **Build > Storage** and enable it.
-3.  **Set Security Rules**:
-    *   **Firestore Rules** (`/firestore/rules` in the console):
-        ```
-        rules_version = '2';
-        service cloud.firestore {
-          match /databases/{database}/documents {
-            // Allow public read of all issues
-            match /issues/{issueId} {
-              allow read: if true;
-              allow create: if true; // Allow anyone to submit an issue
-              
-              // Only allow admins to update or delete
-              allow update, delete: if request.auth != null; 
-            }
-          }
-        }
-        ```
-    *   **Storage Rules** (`/storage/rules` in the console):
-        ```
-        rules_version = '2';
-        service firebase.storage {
-          match /b/{bucket}/o {
-            // Allow public read access to all files
-            match /{allPaths=**} {
-              allow read: if true;
-            }
-            
-            // Allow writes only for image files under 4MB
-            match /issues/{fileName} {
-              allow write: if request.resource.size < 4 * 1024 * 1024
-                           && request.resource.contentType.matches('image/.*');
-            }
-          }
-        }
-        ```
-
-### 2. Environment Variables
+### Environment Variables
 
 This project uses environment variables to connect to Firebase. You will need to get your Firebase project's configuration keys and add them to the project.
 
-### 3. Running the Application
+### Running the Application
 
 Once your environment is configured, you can run the application locally:
 
@@ -88,8 +46,9 @@ This will start the development server, typically on `http://localhost:9002`.
 
 ---
 
-## Connect With Me
+## Built By
 
-*   **YouTube**: [Your YouTube Channel URL]
-*   **Udemy**: [Your Udemy Profile URL]
-*   **LinkedIn**: [Your LinkedIn Profile URL]
+Sagnik Bhattacharya
+*   **YouTube**: [youtube.com/@sagnikteaches](https://www.youtube.com/@sagnikteaches)
+*   **Udemy**: [udemy.com/user/sagnik-bhattacharya-5/](https://www.udemy.com/user/sagnik-bhattacharya-5/)
+*   **LinkedIn**: [linkedin.com/in/sagnik-bhattacharya-916b9463/](https://www.linkedin.com/in/sagnik-bhattacharya-916b9463/)
