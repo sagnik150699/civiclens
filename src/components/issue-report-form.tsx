@@ -4,7 +4,6 @@
 import { useEffect, useState, useRef, useActionState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { submitIssue } from '@/lib/actions';
-import { useToast } from '@/hooks/use-toast';
 
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -20,6 +19,15 @@ import { Input } from '@/components/ui/input';
 import Image from 'next/image';
 import { CameraIcon, Send, LocateIcon } from 'lucide-react';
 import { ISSUE_CATEGORIES } from '@/lib/constants';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -32,15 +40,16 @@ function SubmitButton() {
 }
 
 export function IssueReportForm() {
-  const { toast } = useToast();
   const [state, formAction] = useActionState(submitIssue, { success: false, message: '', errors: {} });
   const [preview, setPreview] = useState<string | null>(null);
   const [address, setAddress] = useState('');
   const [lat, setLat] = useState('');
   const [lng, setLng] = useState('');
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [dialogTitle, setDialogTitle] = useState('');
+  const [dialogDescription, setDialogDescription] = useState('');
   const formRef = useRef<HTMLFormElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
 
   const handleGeolocation = async () => {
     if (navigator.geolocation) {
@@ -51,7 +60,6 @@ export function IssueReportForm() {
           setLat(latCoord.toString());
           setLng(lngCoord.toString());
 
-          // Reverse geocode to get address
           try {
             const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latCoord}&lon=${lngCoord}`);
             const data = await response.json();
@@ -64,54 +72,44 @@ export function IssueReportForm() {
             console.error("Reverse geocoding failed", error);
             setAddress(`Near lat: ${latCoord.toFixed(4)}, lng: ${lngCoord.toFixed(4)}`);
           }
-          
-          toast({
-            title: "Location Acquired",
-            description: "Your current location has been set.",
-          });
         },
         () => {
-          toast({
-            title: "Geolocation Error",
-            description: "Could not acquire your location. Please enter your address manually.",
-            variant: 'destructive',
-          });
+          setDialogTitle('Geolocation Error');
+          setDialogDescription('Could not acquire your location. Please enter your address manually.');
+          setIsDialogOpen(true);
         }
       );
     } else {
-      toast({
-        title: "Geolocation Not Supported",
-        description: "Your browser does not support geolocation.",
-        variant: 'destructive',
-      });
+      setDialogTitle('Geolocation Not Supported');
+      setDialogDescription('Your browser does not support geolocation.');
+      setIsDialogOpen(true);
     }
   };
 
   useEffect(() => {
-    if (state?.success) {
-      toast({
-        title: 'Success!',
-        description: state.message,
-        variant: 'default',
-      });
-      formRef.current?.reset();
-      setPreview(null);
-      setAddress('');
-      setLat('');
-      setLng('');
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
+    if (state?.message) {
+      if (state.success) {
+        setDialogTitle('Success!');
+        setDialogDescription(state.message);
+        setIsDialogOpen(true);
+        formRef.current?.reset();
+        setPreview(null);
+        setAddress('');
+        setLat('');
+        setLng('');
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
+      } else if (!state.success && (state.message || Object.keys(state.errors ?? {}).length > 0)) {
+        setDialogTitle('Error');
+        setDialogDescription(state.message);
+        setIsDialogOpen(true);
       }
-    } else if (state?.message && !state.success && Object.keys(state.errors ?? {}).length > 0) {
-      toast({
-        title: 'Error',
-        description: state.message,
-        variant: 'destructive',
-      });
     }
-  }, [state, toast]);
+  }, [state]);
 
   return (
+    <>
       <form
         ref={formRef}
         action={formAction}
@@ -217,5 +215,20 @@ export function IssueReportForm() {
 
         <SubmitButton />
       </form>
+
+      <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{dialogTitle}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {dialogDescription}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setIsDialogOpen(false)}>OK</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
