@@ -1,33 +1,35 @@
 
 import admin from 'firebase-admin';
 
-// Firebase Admin SDK requires valid credentials which may not always be
-// available in local/test environments. Attempt initialization but swallow any
-// errors so that importing this module does not crash the app.
-try {
-  if (!admin.apps.length) {
-    const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY_BASE64
-      ? Buffer.from(process.env.FIREBASE_SERVICE_ACCOUNT_KEY_BASE64, 'base64').toString('utf-8')
-      : undefined;
-
-    if (serviceAccountKey) {
-      // Running in a local or CI environment with a service account key
+if (!admin.apps.length) {
+  try {
+    const serviceAccountKeyBase64 = process.env.FIREBASE_SERVICE_ACCOUNT_KEY_BASE64;
+    
+    if (serviceAccountKeyBase64) {
+      // Decode the base64 service account key
+      const serviceAccount = JSON.parse(
+        Buffer.from(serviceAccountKeyBase64, 'base64').toString('utf-8')
+      );
+      
+      // Initialize with service account credentials
       admin.initializeApp({
-        credential: admin.credential.cert(JSON.parse(serviceAccountKey)),
+        credential: admin.credential.cert(serviceAccount),
         databaseURL: process.env.FIREBASE_DATABASE_URL,
         storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
       });
     } else {
-      // Running in a Google Cloud environment (e.g., App Hosting)
+      // Initialize with application default credentials for production environments
       admin.initializeApp({
         credential: admin.credential.applicationDefault(),
         databaseURL: process.env.FIREBASE_DATABASE_URL,
         storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
       });
     }
+  } catch (error) {
+    console.error('Failed to initialize Firebase Admin SDK:', error);
+    // You might want to throw the error in a development environment
+    // to catch configuration issues early.
   }
-} catch (error) {
-  console.error('Failed to initialize Firebase Admin SDK:', error);
 }
 
 // If initialization failed, admin.apps will be empty and firestore() will
