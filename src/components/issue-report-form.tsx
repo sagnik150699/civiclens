@@ -38,8 +38,6 @@ export function IssueReportForm() {
   const [address, setAddress] = useState('');
   const [lat, setLat] = useState('');
   const [lng, setLng] = useState('');
-  const [num1, setNum1] = useState(0);
-  const [num2, setNum2] = useState(0);
   const formRef = useRef<HTMLFormElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -89,15 +87,6 @@ export function IssueReportForm() {
     }
   };
 
-  const resetCaptcha = () => {
-    setNum1(Math.floor(Math.random() * 10) + 1);
-    setNum2(Math.floor(Math.random() * 10) + 1);
-  };
-
-  useEffect(() => {
-    resetCaptcha();
-  }, []);
-
   useEffect(() => {
     if (state?.success) {
       toast({
@@ -113,15 +102,12 @@ export function IssueReportForm() {
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
-      resetCaptcha();
     } else if (state?.message && !state.success) {
       toast({
         title: 'Error',
         description: state.message,
         variant: 'destructive',
       });
-       // Keep form data but generate a new captcha
-       resetCaptcha();
     }
   }, [state, toast]);
 
@@ -130,7 +116,6 @@ export function IssueReportForm() {
         ref={formRef}
         action={formAction}
         className="space-y-4"
-        key={num1 + num2} // Use key to help React re-render captcha
       >
         <h2 className="text-2xl font-bold font-headline text-center">Report an Issue</h2>
         
@@ -229,15 +214,6 @@ export function IssueReportForm() {
             />
           </div>
         )}
-
-        <div className="space-y-2">
-          <Label htmlFor="captcha">
-            Security Question: What is {num1} + {num2}?
-          </Label>
-          <Input id="captcha" name="captcha" placeholder="Your answer" />
-          {state?.errors?.captcha && <p className="text-sm font-medium text-destructive">{state.errors.captcha[0]}</p>}
-        </div>
-        <input type="hidden" name="captchaQuestion" value={`${num1}+${num2}`} />
 
         <SubmitButton />
       </form>
