@@ -22,6 +22,11 @@ const issueSchema = z.object({
 });
 
 export async function submitIssue(prevState: any, formData: FormData) {
+  // Gracefully handle the initial render state where formData is not available.
+  if (!formData.has('description')) {
+    return { success: true, message: '' }; 
+  }
+
   const validatedFields = issueSchema.safeParse({
     description: formData.get('description'),
     category: formData.get('category'),
@@ -48,6 +53,7 @@ export async function submitIssue(prevState: any, formData: FormData) {
     return {
         success: false,
         message: 'Incorrect CAPTCHA answer. Please try again.',
+        errors: { captcha: ['Incorrect CAPTCHA answer. Please try again.'] }
     };
   }
   
@@ -117,7 +123,7 @@ export async function updateIssueStatus(id: string, status: IssueStatus) {
     }
 }
 
-export async function login(previousState: any, formData: FormData) {
+export async function login(prevState: any, formData: FormData) {
   const email = formData.get('email') as string;
   const password = formData.get('password') as string;
 
@@ -126,9 +132,9 @@ export async function login(previousState: any, formData: FormData) {
     const expiresIn = 60 * 60 * 24 * 5 * 1000; // 5 days
     cookies().set('session', JSON.stringify(sessionData), { maxAge: expiresIn, httpOnly: true, secure: process.env.NODE_ENV === 'production' });
     redirect('/admin');
+  } else {
+      return { success: false, message: 'Invalid username or password.' };
   }
-  
-  return { success: false, message: 'Invalid username or password.' };
 }
 
 export async function logout() {
