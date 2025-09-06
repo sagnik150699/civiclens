@@ -4,7 +4,7 @@
 import { useEffect, useState, useRef, useActionState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { submitIssue } from '@/lib/actions';
-import { storage } from '@/lib/firebase';
+import { storage } from '@/lib/firebase-client';
 import { ref, uploadBytesResumable, getDownloadURL, type UploadTask } from 'firebase/storage';
 
 import { Button } from '@/components/ui/button';
@@ -136,7 +136,7 @@ export function IssueReportForm() {
     }
   };
   
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
