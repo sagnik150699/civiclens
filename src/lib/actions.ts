@@ -3,28 +3,26 @@
 
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import { addIssue, updateIssueStatus as dbUpdateIssueStatus, type IssueStatus } from '@/lib/data';
-import { admin } from '@/lib/firebase-admin';
+import { admin, adminDb } from '@/lib/firebase-admin';
 import { ISSUE_CATEGORIES, ISSUE_STATUSES } from './constants';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { collection, getDocs, query, orderBy, Timestamp } from 'firebase/firestore';
-import { adminDb } from './firebase-admin';
+import { collection, getDocs, query, orderBy, Timestamp, addDoc, doc, updateDoc } from 'firebase/firestore';
+import type { IssueReport, IssueStatus } from '@/lib/data';
+
 
 const issueSchema = z.object({
   description: z.string().min(10, 'Please provide a more detailed description.'),
   category: z.enum(ISSUE_CATEGORIES.map(c => c.value) as [string, ...string[]], {
     errorMap: () => ({ message: "Please select a category." }),
   }),
-  photo: z.instanceof(File).refine(file => file.size === 0 || file.size < 4 * 1024 * 1024, 'Photo must be less than 4MB.').optional(),
+  photo: z.instanceof(File).optional(),
   address: z.string().min(1, 'Address is required.'),
   lat: z.string().optional(),
   lng: z.string().optional(),
 });
 
 export async function submitIssue(prevState: any, formData: FormData | null) {
-  // This is the initial state call from useActionState.
-  // It should not proceed to validation if form data is not present.
   if (!formData) {
     return { success: false, message: '', errors: {} };
   }
@@ -52,11 +50,10 @@ export async function submitIssue(prevState: any, formData: FormData | null) {
 
     if (photo && photo.size > 0) {
       if (!admin.apps.length) {
-        throw new Error('Firebase not configured');
+        throw new Error('Firebase Admin SDK not configured for storage.');
       }
 
       const buffer = Buffer.from(await photo.arrayBuffer());
-
       const bucket = admin.storage().bucket();
       const fileName = `issues/${Date.now()}-${photo.name}`;
       const file = bucket.file(fileName);
@@ -77,16 +74,24 @@ export async function submitIssue(prevState: any, formData: FormData | null) {
       lng: lng ? parseFloat(lng) : -118.2437 + (Math.random() - 0.5) * 0.1,
     };
 
-    await addIssue({
-      description,
-      category,
-      location,
-      photoUrl,
-      status: 'Submitted',
-      priority: 'Medium', // Default priority
-      address: address,
-      reason: 'Awaiting review'
-    });
+    if (!adminDb) {
+      throw new Error('Firestore is not initialized. Check your server environment configuration.');
+    }
+    const db = adminDb;
+
+    const newIssue = {
+        description,
+        category,
+        location,
+        photoUrl,
+        status: 'Submitted' as IssueStatus,
+        priority: 'Medium' as const,
+        address: address,
+        reason: 'Awaiting review',
+        createdAt: Timestamp.now(),
+    };
+
+    await addDoc(collection(db, 'issues'), newIssue);
 
     revalidatePath('/');
     revalidatePath('/admin');
@@ -112,12 +117,15 @@ export async function updateIssueStatus(id: string, status: IssueStatus) {
     }
 
     try {
-        const success = await dbUpdateIssueStatus(id, status);
-        if (success) {
-            revalidatePath('/admin');
-            return { success: true, message: `Status updated to ${status}`};
+        if (!adminDb) {
+            throw new Error('Firestore is not initialized. Check your server environment configuration.');
         }
-        return { success: false, message: "Failed to update status."}
+        const db = adminDb;
+        const issueRef = doc(db, 'issues', id);
+        await updateDoc(issueRef, { status });
+        
+        revalidatePath('/admin');
+        return { success: true, message: `Status updated to ${status}`};
     } catch (error)
     {
         console.error(error);
@@ -147,18 +155,21 @@ export async function logout() {
 
 export const getIssues = async (): Promise<IssueReport[]> => {
     try {
-      if (!adminDb) throw new Error('Firestore not initialized');
-      const db = adminDb as any;
+      if (!adminDb) {
+        console.error('Firestore not initialized. Check server environment.');
+        return [];
+      };
+      const db = adminDb;
       const issuesCollection = collection(db, 'issues');
       const q = query(issuesCollection, orderBy('createdAt', 'desc'));
       const issuesSnapshot = await getDocs(q);
       const issuesList = issuesSnapshot.docs.map(doc => {
-        const data = doc.data() as any;
+        const data = doc.data();
         return {
           id: doc.id,
           ...data,
-          createdAt: data.createdAt.toDate(),
-        };
+          createdAt: (data.createdAt as Timestamp).toDate(),
+        } as IssueReport;
       });
       return issuesList;
     } catch (error) {
