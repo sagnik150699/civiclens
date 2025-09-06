@@ -29,7 +29,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { useImageUpload } from '@/hooks/use-image-upload';
 
 function SubmitButton({ isUploading }: { isUploading: boolean }) {
   const { pending } = useFormStatus();
@@ -46,11 +45,13 @@ function SubmitButton({ isUploading }: { isUploading: boolean }) {
 
 export function IssueReportForm() {
   const [state, formAction, isPending] = useActionState(submitIssue, { success: false, message: '', errors: {} });
-  const { start: startUpload, progress: uploadProgress, status: uploadStatus, url: photoUrl } = useImageUpload();
   
   const [address, setAddress] = useState('');
   const [lat, setLat] = useState('');
   const [lng, setLng] = useState('');
+  const [photoUrl, setPhotoUrl] = useState('');
+  
+  const [isUploading, setIsUploading] = useState(false);
   
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [dialogTitle, setDialogTitle] = useState('');
@@ -65,10 +66,11 @@ export function IssueReportForm() {
     setAddress('');
     setLat('');
     setLng('');
+    setPhotoUrl('');
+    setIsUploading(false);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
-    // The useImageUpload hook will reset itself on new upload
   }
 
   const handleGeolocation = () => {
@@ -82,6 +84,7 @@ export function IssueReportForm() {
           setLng(lngCoord.toString());
 
           try {
+            // Using a User-Agent is good practice and sometimes required by APIs like Nominatim
             const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latCoord}&lon=${lngCoord}`, {
                 headers: {
                     'User-Agent': 'CivicLens/1.0'
@@ -106,6 +109,7 @@ export function IssueReportForm() {
           setDialogDescription('Could not acquire your location. Please check browser permissions and try again.');
           setIsDialogOpen(true);
         },
+        // More robust options for geolocation
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
       );
     } else {
@@ -115,15 +119,37 @@ export function IssueReportForm() {
     }
   };
   
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    startUpload(file).catch((err) => {
-        setDialogTitle('Upload Error');
-        setDialogDescription(err.message || 'Could not start upload.');
+    setIsUploading(true);
+    setPhotoUrl('');
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+        const response = await fetch('/api/upload', {
+            method: 'POST',
+            body: formData,
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(result.error || 'Upload failed');
+        }
+        
+        setPhotoUrl(result.url);
+
+    } catch (err: any) {
+        setDialogTitle('Upload Failed');
+        setDialogDescription(err.message || 'The image could not be uploaded. Please try a different file or check your connection.');
         setIsDialogOpen(true);
-    });
+    } finally {
+        setIsUploading(false);
+    }
   };
 
 
@@ -144,15 +170,6 @@ export function IssueReportForm() {
     }
   }, [state, isPending]);
 
-  useEffect(() => {
-    if (uploadStatus === 'error') {
-        setDialogTitle('Upload Failed');
-        setDialogDescription('The image could not be uploaded. Please try a different file or check your connection.');
-        setIsDialogOpen(true);
-    }
-  }, [uploadStatus]);
-
-  const isUploading = uploadStatus === 'running';
 
   return (
     <>
@@ -244,14 +261,14 @@ export function IssueReportForm() {
           {state?.errors?.photoUrl && <p className="text-sm font-medium text-destructive">{state.errors.photoUrl[0]}</p>}
         </div>
         
-        {uploadStatus !== 'idle' && uploadStatus !== 'done' && (
+        {isUploading && (
             <div className="space-y-1">
-                <Label>Upload progress: {uploadProgress}% ({uploadStatus})</Label>
-                <Progress value={uploadProgress} className="w-full" />
+                <Label>Uploading image...</Label>
+                <Progress value={undefined} className="w-full" />
             </div>
         )}
 
-        {photoUrl && uploadStatus === 'done' && (
+        {photoUrl && !isUploading && (
           <div className="relative h-48 w-full">
             <Image
               src={photoUrl}
