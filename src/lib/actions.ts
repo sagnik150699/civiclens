@@ -18,7 +18,8 @@ const initializeFirebaseAdmin = () => {
 
   const serviceAccountKeyBase64 = process.env.FIREBASE_SERVICE_ACCOUNT_KEY_BASE64;
   if (!serviceAccountKeyBase64) {
-    throw new Error('FIREBASE_SERVICE_ACCOUNT_KEY_BASE64 environment variable is not set. Please check your .env file.');
+    console.error("FIREBASE_SERVICE_ACCOUNT_KEY_BASE64 env var is not set.");
+    return;
   }
 
   try {
@@ -27,12 +28,11 @@ const initializeFirebaseAdmin = () => {
 
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
-      storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
     });
   } catch (error) {
     console.error("Failed to initialize Firebase Admin SDK:", error);
-    // We throw the error to make it visible during development
-    throw new Error('Server configuration error: Could not initialize Firebase Admin SDK. Check server logs.');
+    // Let the original error bubble up for clearer debugging
+    throw error;
   }
 };
 
@@ -40,12 +40,20 @@ const getAdminDb = () => {
   if (admin.apps.length === 0) {
     initializeFirebaseAdmin();
   }
+  // Check again in case initialization failed
+  if (admin.apps.length === 0) {
+    return null;
+  }
   return admin.firestore();
 };
 
 const getAdminStorage = () => {
     if (admin.apps.length === 0) {
         initializeFirebaseAdmin();
+    }
+    // Check again in case initialization failed
+    if (admin.apps.length === 0) {
+        return null;
     }
     return admin.storage();
 }
