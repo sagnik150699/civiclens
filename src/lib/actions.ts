@@ -74,7 +74,6 @@ export async function submitIssue(prevState: any, formData: FormData | null) {
       photoUrl,
       status: 'Submitted',
       priority: 'Medium', // Default priority
-      reason: 'Awaiting review.', // Default reason
       address: address,
     });
 
