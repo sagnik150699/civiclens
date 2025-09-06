@@ -1,3 +1,4 @@
+
 'use server';
 
 import { z } from 'zod';
@@ -42,11 +43,11 @@ export async function submitIssue(prevState: any, formData: FormData | null) {
       errors: validatedFields.error.flatten().fieldErrors,
     };
   }
-
-  const { description, category, address, lat, lng } = validatedFields.data;
-  const photo = formData.get('photo') as File;
   
   try {
+    const { description, category, address, lat, lng } = validatedFields.data;
+    const photo = formData.get('photo') as File;
+
     const buffer = Buffer.from(await photo.arrayBuffer());
     const photoDataUri = `data:${photo.type};base64,${buffer.toString('base64')}`;
     
@@ -85,11 +86,12 @@ export async function submitIssue(prevState: any, formData: FormData | null) {
 
     revalidatePath('/');
     revalidatePath('/admin');
-    return { success: true, message: 'Issue reported successfully!' };
+    return { success: true, message: 'Issue reported successfully!', errors: {} };
 
   } catch (error) {
     console.error("Error submitting issue:", error);
-    return { success: false, message: 'An unexpected error occurred.' };
+    const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred.';
+    return { success: false, message: errorMessage, errors: {} };
   }
 }
 
