@@ -40,7 +40,7 @@ export interface IssueReportFirestore {
 export const getIssues = async (): Promise<IssueReport[]> => {
   try {
     if (!adminDb) throw new Error('Firestore not initialized');
-    const snapshot = await adminDb
+  const snapshot = await adminDb
       .collection('issues')
       .orderBy('createdAt', 'desc')
       .get();
@@ -83,3 +83,4 @@ export const updateIssueStatus = async (id: string, status: IssueStatus): Promis
     return false;
   }
 };
+
