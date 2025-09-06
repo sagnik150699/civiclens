@@ -5,7 +5,7 @@ import { useEffect, useState, useRef, useActionState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { submitIssue } from '@/lib/actions';
 import { storage } from '@/lib/firebase';
-import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
+import { ref, uploadBytesResumable, getDownloadURL, type UploadTask } from 'firebase/storage';
 
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -20,7 +20,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import Image from 'next/image';
-import { CameraIcon, Send, LocateIcon, Loader2, UploadCloud } from 'lucide-react';
+import { CameraIcon, Send, LocateIcon, Loader2 } from 'lucide-react';
 import { ISSUE_CATEGORIES } from '@/lib/constants';
 import {
   AlertDialog,
@@ -64,6 +64,15 @@ export function IssueReportForm() {
   
   const formRef = useRef<HTMLFormElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const uploadTaskRef = useRef<UploadTask | null>(null);
+
+  // Cleanup upload task on component unmount
+  useEffect(() => {
+    return () => {
+      uploadTaskRef.current?.cancel();
+    };
+  }, []);
+
 
   const resetForm = () => {
     formRef.current?.reset();
@@ -72,6 +81,8 @@ export function IssueReportForm() {
     setAddress('');
     setLat('');
     setLng('');
+    setUploadProgress(0);
+    setIsUploading(false);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -131,13 +142,30 @@ export function IssueReportForm() {
         setIsDialogOpen(true);
         return;
     }
+    if (file.size > 10 * 1024 * 1024) { // 10MB limit
+        setDialogTitle('File Too Large');
+        setDialogDescription('Please select an image smaller than 10MB.');
+        setIsDialogOpen(true);
+        return;
+    }
+
 
     setPreview(URL.createObjectURL(file));
     setIsUploading(true);
     setUploadProgress(0);
+    setPhotoUrl(null);
 
     const storageRef = ref(storage, `issues/${Date.now()}-${file.name}`);
     const uploadTask = uploadBytesResumable(storageRef, file);
+    uploadTaskRef.current = uploadTask;
+
+    const timeout = setTimeout(() => {
+        uploadTask.cancel();
+        setDialogTitle('Upload Timed Out');
+        setDialogDescription('The upload took too long and was cancelled. Please check your network connection and try again.');
+        setIsDialogOpen(true);
+        setIsUploading(false);
+    }, 30000); // 30 second timeout
 
     uploadTask.on(
         'state_changed',
@@ -146,6 +174,7 @@ export function IssueReportForm() {
             setUploadProgress(progress);
         },
         (error) => {
+            clearTimeout(timeout);
             console.error('Upload failed:', error);
             setIsUploading(false);
             setDialogTitle('Upload Error');
@@ -154,6 +183,7 @@ export function IssueReportForm() {
             setPreview(null);
         },
         () => {
+            clearTimeout(timeout);
             getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
                 setPhotoUrl(downloadURL);
                 setIsUploading(false);
@@ -277,7 +307,7 @@ export function IssueReportForm() {
             </div>
         )}
 
-        {preview && !isUploading && (
+        {preview && (
           <div className="relative h-48 w-full">
             <Image
               src={preview}
