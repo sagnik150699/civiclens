@@ -1,7 +1,8 @@
+
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
-import { useFormState, useFormStatus } from 'react-dom';
+import { useEffect, useState, useRef, useActionState } from 'react';
+import { useFormStatus } from 'react-dom';
 import { submitIssue } from '@/lib/actions';
 import { useImageUpload } from '@/hooks/use-image-upload';
 
@@ -44,7 +45,7 @@ function SubmitButton({ isUploading }: { isUploading: boolean }) {
 }
 
 export function IssueReportForm() {
-  const [state, formAction] = useFormState(submitIssue, { success: false, message: '', errors: {} });
+  const [state, formAction] = useActionState(submitIssue, { success: false, message: '', errors: {} });
   const { start: startUpload, progress, status, url: photoUrl, lastError } = useImageUpload();
   
   const [address, setAddress] = useState('');
