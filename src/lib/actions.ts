@@ -3,7 +3,7 @@
 
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import { addIssue, updateIssueStatus as dbUpdateIssueStatus, type IssueStatus, type IssueReportFirestore, type IssueReport } from '@/lib/data';
+import { addIssue, updateIssueStatus as dbUpdateIssueStatus, type IssueStatus } from '@/lib/data';
 import { admin } from '@/lib/firebase-admin';
 import { ISSUE_CATEGORIES, ISSUE_STATUSES } from './constants';
 import { cookies } from 'next/headers';
@@ -16,7 +16,7 @@ const issueSchema = z.object({
   category: z.enum(ISSUE_CATEGORIES.map(c => c.value) as [string, ...string[]], {
     errorMap: () => ({ message: "Please select a category." }),
   }),
-  photo: z.instanceof(File, {message: 'A photo is required.'}).refine(file => file.size > 0, 'A photo is required.').refine(file => file.size < 4 * 1024 * 1024, 'Photo must be less than 4MB.'),
+  photo: z.instanceof(File).refine(file => file.size === 0 || file.size < 4 * 1024 * 1024, 'Photo must be less than 4MB.').optional(),
   address: z.string().min(1, 'Address is required.'),
   lat: z.string().optional(),
   lng: z.string().optional(),
@@ -48,25 +48,29 @@ export async function submitIssue(prevState: any, formData: FormData | null) {
   
   try {
     const { description, category, photo, address, lat, lng } = validatedFields.data;
+    let photoUrl = null;
 
-    if (!admin.apps.length) {
-      throw new Error('Firebase not configured');
+    if (photo && photo.size > 0) {
+      if (!admin.apps.length) {
+        throw new Error('Firebase not configured');
+      }
+
+      const buffer = Buffer.from(await photo.arrayBuffer());
+
+      const bucket = admin.storage().bucket();
+      const fileName = `issues/${Date.now()}-${photo.name}`;
+      const file = bucket.file(fileName);
+
+      await file.save(buffer, {
+          metadata: {
+              contentType: photo.type,
+          },
+      });
+
+      await file.makePublic();
+      photoUrl = file.publicUrl();
     }
 
-    const buffer = Buffer.from(await photo.arrayBuffer());
-
-    const bucket = admin.storage().bucket();
-    const fileName = `issues/${Date.now()}-${photo.name}`;
-    const file = bucket.file(fileName);
-
-    await file.save(buffer, {
-        metadata: {
-            contentType: photo.type,
-        },
-    });
-
-    await file.makePublic();
-    const photoUrl = file.publicUrl();
 
     const location = {
       lat: lat ? parseFloat(lat) : 34.0522 + (Math.random() - 0.5) * 0.1,
@@ -114,9 +118,11 @@ export async function updateIssueStatus(id: string, status: IssueStatus) {
             return { success: true, message: `Status updated to ${status}`};
         }
         return { success: false, message: "Failed to update status."}
-    } catch (error) {
+    } catch (error)
+    {
         console.error(error);
-        return { success: false, message: "Failed to update status."}
+        const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred.";
+        return { success: false, message: `Failed to update status: ${errorMessage}`}
     }
 }
 
@@ -147,7 +153,7 @@ export const getIssues = async (): Promise<IssueReport[]> => {
       const q = query(issuesCollection, orderBy('createdAt', 'desc'));
       const issuesSnapshot = await getDocs(q);
       const issuesList = issuesSnapshot.docs.map(doc => {
-        const data = doc.data() as IssueReportFirestore;
+        const data = doc.data() as any;
         return {
           id: doc.id,
           ...data,

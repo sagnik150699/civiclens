@@ -176,7 +176,7 @@ export function IssueReportForm() {
         <input type="hidden" name="lng" value={lng} />
 
         <div className="space-y-2">
-          <Label htmlFor="photo">Photo</Label>
+          <Label htmlFor="photo">Photo (Optional)</Label>
           <div className="relative">
             <Input
               id="photo"
