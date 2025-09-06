@@ -33,7 +33,7 @@ function SubmitButton() {
 
 export function IssueReportForm() {
   const { toast } = useToast();
-  const [state, formAction] = useActionState(submitIssue, undefined);
+  const [state, formAction] = useActionState(submitIssue, { success: false, message: '', errors: {} });
   const [preview, setPreview] = useState<string | null>(null);
   const [address, setAddress] = useState('');
   const [lat, setLat] = useState('');
@@ -102,7 +102,7 @@ export function IssueReportForm() {
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
-    } else if (state?.message && !state.success) {
+    } else if (state?.message && !state.success && Object.keys(state.errors ?? {}).length > 0) {
       toast({
         title: 'Error',
         description: state.message,
