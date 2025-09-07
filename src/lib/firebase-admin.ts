@@ -11,6 +11,7 @@ const {
   FIREBASE_CLIENT_EMAIL,
   FIREBASE_PRIVATE_KEY,
   GOOGLE_APPLICATION_CREDENTIALS,
+  NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
 } = process.env;
 
 function buildCredential() {
@@ -47,7 +48,10 @@ function getAdminApp(): App {
   if (apps.length) {
     return apps[0];
   }
-  return initializeApp({ credential: buildCredential() });
+  return initializeApp({ 
+    credential: buildCredential(),
+    storageBucket: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  });
 }
 
 function getAdminStorage() {
