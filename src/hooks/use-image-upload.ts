@@ -16,9 +16,7 @@ export function useImageUpload() {
   useEffect(() => {
     return () => {
       // no task.cancel() here — prevents spurious storage/canceled
-      if (taskRef.current) {
-        taskRef.current.cancel();
-      }
+      taskRef.current = null;
     };
   }, []);
 
@@ -27,7 +25,7 @@ export function useImageUpload() {
     if (!file?.type?.startsWith('image/')) throw new Error('Only images allowed');
     if (file.size > 10 * 1024 * 1024) throw new Error('Max 10MB');
 
-    const path = `uploads/${crypto.randomUUID()}_${file.name}`;
+    const path = `issues/${crypto.randomUUID()}_${file.name}`;
     const r = ref(storage, path);
 
     const task = uploadBytesResumable(r, file, {
