@@ -25,10 +25,13 @@ export async function POST(req: Request) {
     await obj.save(bytes, {
       contentType: file.type,
       metadata: { cacheControl: 'public,max-age=31536000,immutable' },
-      public: true,
     });
-
-    const url = obj.publicUrl();
+    
+    // Use getSignedUrl for a robust way to get a public-access URL
+    const [url] = await obj.getSignedUrl({
+      action: 'read',
+      expires: '01-01-2100', // Set a far-future expiration date for effectively permanent URLs
+    });
     
     return NextResponse.json({ ok: true, url }, { status: 200 });
   } catch (e: any) {
