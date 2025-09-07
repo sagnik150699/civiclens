@@ -1,62 +1,71 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { storage } from '@/lib/firebase-client';
-import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
+import { ref, uploadBytesResumable, getDownloadURL, type UploadTask } from 'firebase/storage';
+
+export type UploadStatus = 'idle' | 'running' | 'paused' | 'done' | 'error';
 
 export function useImageUpload() {
   const [progress, setProgress] = useState(0);
-  const [status, setStatus] = useState<'idle'|'running'|'done'|'error'>('idle');
+  const [status, setStatus] = useState<UploadStatus>('idle');
   const [url, setUrl] = useState('');
   const [lastError, setLastError] = useState<string>('');
-  const taskRef = useRef<ReturnType<typeof uploadBytesResumable> | null>(null);
-  const lastBytes = useRef(0);
-  const watchdog = useRef<number | null>(null);
+  const taskRef = useRef<UploadTask | null>(null);
 
-  useEffect(() => () => {
-    taskRef.current?.cancel();
-    if (watchdog.current) clearInterval(watchdog.current);
+  // Cleanup: do NOT auto-cancel; just detach listeners
+  useEffect(() => {
+    return () => {
+      // no task.cancel() here — prevents spurious storage/canceled
+      if (taskRef.current) {
+        taskRef.current.cancel();
+      }
+    };
   }, []);
 
-  async function start(file: File) {
-    if (!file.type.startsWith('image/')) throw new Error('Only images allowed');
+  const start = useCallback(async (file: File) => {
+    setLastError(''); setUrl(''); setProgress(0);
+    if (!file?.type?.startsWith('image/')) throw new Error('Only images allowed');
     if (file.size > 10 * 1024 * 1024) throw new Error('Max 10MB');
 
     const path = `uploads/${crypto.randomUUID()}_${file.name}`;
-    const storageRef = ref(storage, path);
-    const task = uploadBytesResumable(storageRef, file, {
+    const r = ref(storage, path);
+
+    const task = uploadBytesResumable(r, file, {
       contentType: file.type,
       cacheControl: 'public,max-age=31536000,immutable',
     });
-    taskRef.current = task; setProgress(0); setUrl(''); setStatus('running'); setLastError('');
 
-    // Watchdog: cancel if bytes don’t change for 15s (avoids infinite spinner)
-    watchdog.current = window.setInterval(() => {
-      const b = task.snapshot.bytesTransferred;
-      if (b === lastBytes.current && task.snapshot.state === 'running') {
-        console.warn('Upload stuck; canceling'); task.cancel();
-      }
-      lastBytes.current = b;
-    }, 15000) as unknown as number;
+    taskRef.current = task;
+    setStatus('running');
 
     task.on('state_changed',
       (snap) => {
-        const pct = Math.round((snap.bytesTransferred / snap.totalBytes) * 100);
-        setProgress(pct);
+        setProgress(Math.round((snap.bytesTransferred / snap.totalBytes) * 100));
+        setStatus(snap.state === 'paused' ? 'paused' : 'running');
       },
       (err: any) => {
-        if (watchdog.current) clearInterval(watchdog.current);
-        const msg = `${err?.code || 'storage/unknown'}: ${err?.message || 'Upload failed'}`;
-        console.error('Storage error:', msg);
-        setLastError(msg);
         setStatus('error');
+        setLastError(`${err?.code || 'storage/unknown'}: ${err?.message || 'Upload failed'}`);
       },
       async () => {
-        if (watchdog.current) clearInterval(watchdog.current);
         const downloadURL = await getDownloadURL(task.snapshot.ref);
-        setUrl(downloadURL); setStatus('done');
+        setUrl(downloadURL);
+        setStatus('done');
       }
     );
-  }
+  }, []);
 
-  return { start, progress, status, url, lastError };
+  const pause = useCallback(() => {
+    taskRef.current?.pause();
+  }, []);
+
+  const resume = useCallback(() => {
+    taskRef.current?.resume();
+  }, []);
+
+  const cancel = useCallback(() => {
+    taskRef.current?.cancel(); // only on explicit user action
+  }, []);
+
+  return { start, pause, resume, cancel, progress, status, url, lastError };
 }
