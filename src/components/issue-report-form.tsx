@@ -1,11 +1,8 @@
 
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
-import { useActionState } from 'react';
-import { useFormStatus } from 'react-dom';
+import { useEffect, useState, useRef, useActionState } from 'react';
 import { submitIssue } from '@/lib/actions';
-import { useImageUpload } from '@/hooks/use-image-upload';
 
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -31,6 +28,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Progress } from './ui/progress';
+import { useFormStatus } from 'react-dom';
 
 function SubmitButton({ isUploading }: { isUploading: boolean }) {
   const { pending } = useFormStatus();
@@ -47,7 +45,6 @@ function SubmitButton({ isUploading }: { isUploading: boolean }) {
 
 export function IssueReportForm() {
   const [state, formAction] = useActionState(submitIssue, { success: false, message: '', errors: {} });
-  const { start: startUpload, progress, status, url: photoUrl, lastError } = useImageUpload();
   
   const [address, setAddress] = useState('');
   const [lat, setLat] = useState('');
@@ -58,6 +55,9 @@ export function IssueReportForm() {
   const [dialogTitle, setDialogTitle] = useState('');
   const [dialogDescription, setDialogDescription] = useState('');
   const [isLocating, setIsLocating] = useState(false);
+
+  const [uploadStatus, setUploadStatus] = useState<'idle' | 'running' | 'done' | 'error'>('idle');
+  const [uploadProgress, setUploadProgress] = useState(0); // Not used with server upload, but kept for potential future use
   
   const formRef = useRef<HTMLFormElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -68,6 +68,7 @@ export function IssueReportForm() {
     setLat('');
     setLng('');
     setHiddenPhotoUrl('');
+    setUploadStatus('idle');
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -118,29 +119,48 @@ export function IssueReportForm() {
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    
+    if (!file.type.startsWith('image/')) {
+        setDialogTitle('Upload Failed');
+        setDialogDescription('Only image files are allowed.');
+        setIsDialogOpen(true);
+        return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+        setDialogTitle('Upload Failed');
+        setDialogDescription('File size cannot exceed 10MB.');
+        setIsDialogOpen(true);
+        return;
+    }
+
+    setUploadStatus('running');
+    setHiddenPhotoUrl('');
+
+    const formData = new FormData();
+    formData.append('file', file);
 
     try {
-        await startUpload(file);
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+        cache: 'no-store',
+      });
+      
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Unknown upload error');
+      }
+      
+      setHiddenPhotoUrl(result.url);
+      setUploadStatus('done');
     } catch (err: any) {
-        setDialogTitle('Upload Failed');
-        setDialogDescription(err.message || 'The image could not be uploaded. Please try a different file or check your connection.');
-        setIsDialogOpen(true);
-    }
-  };
-
-  useEffect(() => {
-    if (status === 'done' && photoUrl) {
-      setHiddenPhotoUrl(photoUrl);
-    }
-  }, [status, photoUrl]);
-
-  useEffect(() => {
-    if (status === 'error') {
+      setUploadStatus('error');
       setDialogTitle('Upload Failed');
-      setDialogDescription(lastError || 'An unknown error occurred during upload.');
+      setDialogDescription(err.message || 'The image could not be uploaded. Please try a different file or check your connection.');
       setIsDialogOpen(true);
     }
-  }, [status, lastError]);
+  };
 
   useEffect(() => {
     if (state?.message) {
@@ -169,7 +189,7 @@ export function IssueReportForm() {
         
         <div className="space-y-2">
             <Label htmlFor="category">Category</Label>
-            <Select name="category">
+            <Select name="category" required>
                 <SelectTrigger id="category">
                     <SelectValue placeholder="Select an issue category" />
                 </SelectTrigger>
@@ -241,24 +261,24 @@ export function IssueReportForm() {
               className="pl-10"
               ref={fileInputRef}
               onChange={handleFileChange}
-              disabled={status === 'running'}
+              disabled={uploadStatus === 'running'}
             />
             <CameraIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
           </div>
           {state?.errors?.photoUrl && <p className="text-sm font-medium text-destructive">{state.errors.photoUrl[0]}</p>}
         </div>
         
-        {status === 'running' && (
+        {uploadStatus === 'running' && (
           <div className="space-y-2">
-            <Label>Upload Progress: {progress}%</Label>
-            <Progress value={progress} />
+            <Label>Upload Progress</Label>
+            <Progress value={100} className="animate-pulse" />
           </div>
         )}
 
-        {status === 'done' && photoUrl && (
+        {uploadStatus === 'done' && hiddenPhotoUrl && (
           <div className="relative h-48 w-full">
             <Image
-              src={photoUrl}
+              src={hiddenPhotoUrl}
               alt="Image preview"
               fill
               style={{ objectFit: 'cover' }}
@@ -268,7 +288,7 @@ export function IssueReportForm() {
           </div>
         )}
 
-        <SubmitButton isUploading={status === 'running'} />
+        <SubmitButton isUploading={uploadStatus === 'running'} />
       </form>
 
       <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
