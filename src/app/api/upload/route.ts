@@ -32,7 +32,6 @@ export async function POST(req: Request) {
     await obj.save(bytes, {
       contentType: file.type,
       metadata: { cacheControl: 'public,max-age=31536000,immutable' },
-      resumable: false, // Recommended for small files to avoid multi-part upload complexities
     });
     
     // Get a long-lived signed URL to access the file
