@@ -1,7 +1,6 @@
 
 import { NextResponse } from 'next/server';
-import { getAdminApp } from '@/lib/firebase-admin';
-import { getStorage } from 'firebase-admin/storage';
+import { adminBucket } from '@/lib/firebase-admin';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs'; // Ensure Node.js runtime, as Admin SDK is not compatible with Edge.
@@ -23,10 +22,7 @@ export async function POST(req: Request) {
     const bytes = Buffer.from(await file.arrayBuffer());
     const path = `issues/${crypto.randomUUID()}_${file.name}`;
     
-    // Get storage from the correctly initialized admin app
-    const storage = getStorage(getAdminApp());
-    // Call bucket() without arguments to use the default bucket specified in initializeApp
-    const bucket = storage.bucket();
+    const bucket = adminBucket();
     const obj = bucket.file(path);
     
     await obj.save(bytes, {
