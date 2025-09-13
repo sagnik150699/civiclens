@@ -28,6 +28,6 @@ export function getAdminApp(): App {
 
   return initializeApp({
     credential,
-    storageBucket: 'civiclens-bexm4.appspot.com',
+    storageBucket: 'civiclens-bexm4.firebasestorage.app',
   });
 }
