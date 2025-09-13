@@ -7,22 +7,30 @@ export function getAdminApp(): App {
     return apps[0];
   }
 
-  // This relies on the FIREBASE_SERVICE_ACCOUNT environment variable being set.
-  // It should contain the stringified JSON of your service account key.
-  if (!process.env.FIREBASE_SERVICE_ACCOUNT) {
-    throw new Error('FIREBASE_SERVICE_ACCOUNT environment variable is not set.');
-  }
-  const svc = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-
-  // Initialize the app with the service account credentials and the correct storage bucket.
-  return initializeApp({
-    credential: cert({
+  // This logic correctly handles various ways of providing credentials
+  // and was incorrectly replaced in previous attempts.
+  if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+    // This is the recommended approach for environments like Vercel.
+    const svc = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+    return initializeApp({
+      credential: cert({
+        projectId: svc.project_id,
+        clientEmail: svc.client_email,
+        privateKey: svc.private_key.replace(/\\n/g, '\n'),
+      }),
       projectId: svc.project_id,
-      clientEmail: svc.client_email,
-      // This replace() is critical for environments like Vercel that escape newlines.
-      privateKey: svc.private_key.replace(/\\n/g, '\n'),
-    }),
-    projectId: svc.project_id,
-    storageBucket: 'civiclens-bexm4.appspot.com',
-  });
+      storageBucket: 'civiclens-bexm4.appspot.com',
+    });
+  } else {
+    // This allows for local development using separate environment variables.
+    return initializeApp({
+      credential: cert({
+        projectId: process.env.FIREBASE_PROJECT_ID,
+        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+        privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+      }),
+      projectId: process.env.FIREBASE_PROJECT_ID,
+      storageBucket: 'civiclens-bexm4.appspot.com',
+    });
+  }
 }
