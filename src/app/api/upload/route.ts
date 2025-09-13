@@ -22,8 +22,8 @@ export async function POST(req: Request) {
     const bytes = Buffer.from(await file.arrayBuffer());
     const path = `issues/${crypto.randomUUID()}_${file.name}`;
     
-    // By not passing a bucket name, it will use the default bucket for the project.
-    const bucket = getStorage(getAdminApp()).bucket();
+    // Explicitly specify the correct bucket name.
+    const bucket = getStorage(getAdminApp()).bucket('civiclens-bexm4.firebasestorage.app');
     const obj = bucket.file(path);
     
     await obj.save(bytes, {
@@ -41,6 +41,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, url }, { status: 200 });
   } catch (e: any) {
     console.error('[api/upload] error:', e);
-    return NextResponse.json({ error: e?.message || 'Server failed to upload file.' }, { status: 500 });
+    return NextResponse.json({ error: e?.response?.data?.error || e?.message || 'Server failed to upload file.' }, { status: 500 });
   }
 }
