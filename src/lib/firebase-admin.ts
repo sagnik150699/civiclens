@@ -28,7 +28,6 @@ export function getAdminApp(): App {
 
   return initializeApp({
     credential,
-    // Explicitly set the correct storage bucket from the user's screenshot.
-    storageBucket: 'civiclens-bexm4.firebasestorage.app',
+    storageBucket: 'civiclens-bexm4.appspot.com',
   });
 }
