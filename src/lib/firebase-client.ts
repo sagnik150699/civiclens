@@ -11,8 +11,11 @@ const firebaseConfig: FirebaseOptions = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
+// Initialize Firebase
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const db = getFirestore(app);
-export const storage = getStorage(app);
 
-export { app, db, firebaseConfig };
+// Initialize Cloud Storage and get a reference to the service
+const storage = getStorage(app);
+
+export { app, db, storage, firebaseConfig };
