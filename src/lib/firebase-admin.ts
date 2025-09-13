@@ -32,4 +32,3 @@ export function getAdminApp(): App {
     storageBucket: 'civiclens-bexm4.appspot.com',
   });
 }
-
