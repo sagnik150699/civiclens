@@ -28,7 +28,7 @@ export function getAdminApp(): App {
 
   return initializeApp({
     credential,
-    // Explicitly set the correct storage bucket. This was a key part of the fix.
-    storageBucket: 'civiclens-bexm4.appspot.com',
+    // Explicitly set the correct storage bucket from the user's screenshot.
+    storageBucket: 'civiclens-bexm4.firebasestorage.app',
   });
 }
