@@ -48,6 +48,7 @@ function getAdminApp(): App {
   }
   return initializeApp({ 
     credential: buildCredential(),
+    projectId: FIREBASE_PROJECT_ID,
     storageBucket: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
   });
 }
