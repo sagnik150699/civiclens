@@ -1,55 +1,31 @@
 
-import { initializeApp, getApps, App, cert, applicationDefault } from 'firebase-admin/app';
-import { getFirestore } from 'firebase-admin/firestore';
+import { initializeApp, getApps, App, cert } from 'firebase-admin/app';
 import { getStorage } from 'firebase-admin/storage';
 import { getAuth } from 'firebase-admin/auth';
-
-const {
-  FIREBASE_PROJECT_ID,
-  FIREBASE_CLIENT_EMAIL,
-  FIREBASE_PRIVATE_KEY,
-  GOOGLE_APPLICATION_CREDENTIALS,
-  NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-} = process.env;
-
-function buildCredential() {
-  // Use ADC if explicitly configured or available in environment
-  if (GOOGLE_APPLICATION_CREDENTIALS && GOOGLE_APPLICATION_CREDENTIALS.trim() !== '') {
-    return applicationDefault();
-  }
-
-  if (!FIREBASE_PROJECT_ID || !FIREBASE_CLIENT_EMAIL || !FIREBASE_PRIVATE_KEY) {
-    const missing = [
-      !FIREBASE_PROJECT_ID && 'FIREBASE_PROJECT_ID',
-      !FIREBASE_CLIENT_EMAIL && 'FIREBASE_CLIENT_EMAIL',
-      !FIREBASE_PRIVATE_KEY && 'FIREBASE_PRIVATE_KEY',
-    ]
-      .filter(Boolean)
-      .join(', ');
-    throw new Error(
-      `Firebase Admin credentials missing: ${missing}. ` +
-      `Set GOOGLE_APPLICATION_CREDENTIALS for ADC or provide the three explicit env vars.`
-    );
-  }
-
-  const privateKey = FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n');
-
-  return cert({
-    projectId: FIREBASE_PROJECT_ID,
-    clientEmail: FIREBASE_CLIENT_EMAIL,
-    privateKey,
-  });
-}
+import { getFirestore } from 'firebase-admin/firestore';
 
 function getAdminApp(): App {
   const apps = getApps();
   if (apps.length) {
     return apps[0];
   }
-  return initializeApp({ 
-    credential: buildCredential(),
-    projectId: FIREBASE_PROJECT_ID,
-    storageBucket: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+
+  // Recommended: store the whole service account JSON in one env var
+  // e.g. FIREBASE_SERVICE_ACCOUNT (stringified JSON)
+  if (!process.env.FIREBASE_SERVICE_ACCOUNT) {
+    throw new Error('FIREBASE_SERVICE_ACCOUNT environment variable is not set.');
+  }
+  const svc = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+
+  return initializeApp({
+    credential: cert({
+      projectId: svc.project_id,
+      clientEmail: svc.client_email,
+      // Important on Vercel/similar environments: fix escaped newlines
+      privateKey: svc.private_key.replace(/\\n/g, '\n'),
+    }),
+    projectId: svc.project_id,
+    storageBucket: 'civiclens-bexm4.appspot.com',
   });
 }
 

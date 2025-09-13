@@ -4,6 +4,7 @@ import { getAdminApp } from '@/lib/firebase-admin';
 import { getStorage } from 'firebase-admin/storage';
 
 export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs'; // Ensure Node.js runtime, as Admin SDK is not compatible with Edge.
 
 export async function POST(req: Request) {
   try {
@@ -22,20 +23,22 @@ export async function POST(req: Request) {
     const bytes = Buffer.from(await file.arrayBuffer());
     const path = `issues/${crypto.randomUUID()}_${file.name}`;
     
-    // Explicitly specify the correct bucket name.
-    const bucket = getStorage(getAdminApp()).bucket('civiclens-bexm4.appspot.com');
+    // Get storage from the correctly initialized admin app
+    const storage = getStorage(getAdminApp());
+    // Call bucket() without arguments to use the default bucket specified in initializeApp
+    const bucket = storage.bucket();
     const obj = bucket.file(path);
     
     await obj.save(bytes, {
       contentType: file.type,
       metadata: { cacheControl: 'public,max-age=31536000,immutable' },
+      resumable: false, // Recommended for small files to avoid multi-part upload complexities
     });
     
-    // Although the file is public, using getSignedUrl is the most robust way
-    // to get a stable, accessible URL. We set an expiration date far in the future.
+    // Get a long-lived signed URL to access the file
     const [url] = await obj.getSignedUrl({
       action: 'read',
-      expires: '01-01-2100',
+      expires: '01-01-2100', // Far-future expiration date
     });
 
     return NextResponse.json({ ok: true, url }, { status: 200 });
