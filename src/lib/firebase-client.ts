@@ -19,3 +19,4 @@ const db = app ? null : null; // This is not used, but kept to avoid breaking im
 const storage = getStorage(app);
 
 export { app, db, storage, firebaseConfig };
+
