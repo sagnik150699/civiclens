@@ -1,30 +1,34 @@
 
-import { initializeApp, getApps, App, cert } from 'firebase-admin/app';
+import { initializeApp, getApps, App, cert, applicationDefault } from 'firebase-admin/app';
 
-// This function now STRICTLY requires the FIREBASE_SERVICE_ACCOUNT environment variable.
-// This is the most robust way to ensure correct authentication in all environments.
+// This function provides a robust way to initialize the Firebase Admin SDK.
+// It prioritizes a service account from an environment variable, but falls back
+// to Application Default Credentials, which works in many Google Cloud environments
+// and for local development with `gcloud auth application-default login`.
 export function getAdminApp(): App {
   if (getApps().length) {
     return getApps()[0];
   }
 
-  // If the service account JSON is not set, throw an error immediately.
-  // This prevents the SDK from falling back to incorrect default credentials.
-  if (!process.env.FIREBASE_SERVICE_ACCOUNT) {
-    throw new Error('FIREBASE_SERVICE_ACCOUNT environment variable is not set.');
-  }
+  const serviceAccountEnv = process.env.FIREBASE_SERVICE_ACCOUNT;
+  let credential;
 
-  const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-
-  // Vercel and other environments can escape newlines. This line fixes them.
-  if (serviceAccount.private_key) {
-      serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
+  if (serviceAccountEnv) {
+    // If the service account JSON is in an env var, parse it and use it.
+    const serviceAccount = JSON.parse(serviceAccountEnv);
+    // Vercel and other environments can escape newlines. This line fixes them.
+    if (serviceAccount.private_key) {
+        serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
+    }
+    credential = cert(serviceAccount);
+  } else {
+    // Otherwise, use Application Default Credentials.
+    credential = applicationDefault();
   }
 
   return initializeApp({
-    // Use the explicit service account credential.
-    credential: cert(serviceAccount),
-    // Use the correct storage bucket name identified from the Firebase config.
-    storageBucket: 'civiclens-bexm4.firebasestorage.app',
+    credential,
+    // Explicitly set the correct storage bucket. This was a key part of the fix.
+    storageBucket: 'civiclens-bexm4.appspot.com',
   });
 }
