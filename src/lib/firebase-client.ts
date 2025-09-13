@@ -17,4 +17,10 @@ const firebaseConfig = {
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const storage = getStorage(app);
 
+// Guard: log once in dev
+if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
+  console.log("[Web SDK] storageBucket =", firebaseConfig.storageBucket);
+}
+
+
 export { app, storage, firebaseConfig };

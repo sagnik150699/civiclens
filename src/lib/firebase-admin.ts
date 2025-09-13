@@ -2,13 +2,13 @@
 import { initializeApp, getApps, App, cert, applicationDefault } from 'firebase-admin/app';
 
 // This function provides a robust way to initialize the Firebase Admin SDK.
-// It prioritizes a service account from an environment variable, but falls back
-// to Application Default Credentials, which works in many Google Cloud environments
-// and for local development with `gcloud auth application-default login`.
 export function getAdminApp(): App {
   if (getApps().length) {
     return getApps()[0];
   }
+
+  const projectId = process.env.FIREBASE_PROJECT_ID || process.env.GCLOUD_PROJECT || "civiclens-bexm4";
+  const resolvedBucket = process.env.FIREBASE_STORAGE_BUCKET || "civiclens-bexm4.firebasestorage.app";
 
   const serviceAccountEnv = process.env.FIREBASE_SERVICE_ACCOUNT;
   let credential;
@@ -26,8 +26,12 @@ export function getAdminApp(): App {
     credential = applicationDefault();
   }
 
-  return initializeApp({
+  const app = initializeApp({
     credential,
-    storageBucket: 'civiclens-bexm4.firebasestorage.app',
+    projectId,
+    storageBucket: resolvedBucket,
   });
+  
+  console.log("[Admin Init] projectId:", projectId, "bucket:", resolvedBucket);
+  return app;
 }
