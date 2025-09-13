@@ -22,6 +22,7 @@ export async function POST(req: Request) {
     const bytes = Buffer.from(await file.arrayBuffer());
     const path = `issues/${crypto.randomUUID()}_${file.name}`;
     
+    // By not passing a bucket name, it will use the default bucket for the project.
     const bucket = getStorage(getAdminApp()).bucket();
     const obj = bucket.file(path);
     
