@@ -13,8 +13,8 @@ const firebaseConfig = {
   appId: "1:873086332859:web:8856f2a6ffa3f493ff5e9e"
 };
 
-let app: FirebaseApp;
-let storage: FirebaseStorage;
+let app: FirebaseApp | null = null;
+let storage: FirebaseStorage | null = null;
 
 // Initialize Firebase only on the client side
 if (typeof window !== "undefined") {
@@ -23,9 +23,14 @@ if (typeof window !== "undefined") {
 
   // Guard: log once in dev
   if (process.env.NODE_ENV === "development") {
-    console.log("[Web SDK] Initialized with explicit projectId:", firebaseConfig.projectId, "and storageBucket:", firebaseConfig.storageBucket);
+    // This check ensures we don't log on every hot-reload
+    if (!window.hasOwnProperty('__firebase_initialized__')) {
+      console.log("[Web SDK] Initialized with explicit projectId:", firebaseConfig.projectId, "and storageBucket:", firebaseConfig.storageBucket);
+      (window as any).__firebase_initialized__ = true;
+    }
   }
 }
 
 // Export the initialized services
 export { app, storage, firebaseConfig };
+
