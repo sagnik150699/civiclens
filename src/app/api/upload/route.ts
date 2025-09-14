@@ -23,15 +23,15 @@ export async function POST(req: Request) {
     const path = `issues/${crypto.randomUUID()}_${file.name}`;
     
     const bucket = adminBucket();
-    const obj = bucket.file(path);
+    const fileUpload = bucket.file(path);
     
-    await obj.save(bytes, {
+    await fileUpload.save(bytes, {
       contentType: file.type,
       metadata: { cacheControl: 'public,max-age=31536000,immutable' },
     });
     
     // Get a long-lived signed URL to access the file
-    const [url] = await obj.getSignedUrl({
+    const [url] = await fileUpload.getSignedUrl({
       action: 'read',
       expires: '01-01-2100', // Far-future expiration date
     });
