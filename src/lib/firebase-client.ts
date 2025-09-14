@@ -13,23 +13,23 @@ const firebaseConfig = {
   appId: "1:873086332859:web:8856f2a6ffa3f493ff5e9e"
 };
 
-let app: FirebaseApp | undefined;
-let storage: FirebaseStorage | undefined;
-
-// Initialize Firebase only on the client side
-if (typeof window !== "undefined") {
-  app = getApps().length ? getApp() : initializeApp(firebaseConfig);
-  storage = getStorage(app);
-
-  // Guard: log once in dev
-  if (process.env.NODE_ENV === "development") {
-    // This check ensures we don't log on every hot-reload
-    if (!window.hasOwnProperty('__firebase_initialized__')) {
-      console.log("[Web SDK] Initialized with explicit projectId:", firebaseConfig.projectId, "and storageBucket:", firebaseConfig.storageBucket);
-      (window as any).__firebase_initialized__ = true;
-    }
+// This function can be called from anywhere (client-side) to get the app instance.
+function getClientApp(): FirebaseApp {
+  if (getApps().length) {
+    return getApp();
   }
+  const app = initializeApp(firebaseConfig);
+  return app;
 }
 
-// Export the initialized services
-export { app, storage, firebaseConfig };
+// This function can be called from anywhere (client-side) to get the storage instance.
+function getClientStorage(): FirebaseStorage {
+    const app = getClientApp();
+    return getStorage(app);
+}
+
+// Export the functions that provide the initialized services.
+// Components should import these functions, not the variables.
+export const app = getClientApp();
+export const storage = getClientStorage();
+export { firebaseConfig };
