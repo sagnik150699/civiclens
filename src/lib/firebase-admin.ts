@@ -23,7 +23,7 @@ export function getAdminApp(): App {
   }
 
   const projectId = process.env.FIREBASE_PROJECT_ID || process.env.GCLOUD_PROJECT || "civiclens-bexm4";
-  const resolvedBucket = "civiclens-bexm4.firebasestorage.app";
+  const resolvedBucket = "civiclens-bexm4.appspot.com"; // Use the GCS-native bucket name.
 
   const serviceAccount = safeParseJSON(process.env.FIREBASE_SERVICE_ACCOUNT);
   
