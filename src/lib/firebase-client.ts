@@ -13,8 +13,8 @@ const firebaseConfig = {
   appId: "1:873086332859:web:8856f2a6ffa3f493ff5e9e"
 };
 
-let app: FirebaseApp;
-let storage: FirebaseStorage;
+let app: FirebaseApp | undefined;
+let storage: FirebaseStorage | undefined;
 
 // Initialize Firebase only on the client side
 if (typeof window !== "undefined") {
