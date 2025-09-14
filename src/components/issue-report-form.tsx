@@ -145,12 +145,21 @@ export function IssueReportForm() {
         body: formData,
         cache: 'no-store',
       });
-      
-      const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || 'Unknown upload error');
+        let errorResult;
+        try {
+          // Try to parse the error response as JSON
+          errorResult = await response.json();
+        } catch (e) {
+          // If parsing fails, use the response text as the error message
+          const text = await response.text();
+          throw new Error(text || `HTTP error! status: ${response.status}`);
+        }
+        throw new Error(errorResult.error || 'Unknown upload error');
       }
+      
+      const result = await response.json();
       
       setHiddenPhotoUrl(result.url);
       setUploadStatus('done');
