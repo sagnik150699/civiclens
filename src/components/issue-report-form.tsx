@@ -3,6 +3,8 @@
 
 import { useEffect, useState, useRef, useActionState } from 'react';
 import { submitIssue } from '@/lib/actions';
+import { storage } from '@/lib/firebase-client';
+import { ref as storageRef, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -57,7 +59,7 @@ export function IssueReportForm() {
   const [isLocating, setIsLocating] = useState(false);
 
   const [uploadStatus, setUploadStatus] = useState<'idle' | 'running' | 'done' | 'error'>('idle');
-  const [uploadProgress, setUploadProgress] = useState(0); // Not used with server upload, but kept for potential future use
+  const [uploadProgress, setUploadProgress] = useState(0);
   
   const formRef = useRef<HTMLFormElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -69,6 +71,7 @@ export function IssueReportForm() {
     setLng('');
     setHiddenPhotoUrl('');
     setUploadStatus('idle');
+    setUploadProgress(0);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -134,41 +137,32 @@ export function IssueReportForm() {
     }
 
     setUploadStatus('running');
+    setUploadProgress(0);
     setHiddenPhotoUrl('');
 
-    const formData = new FormData();
-    formData.append('file', file);
+    const filePath = `issues/${crypto.randomUUID()}_${file.name}`;
+    const fileStorageRef = storageRef(storage, filePath);
+    const uploadTask = uploadBytesResumable(fileStorageRef, file);
 
-    try {
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-        cache: 'no-store',
-      });
-
-      if (!response.ok) {
-        let errorResult;
-        try {
-          // Try to parse the error response as JSON
-          errorResult = await response.json();
-        } catch (e) {
-          // If parsing fails, use the response text as the error message
-          const text = await response.text();
-          throw new Error(text || `HTTP error! status: ${response.status}`);
-        }
-        throw new Error(errorResult.error || 'Unknown upload error');
+    uploadTask.on('state_changed',
+      (snapshot) => {
+        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+        setUploadProgress(progress);
+      }, 
+      (error) => {
+        console.error("Upload Error:", error);
+        setUploadStatus('error');
+        setDialogTitle('Upload Failed');
+        setDialogDescription(error.message || 'The image could not be uploaded. Please try again.');
+        setIsDialogOpen(true);
+      }, 
+      () => {
+        getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+          setHiddenPhotoUrl(downloadURL);
+          setUploadStatus('done');
+        });
       }
-      
-      const result = await response.json();
-      
-      setHiddenPhotoUrl(result.url);
-      setUploadStatus('done');
-    } catch (err: any) {
-      setUploadStatus('error');
-      setDialogTitle('Upload Failed');
-      setDialogDescription(err.message || 'The image could not be uploaded. Please try a different file or check your connection.');
-      setIsDialogOpen(true);
-    }
+    );
   };
 
   useEffect(() => {
@@ -280,7 +274,7 @@ export function IssueReportForm() {
         {uploadStatus === 'running' && (
           <div className="space-y-2">
             <Label>Upload Progress</Label>
-            <Progress value={100} className="animate-pulse" />
+            <Progress value={uploadProgress} />
           </div>
         )}
 
