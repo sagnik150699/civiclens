@@ -8,10 +8,8 @@ export function getAdminApp(): App {
     return getApps()[0];
   }
 
-  // --- Explicit Configuration ---
-  // The Admin SDK must use the .appspot.com GCS bucket name.
   const projectId = "civiclens-bexm4";
-  const storageBucket = "civiclens-bexm4.appspot.com"; 
+  const storageBucket = "civiclens-bexm4.firebasestorage.app"; 
 
   let credential;
   const serviceAccountEnv = process.env.FIREBASE_SERVICE_ACCOUNT;
