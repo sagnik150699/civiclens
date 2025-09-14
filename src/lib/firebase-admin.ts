@@ -23,17 +23,16 @@ export function getAdminApp(): App {
   }
 
   const projectId = process.env.FIREBASE_PROJECT_ID || process.env.GCLOUD_PROJECT || "civiclens-bexm4";
-  const resolvedBucket = "civiclens-bexm4.appspot.com"; // Use the GCS-native bucket name.
-
   const serviceAccount = safeParseJSON(process.env.FIREBASE_SERVICE_ACCOUNT);
   
+  // By not specifying storageBucket, we let the Admin SDK discover the default bucket for the project.
+  // This is the most robust method.
   const app = initializeApp({
     credential: serviceAccount ? cert(serviceAccount) : applicationDefault(),
     projectId,
-    storageBucket: resolvedBucket,
   });
   
-  console.log("[Admin Init] projectId:", projectId, "bucket:", resolvedBucket);
+  console.log("[Admin Init] Initialized with projectId:", projectId, "(Bucket will be auto-discovered)");
   return app;
 }
 
