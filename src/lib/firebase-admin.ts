@@ -2,37 +2,43 @@
 import { initializeApp, getApps, App, cert, applicationDefault } from 'firebase-admin/app';
 import { getStorage } from 'firebase-admin/storage';
 
-function safeParseJSON(str?: string) {
-  if (!str) return null;
-  try {
-    const parsed = JSON.parse(str);
-    // Vercel and other environments can escape newlines. This line fixes them.
-    if (parsed.private_key) {
-        parsed.private_key = parsed.private_key.replace(/\\n/g, '\n');
-    }
-    return parsed;
-  } catch {
-    return null;
-  }
-}
-
 // This function provides a robust way to initialize the Firebase Admin SDK.
 export function getAdminApp(): App {
   if (getApps().length) {
     return getApps()[0];
   }
 
-  const projectId = process.env.FIREBASE_PROJECT_ID || process.env.GCLOUD_PROJECT || "civiclens-bexm4";
-  const serviceAccount = safeParseJSON(process.env.FIREBASE_SERVICE_ACCOUNT);
+  // --- Explicit Configuration ---
+  // This configuration explicitly sets the project ID and storage bucket
+  // to the known correct values for this project, removing all ambiguity.
+  const projectId = "civiclens-bexm4";
+  const storageBucket = "civiclens-bexm4.firebasestorage.app";
+
+  let credential;
+  const serviceAccountEnv = process.env.FIREBASE_SERVICE_ACCOUNT;
+  if (serviceAccountEnv) {
+    try {
+        const serviceAccount = JSON.parse(serviceAccountEnv);
+        // Vercel and other environments can escape newlines. This line fixes them.
+        if (serviceAccount.private_key) {
+            serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
+        }
+        credential = cert(serviceAccount);
+    } catch (e) {
+        console.error("Failed to parse FIREBASE_SERVICE_ACCOUNT. Falling back to default credentials.", e);
+        credential = applicationDefault();
+    }
+  } else {
+    credential = applicationDefault();
+  }
   
-  // By not specifying storageBucket, we let the Admin SDK discover the default bucket for the project.
-  // This is the most robust method.
   const app = initializeApp({
-    credential: serviceAccount ? cert(serviceAccount) : applicationDefault(),
+    credential,
     projectId,
+    storageBucket,
   });
   
-  console.log("[Admin Init] Initialized with projectId:", projectId, "(Bucket will be auto-discovered)");
+  console.log("[Admin Init] Initialized with explicit projectId:", projectId, "and storageBucket:", storageBucket);
   return app;
 }
 
