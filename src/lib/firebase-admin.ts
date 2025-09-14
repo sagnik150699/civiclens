@@ -10,7 +10,6 @@ export function getAdminApp(): App {
 
   // --- Explicit Configuration ---
   // The Admin SDK must use the .appspot.com GCS bucket name.
-  // This is the definitive fix for the "bucket does not exist" error.
   const projectId = "civiclens-bexm4";
   const storageBucket = "civiclens-bexm4.appspot.com"; 
 
