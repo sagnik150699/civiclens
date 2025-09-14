@@ -9,16 +9,17 @@ export function getAdminApp(): App {
   }
 
   // --- Explicit Configuration ---
-  // This configuration explicitly sets the project ID and storage bucket
-  // to the known correct values for this project, removing all ambiguity.
+  // The Admin SDK must use the .appspot.com GCS bucket name.
+  // This is the definitive fix for the "bucket does not exist" error.
   const projectId = "civiclens-bexm4";
-  const storageBucket = "civiclens-bexm4.appspot.com"; // Use the .appspot.com format for Admin SDK
+  const storageBucket = "civiclens-bexm4.appspot.com"; 
 
   let credential;
   const serviceAccountEnv = process.env.FIREBASE_SERVICE_ACCOUNT;
+  
   if (serviceAccountEnv) {
     try {
-        const serviceAccount = JSON.parse(serviceAccountEnv);
+        let serviceAccount = JSON.parse(serviceAccountEnv);
         // Vercel and other environments can escape newlines. This line fixes them.
         if (serviceAccount.private_key) {
             serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
