@@ -9,26 +9,13 @@ export function getAdminApp(): App {
   }
 
   const projectId = "civiclens-bexm4";
-  const storageBucket = "civiclens-bexm4.firebasestorage.app"; 
+  // The .appspot.com format is the GCS bucket name, which is what the Admin SDK needs.
+  const storageBucket = "civiclens-bexm4.appspot.com"; 
 
-  let credential;
-  const serviceAccountEnv = process.env.FIREBASE_SERVICE_ACCOUNT;
-  
-  if (serviceAccountEnv) {
-    try {
-        let serviceAccount = JSON.parse(serviceAccountEnv);
-        // Vercel and other environments can escape newlines. This line fixes them.
-        if (serviceAccount.private_key) {
-            serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
-        }
-        credential = cert(serviceAccount);
-    } catch (e) {
-        console.error("Failed to parse FIREBASE_SERVICE_ACCOUNT. Falling back to default credentials.", e);
-        credential = applicationDefault();
-    }
-  } else {
-    credential = applicationDefault();
-  }
+  // When running in a Google Cloud environment (like App Hosting),
+  // it's best to use Application Default Credentials.
+  // The SDK will automatically find the correct service account.
+  const credential = applicationDefault();
   
   const app = initializeApp({
     credential,

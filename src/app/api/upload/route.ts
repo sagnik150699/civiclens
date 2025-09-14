@@ -38,8 +38,8 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ ok: true, url }, { status: 200 });
   } catch (e: any) {
-    console.error('[api/upload] error:', e);
-    const errorMessage = e.response?.data?.error?.message || e.message || 'Server failed to upload file.';
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
+    console.error('[api/upload] An internal error occurred:', e);
+    // Do not expose sensitive error details to the client
+    return NextResponse.json({ error: 'Server failed to upload file.' }, { status: 500 });
   }
 }
