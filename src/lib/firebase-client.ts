@@ -8,7 +8,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyAanUGeE4WzPNUCfx9d_KSM4vt5cZdStJg",
   authDomain: "civiclens-bexm4.firebaseapp.com",
   projectId: "civiclens-bexm4",
-  storageBucket: "civiclens-bexm4.firebasestorage.app",
+  storageBucket: "civiclens-bexm4.appspot.com", // Use the .appspot.com format for consistency
   messagingSenderId: "873086332859",
   appId: "1:873086332859:web:8856f2a6ffa3f493ff5e9e"
 };

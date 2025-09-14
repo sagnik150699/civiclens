@@ -12,7 +12,7 @@ export function getAdminApp(): App {
   // This configuration explicitly sets the project ID and storage bucket
   // to the known correct values for this project, removing all ambiguity.
   const projectId = "civiclens-bexm4";
-  const storageBucket = "civiclens-bexm4.firebasestorage.app";
+  const storageBucket = "civiclens-bexm4.appspot.com"; // Use the .appspot.com format for Admin SDK
 
   let credential;
   const serviceAccountEnv = process.env.FIREBASE_SERVICE_ACCOUNT;
