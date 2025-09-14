@@ -8,13 +8,13 @@ const firebaseConfig = {
   apiKey: "AIzaSyAanUGeE4WzPNUCfx9d_KSM4vt5cZdStJg",
   authDomain: "civiclens-bexm4.firebaseapp.com",
   projectId: "civiclens-bexm4",
-  storageBucket: "civiclens-bexm4.firebasestorage.app", 
+  storageBucket: "civiclens-bexm4.appspot.com", 
   messagingSenderId: "873086332859",
   appId: "1:873086332859:web:8856f2a6ffa3f493ff5e9e"
 };
 
-let app: FirebaseApp | null = null;
-let storage: FirebaseStorage | null = null;
+let app: FirebaseApp;
+let storage: FirebaseStorage;
 
 // Initialize Firebase only on the client side
 if (typeof window !== "undefined") {
@@ -33,4 +33,3 @@ if (typeof window !== "undefined") {
 
 // Export the initialized services
 export { app, storage, firebaseConfig };
-
