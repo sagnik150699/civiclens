@@ -22,8 +22,6 @@ try {
   db = getFirestore(app);
   bucket = getStorage(app).bucket();
 } catch (error) {
-    // This will now catch the actual Firebase error if credentials are placeholders
-    // and allow the app to start. The error will be handled in the server action.
     console.warn('Firebase Admin initialization failed. This may be due to placeholder credentials.');
 }
 
