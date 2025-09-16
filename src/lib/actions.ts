@@ -6,8 +6,8 @@ import { revalidatePath } from 'next/cache';
 import { ISSUE_STATUSES } from './constants';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import type { IssueStatus, IssueReport, IssueReportFirestore } from '@/lib/data';
-import { db } from '@/lib/server/firebase-admin';
+import type { IssueStatus, IssueReport } from '@/lib/data';
+import { mockIssues } from '@/lib/server/mock-db';
 
 const updateStatusSchema = z.object({
     id: z.string(),
@@ -15,28 +15,8 @@ const updateStatusSchema = z.object({
 })
 
 export async function getIssues(): Promise<IssueReport[]> {
-  // If db is not initialized, return empty array to prevent site crash
-  if (!db) {
-    console.log('Returning empty issues array because db is not initialized.');
-    return [];
-  }
-  try {
-    const snapshot = await db.collection('issues').orderBy('createdAt', 'desc').get();
-    if (snapshot.empty) {
-      return [];
-    }
-    return snapshot.docs.map(doc => {
-      const data = doc.data() as IssueReportFirestore;
-      return {
-        ...data,
-        id: doc.id,
-        createdAt: data.createdAt.toDate(),
-      };
-    });
-  } catch (error) {
-    console.error('Error fetching issues:', error);
-    return [];
-  }
+  // Returning mock data instead of trying to fetch from Firebase.
+  return Promise.resolve(mockIssues);
 }
 
 export async function updateIssueStatus(id: string, status: IssueStatus) {
@@ -46,23 +26,14 @@ export async function updateIssueStatus(id: string, status: IssueStatus) {
         return { success: false, message: "Invalid data provided."}
     }
     
-    // This will throw an error if db is not configured, which will be caught by Next.js
-    // and shown to the user in the logs.
-    if (!db) {
-        return { success: false, message: "Backend not configured. Missing Firebase Admin credentials." };
-    }
-
-    try {
-        const issueRef = db.collection('issues').doc(id);
-        await issueRef.update({ status });
-        
+    const issueIndex = mockIssues.findIndex(issue => issue.id === id);
+    if (issueIndex !== -1) {
+        mockIssues[issueIndex].status = status;
         revalidatePath('/admin');
         return { success: true, message: `Status updated to ${status}`};
-    } catch (error) {
-        console.error(error);
-        const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred.";
-        return { success: false, message: `Failed to update status: ${errorMessage}`}
     }
+
+    return { success: false, message: "Failed to update status: Issue not found."}
 }
 
 export async function login(prevState: any, formData: FormData) {
