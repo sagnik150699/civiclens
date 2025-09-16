@@ -4,17 +4,10 @@
 import { issueSchema } from '@/lib/schemas';
 import { revalidatePath } from 'next/cache';
 import type { IssueStatus, IssuePriority, IssueCategory } from './data';
-import { db } from './server/firebase-admin';
-import { FieldValue } from 'firebase-admin/firestore';
+import * as mockDb from './server/mock-db';
+
 
 export async function submitIssue(prevState: any, formData: FormData) {
-  if (!db) {
-    return { 
-      success: false, 
-      message: 'Backend not configured. Missing Firebase Admin credentials.',
-      errors: {} 
-    };
-  }
 
   try {
     const validatedFields = issueSchema.safeParse({
@@ -48,10 +41,9 @@ export async function submitIssue(prevState: any, formData: FormData) {
       status: 'Submitted' as IssueStatus,
       priority: 'Medium' as IssuePriority, // Default priority
       reason: 'Awaiting review', // Default reason
-      createdAt: FieldValue.serverTimestamp(),
     };
 
-    await db.collection('issues').add(newIssue);
+    mockDb.addIssue(newIssue);
 
     revalidatePath('/');
     revalidatePath('/admin');

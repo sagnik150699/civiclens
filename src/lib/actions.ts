@@ -6,32 +6,16 @@ import { revalidatePath } from 'next/cache';
 import { ISSUE_STATUSES } from './constants';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import type { IssueStatus, IssueReport, IssueReportFirestore } from '@/lib/data';
-import { db } from './server/firebase-admin';
-import { FieldValue } from 'firebase-admin/firestore';
+import type { IssueStatus } from '@/lib/data';
+import * as mockDb from './server/mock-db';
 
 const updateStatusSchema = z.object({
     id: z.string(),
     status: z.enum(ISSUE_STATUSES)
 })
 
-export async function getIssues(): Promise<IssueReport[]> {
-  if (!db) {
-    console.error("Firestore is not initialized.");
-    return [];
-  }
-  const snapshot = await db.collection('issues').orderBy('createdAt', 'desc').get();
-  if (snapshot.empty) {
-    return [];
-  }
-  return snapshot.docs.map(doc => {
-    const data = doc.data() as IssueReportFirestore;
-    return {
-      ...data,
-      id: doc.id,
-      createdAt: data.createdAt.toDate(),
-    };
-  });
+export async function getIssues() {
+  return mockDb.getIssues();
 }
 
 export async function updateIssueStatus(id: string, status: IssueStatus) {
@@ -41,18 +25,13 @@ export async function updateIssueStatus(id: string, status: IssueStatus) {
         return { success: false, message: "Invalid data provided."}
     }
     
-    if (!db) {
-        return { success: false, message: "Backend not configured. Missing Firebase Admin credentials." }
-    }
+    const success = mockDb.updateIssueStatus(id, status);
 
-    try {
-        const issueRef = db.collection('issues').doc(id);
-        await issueRef.update({ status });
+    if (success) {
         revalidatePath('/admin');
         return { success: true, message: `Status updated to ${status}`};
-    } catch (error) {
-        console.error("Error updating issue status:", error);
-        return { success: false, message: "Failed to update status in the database." };
+    } else {
+        return { success: false, message: "Failed to update status." };
     }
 }
 
