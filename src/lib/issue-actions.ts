@@ -3,10 +3,19 @@
 
 import { issueSchema } from '@/lib/schemas';
 import { revalidatePath } from 'next/cache';
-import type { IssueStatus, IssuePriority } from './data';
-import { mockIssues } from '@/lib/server/mock-db';
+import type { IssueStatus, IssuePriority, IssueCategory } from './data';
+import { db } from './server/firebase-admin';
+import { FieldValue } from 'firebase-admin/firestore';
 
 export async function submitIssue(prevState: any, formData: FormData) {
+  if (!db) {
+    return { 
+      success: false, 
+      message: 'Backend not configured. Missing Firebase Admin credentials.',
+      errors: {} 
+    };
+  }
+
   try {
     const validatedFields = issueSchema.safeParse({
       description: formData.get('description'),
@@ -25,29 +34,24 @@ export async function submitIssue(prevState: any, formData: FormData) {
       };
     }
 
-    const { description, category, address, lat, lng } = validatedFields.data;
+    const { description, category, address } = validatedFields.data;
     const photoUrl = validatedFields.data.photoUrl || null;
-
-    const location = {
-      lat: lat ? parseFloat(lat) : 34.0522 + (Math.random() - 0.5) * 0.1,
-      lng: lng ? parseFloat(lng) : -118.2437 + (Math.random() - 0.5) * 0.1,
-    };
+    const lat = validatedFields.data.lat ? parseFloat(validatedFields.data.lat) : 34.0522 + (Math.random() - 0.5) * 0.1;
+    const lng = validatedFields.data.lng ? parseFloat(validatedFields.data.lng) : -118.2437 + (Math.random() - 0.5) * 0.1;
 
     const newIssue = {
-      id: crypto.randomUUID(),
       description,
-      category,
-      location,
+      category: category as IssueCategory,
+      location: { lat, lng },
       address,
       photoUrl,
       status: 'Submitted' as IssueStatus,
-      priority: 'Medium' as IssuePriority,
-      reason: 'Awaiting review',
-      createdAt: new Date(),
+      priority: 'Medium' as IssuePriority, // Default priority
+      reason: 'Awaiting review', // Default reason
+      createdAt: FieldValue.serverTimestamp(),
     };
 
-    // Add to the in-memory mock database
-    mockIssues.unshift(newIssue);
+    await db.collection('issues').add(newIssue);
 
     revalidatePath('/');
     revalidatePath('/admin');

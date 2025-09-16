@@ -6,8 +6,9 @@ import { revalidatePath } from 'next/cache';
 import { ISSUE_STATUSES } from './constants';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import type { IssueStatus, IssueReport } from '@/lib/data';
-import { mockIssues } from '@/lib/server/mock-db';
+import type { IssueStatus, IssueReport, IssueReportFirestore } from '@/lib/data';
+import { db } from './server/firebase-admin';
+import { FieldValue } from 'firebase-admin/firestore';
 
 const updateStatusSchema = z.object({
     id: z.string(),
@@ -15,8 +16,22 @@ const updateStatusSchema = z.object({
 })
 
 export async function getIssues(): Promise<IssueReport[]> {
-  // Returning mock data instead of trying to fetch from Firebase.
-  return Promise.resolve(mockIssues);
+  if (!db) {
+    console.error("Firestore is not initialized.");
+    return [];
+  }
+  const snapshot = await db.collection('issues').orderBy('createdAt', 'desc').get();
+  if (snapshot.empty) {
+    return [];
+  }
+  return snapshot.docs.map(doc => {
+    const data = doc.data() as IssueReportFirestore;
+    return {
+      ...data,
+      id: doc.id,
+      createdAt: data.createdAt.toDate(),
+    };
+  });
 }
 
 export async function updateIssueStatus(id: string, status: IssueStatus) {
@@ -26,14 +41,19 @@ export async function updateIssueStatus(id: string, status: IssueStatus) {
         return { success: false, message: "Invalid data provided."}
     }
     
-    const issueIndex = mockIssues.findIndex(issue => issue.id === id);
-    if (issueIndex !== -1) {
-        mockIssues[issueIndex].status = status;
-        revalidatePath('/admin');
-        return { success: true, message: `Status updated to ${status}`};
+    if (!db) {
+        return { success: false, message: "Backend not configured. Missing Firebase Admin credentials." }
     }
 
-    return { success: false, message: "Failed to update status: Issue not found."}
+    try {
+        const issueRef = db.collection('issues').doc(id);
+        await issueRef.update({ status });
+        revalidatePath('/admin');
+        return { success: true, message: `Status updated to ${status}`};
+    } catch (error) {
+        console.error("Error updating issue status:", error);
+        return { success: false, message: "Failed to update status in the database." };
+    }
 }
 
 export async function login(prevState: any, formData: FormData) {
