@@ -60,7 +60,7 @@ export const getIssues = async (): Promise<import('./data').IssueReport[]> => {
       const issuesCollection = db.collection('issues');
       const q = issuesCollection.orderBy('createdAt', 'desc');
       const issuesSnapshot = await q.get();
-      const issuesList = issuesSnapshot.docs.map(doc => {
+      const issuesList = await Promise.all(issuesSnapshot.docs.map(async doc => {
         const data = doc.data();
         const { Timestamp } = await import('firebase-admin/firestore');
         return {
@@ -68,7 +68,7 @@ export const getIssues = async (): Promise<import('./data').IssueReport[]> => {
           ...data,
           createdAt: (data.createdAt as InstanceType<typeof Timestamp>).toDate(),
         } as unknown as import('./data').IssueReport;
-      });
+      }));
       return issuesList;
     } catch (error) {
       console.error('Error fetching issues from Firestore: ', error);
