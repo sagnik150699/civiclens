@@ -1,9 +1,10 @@
 
-import { initializeApp, getApps, App, cert, applicationDefault } from 'firebase-admin/app';
+import { initializeApp, getApps, App, applicationDefault } from 'firebase-admin/app';
 import { getStorage } from 'firebase-admin/storage';
 
 // This function provides a robust way to initialize the Firebase Admin SDK.
 export function getAdminApp(): App {
+  // Check if the app is already initialized to avoid errors.
   if (getApps().length) {
     return getApps()[0];
   }
@@ -17,6 +18,7 @@ export function getAdminApp(): App {
   // The SDK will automatically find the correct service account.
   const credential = applicationDefault();
   
+  // Initialize the app with the explicit configuration.
   const app = initializeApp({
     credential,
     projectId,
