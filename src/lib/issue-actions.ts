@@ -7,68 +7,69 @@ import { revalidatePath } from 'next/cache';
 import type { IssueStatus, IssuePriority } from './data';
 import { Timestamp } from 'firebase-admin/firestore';
 
-
 export async function submitIssue(prevState: any, formData: FormData) {
-    if (!db) {
-        return {
-            success: false,
-            message: 'Backend not configured. Missing Firebase Admin credentials.',
-            errors: {},
-        };
+  // First, check if the database connection is available.
+  if (!db) {
+    return {
+      success: false,
+      message: 'Backend not configured. Missing Firebase Admin credentials.',
+      errors: {},
+    };
+  }
+
+  // Wrap the entire operation in a try/catch to handle any unexpected errors.
+  try {
+    const validatedFields = issueSchema.safeParse({
+      description: formData.get('description'),
+      category: formData.get('category'),
+      photoUrl: formData.get('photoUrl'),
+      address: formData.get('address'),
+      lat: formData.get('lat'),
+      lng: formData.get('lng'),
+    });
+
+    if (!validatedFields.success) {
+      return {
+        success: false,
+        message: "Validation failed. Please check your inputs.",
+        errors: validatedFields.error.flatten().fieldErrors,
+      };
     }
 
-    try {
-        const validatedFields = issueSchema.safeParse({
-            description: formData.get('description'),
-            category: formData.get('category'),
-            photoUrl: formData.get('photoUrl'),
-            address: formData.get('address'),
-            lat: formData.get('lat'),
-            lng: formData.get('lng'),
-        });
+    const { description, category, address, lat, lng } = validatedFields.data;
+    const photoUrl = validatedFields.data.photoUrl || null;
 
-        if (!validatedFields.success) {
-            return {
-                success: false,
-                message: "Validation failed. Please check your inputs.",
-                errors: validatedFields.error.flatten().fieldErrors,
-            };
-        }
+    const location = {
+      lat: lat ? parseFloat(lat) : 34.0522 + (Math.random() - 0.5) * 0.1,
+      lng: lng ? parseFloat(lng) : -118.2437 + (Math.random() - 0.5) * 0.1,
+    };
+
+    const newIssue = {
+      description,
+      category,
+      location,
+      address,
+      photoUrl,
+      status: 'Submitted' as IssueStatus,
+      priority: 'Medium' as IssuePriority,
+      reason: 'Awaiting review',
+      createdAt: Timestamp.now(),
+    };
+
+    await db.collection('issues').add(newIssue);
+
+    revalidatePath('/');
+    revalidatePath('/admin');
+    return { success: true, message: 'Issue reported successfully! Our team will review it shortly.', errors: {} };
+
+  } catch (error) {
+    console.error("Error submitting issue:", error);
     
-        const { description, category, address, lat, lng } = validatedFields.data;
-        const photoUrl = validatedFields.data.photoUrl || null;
-
-        const location = {
-            lat: lat ? parseFloat(lat) : 34.0522 + (Math.random() - 0.5) * 0.1,
-            lng: lng ? parseFloat(lng) : -118.2437 + (Math.random() - 0.5) * 0.1,
-        };
-
-        const newIssue = {
-            description,
-            category,
-            location,
-            address,
-            photoUrl,
-            status: 'Submitted' as IssueStatus,
-            priority: 'Medium' as IssuePriority,
-            reason: 'Awaiting review',
-            createdAt: Timestamp.now(),
-        };
-
-        await db.collection('issues').add(newIssue);
-
-        revalidatePath('/');
-        revalidatePath('/admin');
-        return { success: true, message: 'Issue reported successfully! Our team will review it shortly.', errors: {} };
-
-    } catch (error) {
-        console.error("Error submitting issue:", error);
-        
-        const errorMessage = error instanceof Error ? error.message : 'An unexpected server error occurred. Please try again later.';
-        return { 
-            success: false, 
-            message: errorMessage, 
-            errors: {} 
-        };
-    }
+    const errorMessage = error instanceof Error ? error.message : 'An unexpected server error occurred. Please try again later.';
+    return { 
+      success: false, 
+      message: errorMessage, 
+      errors: {} 
+    };
+  }
 }
