@@ -3,23 +3,20 @@ import { initializeApp, getApps, App, applicationDefault } from 'firebase-admin/
 import { getFirestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
 
-// This function provides a robust way to initialize the Firebase Admin SDK.
+const FIREBASE_APP_NAME = 'firebase-admin-app-civiclens';
+
 export function getAdminApp(): App {
-  // Check if the app is already initialized to avoid errors.
-  if (getApps().length) {
-    return getApps()[0];
+  const apps = getApps();
+  const existingApp = apps.find(app => app.name === FIREBASE_APP_NAME);
+  if (existingApp) {
+    return existingApp;
   }
 
-  // When running in a Google Cloud environment (like App Hosting),
-  // it's best to use Application Default Credentials.
-  // The SDK will automatically find the correct service account.
-  const app = initializeApp({
+  return initializeApp({
     credential: applicationDefault(),
     projectId: 'civiclens-bexm4',
     storageBucket: 'civiclens-bexm4.appspot.com',
-  });
-  
-  return app;
+  }, FIREBASE_APP_NAME);
 }
 
 export function adminDb() {

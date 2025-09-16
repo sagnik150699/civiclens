@@ -2,7 +2,7 @@
 'use client';
 
 import { useEffect, useState, useRef, useActionState } from 'react';
-import { submitIssue } from '@/lib/actions';
+import { submitIssue } from '@/lib/issue-actions';
 import { storage } from '@/lib/firebase-client';
 import { ref as storageRef, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 
