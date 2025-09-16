@@ -1,3 +1,4 @@
+'use server';
 
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
@@ -5,10 +6,6 @@ import { ISSUE_CATEGORIES } from './constants';
 import { Timestamp } from 'firebase-admin/firestore';
 import type { IssueStatus } from '@/lib/data';
 import { db } from '@/lib/firebase-admin';
-
-export const runtime = 'nodejs';
-
-'use server';
 
 const issueSchema = z.object({
   description: z.string().min(10, 'Please provide a more detailed description.'),
