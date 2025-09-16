@@ -1,3 +1,4 @@
+
 'use server';
 
 import { z } from 'zod';
@@ -6,7 +7,7 @@ import { ISSUE_STATUSES } from './constants';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import type { IssueStatus } from '@/lib/data';
-import { adminDb } from '@/lib/firebase-admin';
+import { db } from '@/lib/firebase-admin';
 
 const updateStatusSchema = z.object({
     id: z.string(),
@@ -21,7 +22,6 @@ export async function updateIssueStatus(id: string, status: IssueStatus) {
     }
 
     try {
-        const db = adminDb();
         const issueRef = db.collection('issues').doc(id);
         await issueRef.update({ status });
         
@@ -56,7 +56,6 @@ export async function logout() {
 
 export const getIssues = async (): Promise<import('./data').IssueReport[]> => {
     try {
-      const db = adminDb();
       const issuesCollection = db.collection('issues');
       const q = issuesCollection.orderBy('createdAt', 'desc');
       const issuesSnapshot = await q.get();
