@@ -1,38 +1,32 @@
 
 'server-only';
-import { initializeApp, getApps, App, cert, type AppOptions } from 'firebase-admin/app';
-import { getFirestore, Firestore } from 'firebase-admin/firestore';
+import { initializeApp, getApps, cert, type AppOptions } from 'firebase-admin/app';
+import { getFirestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
 import { firebaseCredentials } from './credentials';
 
-
-let db: Firestore | null = null;
-let bucket = null;
+let db: ReturnType<typeof getFirestore> | null = null;
+let bucket: ReturnType<typeof getStorage>['bucket'] | null = null;
 
 try {
-  // Hardcode credentials from the credentials.ts file
-  const creds = firebaseCredentials;
+  const appOptions: AppOptions = {
+    credential: cert({
+      projectId: firebaseCredentials.projectId,
+      clientEmail: firebaseCredentials.clientEmail,
+      privateKey: firebaseCredentials.privateKey,
+    }),
+    storageBucket: 'civiclens-bexm4.appspot.com',
+  };
 
-  if (creds && creds.projectId && creds.clientEmail && creds.privateKey && !creds.projectId.includes('your-project-id')) {
-    const appOptions: AppOptions = {
-      credential: cert({
-        projectId: creds.projectId,
-        clientEmail: creds.clientEmail,
-        privateKey: creds.privateKey,
-      }),
-      storageBucket: 'civiclens-bexm4.appspot.com',
-    };
-    
-    const app = getApps()[0] ?? initializeApp(appOptions);
+  const app = getApps()[0] ?? initializeApp(appOptions);
 
-    db = getFirestore(app);
-    bucket = getStorage(app).bucket();
-  } else {
-    console.warn("Firebase Admin credentials not found or are placeholders in src/lib/server/credentials.ts. Please add them to enable backend functionality.");
-  }
-
+  db = getFirestore(app);
+  bucket = getStorage(app).bucket();
 } catch (error) {
-    console.error("Failed to initialize Firebase Admin SDK:", error);
+  console.warn(
+    'Firebase Admin initialization failed. This is expected if credentials are not configured. ' +
+    'The app will continue to run, but backend features will be disabled.'
+  );
 }
 
 export { db, bucket };
