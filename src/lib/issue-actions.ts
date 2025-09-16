@@ -9,7 +9,6 @@ import { Timestamp } from 'firebase-admin/firestore';
 
 
 export async function submitIssue(prevState: any, formData: FormData) {
-    
     try {
         if (!db) {
             return {
@@ -30,9 +29,9 @@ export async function submitIssue(prevState: any, formData: FormData) {
 
         if (!validatedFields.success) {
             return {
-            success: false,
-            message: "Validation failed. Please check your inputs.",
-            errors: validatedFields.error.flatten().fieldErrors,
+                success: false,
+                message: "Validation failed. Please check your inputs.",
+                errors: validatedFields.error.flatten().fieldErrors,
             };
         }
     
@@ -40,8 +39,8 @@ export async function submitIssue(prevState: any, formData: FormData) {
         const photoUrl = validatedFields.data.photoUrl || null;
 
         const location = {
-        lat: lat ? parseFloat(lat) : 34.0522 + (Math.random() - 0.5) * 0.1,
-        lng: lng ? parseFloat(lng) : -118.2437 + (Math.random() - 0.5) * 0.1,
+            lat: lat ? parseFloat(lat) : 34.0522 + (Math.random() - 0.5) * 0.1,
+            lng: lng ? parseFloat(lng) : -118.2437 + (Math.random() - 0.5) * 0.1,
         };
 
         const newIssue = {
@@ -64,13 +63,12 @@ export async function submitIssue(prevState: any, formData: FormData) {
 
     } catch (error) {
         console.error("Error submitting issue:", error);
-        const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred.';
         
         // Return a user-friendly error message that can be displayed in the UI
-        if (errorMessage.includes('Firebase Admin credentials missing')) {
-             return { success: false, message: 'Server configuration error. Please contact the administrator.', errors: {} };
-        }
-
-        return { success: false, message: `Submission failed: ${errorMessage}`, errors: {} };
+        return { 
+            success: false, 
+            message: 'Server configuration error. Please try again later.', 
+            errors: {} 
+        };
     }
 }
