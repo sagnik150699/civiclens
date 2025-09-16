@@ -8,6 +8,14 @@ import { issueSchema } from '@/lib/schemas';
 
 export async function submitIssue(prevState: any, formData: FormData) {
     
+    if (!db) {
+        return {
+            success: false,
+            message: 'Backend not configured. Missing Firebase Admin credentials.',
+            errors: {},
+        }
+    }
+
     const validatedFields = issueSchema.safeParse({
         description: formData.get('description'),
         category: formData.get('category'),

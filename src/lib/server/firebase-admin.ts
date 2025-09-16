@@ -1,22 +1,28 @@
-'use server';
-
 import { initializeApp, getApps, App, cert, type AppOptions } from 'firebase-admin/app';
-import { getFirestore } from 'firebase-admin/firestore';
+import { getFirestore, Firestore } from 'firebase-admin/firestore';
 
-const projectId = process.env.FIREBASE_PROJECT_ID;
-const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-// Vercel/Firebase App Hosting stores multiline envs escaped; fix newlines:
-const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
+let db: Firestore | null = null;
 
-if (!projectId || !clientEmail || !privateKey) {
-  // Fail fast so you notice missing envs at build/runtime
-  throw new Error('Missing Firebase Admin env vars (FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY).');
+try {
+    const projectId = process.env.FIREBASE_PROJECT_ID;
+    const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+    // Vercel/Firebase App Hosting stores multiline envs escaped; fix newlines:
+    const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
+
+    if (!projectId || !clientEmail || !privateKey) {
+        console.warn('Firebase Admin environment variables not set. App will not be able to connect to Firestore. Please set FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, and FIREBASE_PRIVATE_KEY.');
+    } else {
+        const app =
+        getApps()[0] ??
+        initializeApp({
+            credential: cert({ projectId, clientEmail, privateKey }),
+        } as AppOptions);
+
+        db = getFirestore(app);
+    }
+} catch (error) {
+    console.error("Failed to initialize Firebase Admin SDK:", error);
 }
 
-const app =
-  getApps()[0] ??
-  initializeApp({
-    credential: cert({ projectId, clientEmail, privateKey }),
-  } as AppOptions);
 
-export const db = getFirestore(app);
+export { db };
