@@ -1,27 +1,12 @@
 'use server';
 
-import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import { ISSUE_CATEGORIES } from './constants';
 import { Timestamp } from 'firebase-admin/firestore';
 import type { IssueStatus } from '@/lib/data';
-import { db } from '@/lib/firebase-admin';
+import { db } from '@/lib/server/firebase-admin';
+import { issueSchema } from '@/lib/schemas';
 
-const issueSchema = z.object({
-  description: z.string().min(10, 'Please provide a more detailed description.'),
-  category: z.enum(ISSUE_CATEGORIES.map(c => c.value) as [string, ...string[]], {
-    errorMap: () => ({ message: "Please select a category." }),
-  }),
-  photoUrl: z.string().url('Invalid URL format.').optional().or(z.literal('')),
-  address: z.string().min(1, 'Address is required.'),
-  lat: z.string().optional(),
-  lng: z.string().optional(),
-});
-
-export async function submitIssue(prevState: any, formData: FormData | null) {
-    if (!formData) {
-        return { success: false, message: '', errors: {} };
-    }
+export async function submitIssue(prevState: any, formData: FormData) {
     
     const validatedFields = issueSchema.safeParse({
         description: formData.get('description'),

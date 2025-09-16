@@ -6,13 +6,33 @@ import { revalidatePath } from 'next/cache';
 import { ISSUE_STATUSES } from './constants';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import type { IssueStatus } from '@/lib/data';
-import { db } from '@/lib/firebase-admin';
+import type { IssueStatus, IssueReport, IssueReportFirestore } from '@/lib/data';
+import { db } from '@/lib/server/firebase-admin';
 
 const updateStatusSchema = z.object({
     id: z.string(),
     status: z.enum(ISSUE_STATUSES)
 })
+
+export async function getIssues(): Promise<IssueReport[]> {
+  try {
+    const snapshot = await db.collection('issues').orderBy('createdAt', 'desc').get();
+    if (snapshot.empty) {
+      return [];
+    }
+    return snapshot.docs.map(doc => {
+      const data = doc.data() as IssueReportFirestore;
+      return {
+        ...data,
+        id: doc.id,
+        createdAt: data.createdAt.toDate(),
+      };
+    });
+  } catch (error) {
+    console.error('Error fetching issues:', error);
+    return [];
+  }
+}
 
 export async function updateIssueStatus(id: string, status: IssueStatus) {
     const validated = updateStatusSchema.safeParse({id, status});
@@ -53,24 +73,3 @@ export async function logout() {
   cookies().set('session', '', { expires: new Date(0) });
   redirect(`/login`);
 }
-
-export const getIssues = async (): Promise<import('./data').IssueReport[]> => {
-    try {
-      const issuesCollection = db.collection('issues');
-      const q = issuesCollection.orderBy('createdAt', 'desc');
-      const issuesSnapshot = await q.get();
-      const issuesList = await Promise.all(issuesSnapshot.docs.map(async doc => {
-        const data = doc.data();
-        const { Timestamp } = await import('firebase-admin/firestore');
-        return {
-          id: doc.id,
-          ...data,
-          createdAt: (data.createdAt as InstanceType<typeof Timestamp>).toDate(),
-        } as unknown as import('./data').IssueReport;
-      }));
-      return issuesList;
-    } catch (error) {
-      console.error('Error fetching issues from Firestore: ', error);
-      return [];
-    }
-  };
