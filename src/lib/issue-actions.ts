@@ -9,15 +9,15 @@ import { Timestamp } from 'firebase-admin/firestore';
 
 
 export async function submitIssue(prevState: any, formData: FormData) {
-    try {
-        if (!db) {
-            return {
-                success: false,
-                message: 'Backend not configured. Missing Firebase Admin credentials.',
-                errors: {},
-            }
+    if (!db) {
+        return {
+            success: false,
+            message: 'Backend not configured. Missing Firebase Admin credentials.',
+            errors: {},
         }
+    }
 
+    try {
         const validatedFields = issueSchema.safeParse({
             description: formData.get('description'),
             category: formData.get('category'),
@@ -64,10 +64,10 @@ export async function submitIssue(prevState: any, formData: FormData) {
     } catch (error) {
         console.error("Error submitting issue:", error);
         
-        // Return a user-friendly error message that can be displayed in the UI
+        const errorMessage = error instanceof Error ? error.message : 'An unknown server error occurred.';
         return { 
             success: false, 
-            message: 'Server configuration error. Please try again later.', 
+            message: errorMessage, 
             errors: {} 
         };
     }
