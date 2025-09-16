@@ -4,20 +4,20 @@
 import { db } from '@/lib/server/firebase-admin';
 import { issueSchema } from '@/lib/schemas';
 import { revalidatePath } from 'next/cache';
-import type { IssueStatus } from './data';
+import type { IssueStatus, IssuePriority } from './data';
 import { Timestamp } from 'firebase-admin/firestore';
 
 
 export async function submitIssue(prevState: any, formData: FormData) {
-    if (!db) {
-        return {
-            success: false,
-            message: 'Backend not configured. Missing Firebase Admin credentials.',
-            errors: {},
-        }
-    }
-
     try {
+        if (!db) {
+            return {
+                success: false,
+                message: 'Backend not configured. Missing Firebase Admin credentials.',
+                errors: {},
+            }
+        }
+        
         const validatedFields = issueSchema.safeParse({
             description: formData.get('description'),
             category: formData.get('category'),
@@ -47,10 +47,10 @@ export async function submitIssue(prevState: any, formData: FormData) {
             description,
             category,
             location,
+            address,
             photoUrl,
             status: 'Submitted' as IssueStatus,
-            priority: 'Medium' as const,
-            address: address,
+            priority: 'Medium' as IssuePriority,
             reason: 'Awaiting review',
             createdAt: Timestamp.now(),
         };

@@ -1,5 +1,5 @@
 
-'use server';
+'server-only';
 import { initializeApp, getApps, App, cert, type AppOptions } from 'firebase-admin/app';
 import { getFirestore, Firestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
