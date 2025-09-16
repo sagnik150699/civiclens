@@ -1,4 +1,3 @@
-
 'server-only';
 import { initializeApp, getApps, cert, type AppOptions } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
@@ -23,10 +22,9 @@ try {
   db = getFirestore(app);
   bucket = getStorage(app).bucket();
 } catch (error) {
-  console.warn(
-    'Firebase Admin initialization failed. This is expected if credentials are not configured. ' +
-    'The app will continue to run, but backend features will be disabled.'
-  );
+    // This will now catch the actual Firebase error if credentials are placeholders
+    // and allow the app to start. The error will be handled in the server action.
+    console.warn('Firebase Admin initialization failed. This may be due to placeholder credentials.');
 }
 
 export { db, bucket };
