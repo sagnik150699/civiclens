@@ -15,6 +15,10 @@ const updateStatusSchema = z.object({
 })
 
 export async function getIssues(): Promise<IssueReport[]> {
+  if (!db) {
+    console.log('Returning empty issues array because db is not initialized.');
+    return [];
+  }
   try {
     const snapshot = await db.collection('issues').orderBy('createdAt', 'desc').get();
     if (snapshot.empty) {
@@ -35,6 +39,10 @@ export async function getIssues(): Promise<IssueReport[]> {
 }
 
 export async function updateIssueStatus(id: string, status: IssueStatus) {
+    if (!db) {
+        return { success: false, message: "Backend not configured. Missing Firebase Admin credentials." };
+    }
+
     const validated = updateStatusSchema.safeParse({id, status});
 
     if (!validated.success) {
