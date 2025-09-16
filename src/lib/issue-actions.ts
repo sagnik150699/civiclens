@@ -8,7 +8,8 @@ import type { IssueStatus, IssuePriority } from './data';
 import { Timestamp } from 'firebase-admin/firestore';
 
 export async function submitIssue(prevState: any, formData: FormData) {
-  // First, check if the database connection is available.
+  // This will throw an error if db is not configured, which will be caught by Next.js
+  // and shown to the user in the logs.
   if (!db) {
     return {
       success: false,

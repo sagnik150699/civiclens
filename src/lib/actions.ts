@@ -15,6 +15,7 @@ const updateStatusSchema = z.object({
 })
 
 export async function getIssues(): Promise<IssueReport[]> {
+  // If db is not initialized, return empty array to prevent site crash
   if (!db) {
     console.log('Returning empty issues array because db is not initialized.');
     return [];
@@ -39,14 +40,16 @@ export async function getIssues(): Promise<IssueReport[]> {
 }
 
 export async function updateIssueStatus(id: string, status: IssueStatus) {
-    if (!db) {
-        return { success: false, message: "Backend not configured. Missing Firebase Admin credentials." };
-    }
-
     const validated = updateStatusSchema.safeParse({id, status});
 
     if (!validated.success) {
         return { success: false, message: "Invalid data provided."}
+    }
+    
+    // This will throw an error if db is not configured, which will be caught by Next.js
+    // and shown to the user in the logs.
+    if (!db) {
+        return { success: false, message: "Backend not configured. Missing Firebase Admin credentials." };
     }
 
     try {
@@ -55,8 +58,7 @@ export async function updateIssueStatus(id: string, status: IssueStatus) {
         
         revalidatePath('/admin');
         return { success: true, message: `Status updated to ${status}`};
-    } catch (error)
-    {
+    } catch (error) {
         console.error(error);
         const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred.";
         return { success: false, message: `Failed to update status: ${errorMessage}`}

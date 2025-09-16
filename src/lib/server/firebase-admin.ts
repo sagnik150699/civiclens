@@ -18,23 +18,19 @@ try {
       credential: cert({
         projectId,
         clientEmail,
-        privateKey,
+        privateKey: privateKey.replace(/\\n/g, '\n'),
       }),
-      storageBucket: 'civiclens-bexm4.firebasestorage.app',
+      storageBucket: 'civiclens-bexm4.appspot.com',
     };
 
-    // Initialize the app if it doesn't already exist.
     const app = getApps().length ? getApps()[0] : initializeApp(appOptions);
     db = getFirestore(app);
     bucket = getStorage(app).bucket();
     
   } else {
-    // This warning will show in the server logs if credentials are not provided.
-    // The app will continue to run, but database operations will fail gracefully.
-    console.warn('Firebase Admin SDK not initialized. Required environment variables are missing. The app will not connect to the database.');
+    console.warn('Firebase Admin SDK not initialized. Required environment variables are missing.');
   }
 } catch (error) {
-  // Catch any unexpected errors during initialization.
   console.error('Firebase Admin initialization failed. Please check your environment variables and credentials.', error);
 }
 
