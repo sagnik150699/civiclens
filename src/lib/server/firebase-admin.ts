@@ -7,22 +7,28 @@ import { firebaseCredentials } from './credentials';
 let db: ReturnType<typeof getFirestore> | null = null;
 let bucket: ReturnType<typeof getStorage>['bucket'] | null = null;
 
-try {
-  const appOptions: AppOptions = {
-    credential: cert({
-      projectId: firebaseCredentials.projectId,
-      clientEmail: firebaseCredentials.clientEmail,
-      privateKey: firebaseCredentials.privateKey,
-    }),
-    storageBucket: 'civiclens-bexm4.appspot.com',
-  };
+// This code will only run if the placeholder credentials have been replaced.
+if (firebaseCredentials.projectId !== "your-project-id" && firebaseCredentials.clientEmail !== "your-client-email@your-project-id.iam.gserviceaccount.com") {
+    try {
+      const appOptions: AppOptions = {
+        credential: cert({
+          projectId: firebaseCredentials.projectId,
+          clientEmail: firebaseCredentials.clientEmail,
+          privateKey: firebaseCredentials.privateKey,
+        }),
+        storageBucket: 'civiclens-bexm4.appspot.com',
+      };
 
-  const app = getApps()[0] ?? initializeApp(appOptions);
+      const app = getApps()[0] ?? initializeApp(appOptions);
 
-  db = getFirestore(app);
-  bucket = getStorage(app).bucket();
-} catch (error) {
-    console.warn('Firebase Admin initialization failed. This may be due to placeholder credentials.');
+      db = getFirestore(app);
+      bucket = getStorage(app).bucket();
+    } catch (error) {
+        console.error('Firebase Admin initialization failed. Please check your credentials.', error);
+    }
+} else {
+    console.warn('Firebase Admin SDK not initialized. Using placeholder credentials.');
 }
+
 
 export { db, bucket };
