@@ -31,10 +31,11 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Progress } from './ui/progress';
 import { useFormStatus } from 'react-dom';
+import { Checkbox } from './ui/checkbox';
 
-function SubmitButton({ isUploading }: { isUploading: boolean }) {
+function SubmitButton({ isUploading, isCaptchaVerified }: { isUploading: boolean, isCaptchaVerified: boolean }) {
   const { pending } = useFormStatus();
-  const isDisabled = pending || isUploading;
+  const isDisabled = pending || isUploading || !isCaptchaVerified;
 
   return (
     <Button type="submit" className="w-full" disabled={isDisabled}>
@@ -57,6 +58,7 @@ export function IssueReportForm() {
   const [dialogTitle, setDialogTitle] = useState('');
   const [dialogDescription, setDialogDescription] = useState('');
   const [isLocating, setIsLocating] = useState(false);
+  const [isCaptchaVerified, setIsCaptchaVerified] = useState(false);
 
   const [uploadStatus, setUploadStatus] = useState<'idle' | 'running' | 'done' | 'error'>('idle');
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -72,6 +74,9 @@ export function IssueReportForm() {
     setHiddenPhotoUrl('');
     setUploadStatus('idle');
     setUploadProgress(0);
+    setIsCaptchaVerified(false);
+    const captchaCheckbox = document.getElementById('captcha') as HTMLInputElement;
+    if (captchaCheckbox) captchaCheckbox.checked = false;
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -291,7 +296,17 @@ export function IssueReportForm() {
           </div>
         )}
 
-        <SubmitButton isUploading={uploadStatus === 'running'} />
+        <div className="flex items-center space-x-2">
+          <Checkbox id="captcha" onCheckedChange={(checked) => setIsCaptchaVerified(checked as boolean)} />
+          <Label
+            htmlFor="captcha"
+            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+          >
+            I am not a robot
+          </Label>
+        </div>
+
+        <SubmitButton isUploading={uploadStatus === 'running'} isCaptchaVerified={isCaptchaVerified} />
       </form>
 
       <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
