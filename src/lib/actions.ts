@@ -7,7 +7,7 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { collection, getDocs, doc, updateDoc, orderBy, query } from 'firebase/firestore';
 
-import { db } from '@/lib/server/firebase-admin';
+import { getFirebaseAdmin } from '@/lib/server/firebase-admin';
 import type { IssueReport, IssueStatus } from '@/lib/data';
 import { ISSUE_STATUSES } from './constants';
 
@@ -20,6 +20,7 @@ const updateStatusSchema = z.object({
 
 export async function getIssues(): Promise<IssueReport[]> {
   try {
+    const { db } = getFirebaseAdmin();
     const issuesCollection = collection(db, 'issues');
     const q = query(issuesCollection, orderBy('createdAt', 'desc'));
     const issuesSnapshot = await getDocs(q);
@@ -59,6 +60,7 @@ export async function updateIssueStatus(id: string, status: IssueStatus) {
     }
     
     try {
+        const { db } = getFirebaseAdmin();
         const issueRef = doc(db, 'issues', id);
         await updateDoc(issueRef, { status: status });
         

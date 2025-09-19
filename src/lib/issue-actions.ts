@@ -4,7 +4,7 @@
 import { issueSchema } from '@/lib/schemas';
 import { revalidatePath } from 'next/cache';
 import { collection, addDoc, Timestamp } from 'firebase/firestore';
-import { db, bucket } from '@/lib/server/firebase-admin';
+import { getFirebaseAdmin } from '@/lib/server/firebase-admin';
 import type { IssueStatus, IssuePriority, IssueCategory } from './data';
 import { randomUUID } from 'crypto';
 
@@ -13,12 +13,6 @@ export type IssueFormState = {
   message: string;
   errors?: Record<string, string[]>;
   uploadProgress?: number;
-};
-
-const initialState: IssueFormState = {
-  success: false,
-  message: '',
-  errors: {},
 };
 
 export async function submitIssue(prevState: IssueFormState, formData: FormData): Promise<IssueFormState> {
@@ -40,6 +34,7 @@ export async function submitIssue(prevState: IssueFormState, formData: FormData)
       };
     }
 
+    const { db, bucket } = getFirebaseAdmin();
     const { description, category, address, photo } = validatedFields.data;
     let photoUrl: string | null = null;
     
