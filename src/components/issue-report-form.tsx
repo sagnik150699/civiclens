@@ -145,29 +145,24 @@ export function IssueReportForm() {
     setUploadProgress(0);
     setHiddenPhotoUrl('');
 
-    const filePath = `issues/${crypto.randomUUID()}_${file.name}`;
-    const fileStorageRef = storageRef(storage, filePath);
-    const uploadTask = uploadBytesResumable(fileStorageRef, file);
-
-    uploadTask.on('state_changed',
-      (snapshot) => {
-        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+    // Simulate upload
+    const simulateUpload = () => {
+      let progress = 0;
+      const interval = setInterval(() => {
+        progress += 20;
         setUploadProgress(progress);
-      }, 
-      (error) => {
-        console.error("Upload Error:", error);
-        setUploadStatus('error');
-        setDialogTitle('Upload Failed');
-        setDialogDescription(error.message || 'The image could not be uploaded. Please try again.');
-        setIsDialogOpen(true);
-      }, 
-      () => {
-        getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
-          setHiddenPhotoUrl(downloadURL);
+        if (progress >= 100) {
+          clearInterval(interval);
+          // Use a random picsum photo for preview
+          const randomId = Math.floor(Math.random() * 1000);
+          const photoUrl = `https://picsum.photos/seed/${randomId}/600/400`;
+          setHiddenPhotoUrl(photoUrl);
           setUploadStatus('done');
-        });
-      }
-    );
+        }
+      }, 100);
+    };
+
+    simulateUpload();
   };
 
   useEffect(() => {
