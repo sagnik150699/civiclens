@@ -7,14 +7,14 @@ import type { IssueStatus, IssuePriority, IssueCategory } from './data';
 import * as mockDb from './server/mock-db';
 
 type IssueFormErrors = Record<string, string[]>;
-type IssueFormState = {
+export type IssueFormState = {
   success: boolean;
   message: string;
-  errors: IssueFormErrors;
+  errors?: IssueFormErrors;
 };
 
 
-export async function submitIssue(_prevState: IssueFormState, formData: FormData): Promise<IssueFormState> {
+export async function submitIssue(prevState: IssueFormState, formData: FormData): Promise<IssueFormState> {
 
   try {
     const validatedFields = issueSchema.safeParse({
@@ -36,8 +36,6 @@ export async function submitIssue(_prevState: IssueFormState, formData: FormData
 
     const { description, category, address } = validatedFields.data;
     const photoUrl = validatedFields.data.photoUrl || null;
-    // Use client-provided coordinates, or default to 0 if they are missing.
-    // Avoid using Math.random() on the server.
     const lat = validatedFields.data.lat ? parseFloat(validatedFields.data.lat) : 0;
     const lng = validatedFields.data.lng ? parseFloat(validatedFields.data.lng) : 0;
 
@@ -56,7 +54,7 @@ export async function submitIssue(_prevState: IssueFormState, formData: FormData
 
     revalidatePath('/');
     revalidatePath('/admin');
-    return { success: true, message: 'Issue reported successfully! Our team will review it shortly.', errors: {} };
+    return { success: true, message: 'Issue reported successfully! Our team will review it shortly.' };
 
   } catch (error) {
     console.error("Error submitting issue:", error);
@@ -65,7 +63,6 @@ export async function submitIssue(_prevState: IssueFormState, formData: FormData
     return {
       success: false,
       message: errorMessage,
-      errors: {}
     };
   }
 }

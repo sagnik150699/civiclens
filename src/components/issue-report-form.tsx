@@ -2,7 +2,7 @@
 'use client';
 
 import { useEffect, useState, useRef, useActionState } from 'react';
-import { submitIssue } from '@/lib/issue-actions';
+import { submitIssue, type IssueFormState } from '@/lib/issue-actions';
 
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -44,8 +44,14 @@ function SubmitButton({ isUploading, isCaptchaVerified }: { isUploading: boolean
   );
 }
 
+const initialState: IssueFormState = {
+    success: false,
+    message: '',
+    errors: {}
+};
+
 export function IssueReportForm() {
-  const [state, formAction] = useActionState(submitIssue, { success: false, message: '', errors: {} });
+  const [state, formAction] = useActionState(submitIssue, initialState);
   
   const [address, setAddress] = useState('');
   const [lat, setLat] = useState('');
