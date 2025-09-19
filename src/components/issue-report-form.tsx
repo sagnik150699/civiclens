@@ -44,7 +44,6 @@ const initialState: IssueFormState = {
     errors: {}
 };
 
-
 function SubmitButton({ isUploading, isCaptchaVerified }: { isUploading: boolean, isCaptchaVerified: boolean }) {
   const { pending } = useFormStatus();
   const isDisabled = pending || isUploading || !isCaptchaVerified;
@@ -77,6 +76,7 @@ export function IssueReportForm() {
   
   const formRef = useRef<HTMLFormElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const imageSeedRef = useRef<number | null>(null);
 
   const resetForm = () => {
     formRef.current?.reset();
@@ -87,6 +87,7 @@ export function IssueReportForm() {
     setUploadStatus('idle');
     setUploadProgress(0);
     setIsCaptchaVerified(false);
+    imageSeedRef.current = null;
     const captchaCheckbox = document.getElementById('captcha') as HTMLInputElement;
     if (captchaCheckbox) captchaCheckbox.checked = false;
     if (fileInputRef.current) {
@@ -138,7 +139,12 @@ export function IssueReportForm() {
   
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file) {
+        setUploadStatus('idle');
+        setHiddenPhotoUrl('');
+        imageSeedRef.current = null;
+        return;
+    }
     
     if (!file.type.startsWith('image/')) {
         setDialogTitle('Upload Failed');
@@ -157,9 +163,11 @@ export function IssueReportForm() {
     setUploadProgress(0);
     setHiddenPhotoUrl('');
 
-    // Use a random picsum photo for preview, but keep it consistent for this upload
-    const randomId = Math.floor(Math.random() * 1000);
-    const photoUrl = `https://picsum.photos/seed/${randomId}/600/400`;
+    // Set a consistent seed for this upload session
+    if (!imageSeedRef.current) {
+        imageSeedRef.current = Math.floor(Math.random() * 1000);
+    }
+    const photoUrl = `https://picsum.photos/seed/${imageSeedRef.current}/600/400`;
 
     // Simulate upload
     const simulateUpload = () => {
