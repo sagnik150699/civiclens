@@ -2,7 +2,7 @@
 'use client';
 
 import { useEffect, useState, useRef, useActionState } from 'react';
-import { submitIssue } from '@/lib/issue-actions';
+import { submitIssue, type IssueFormState } from '@/lib/issue-actions';
 
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -29,7 +29,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useFormStatus } from 'react-dom';
 import { Checkbox } from './ui/checkbox';
-import type { IssueFormState } from '@/lib/issue-actions';
+import { Progress } from './ui/progress';
 
 const initialState: IssueFormState = {
     success: false,
@@ -55,6 +55,7 @@ export function IssueReportForm() {
   const [lat, setLat] = useState('');
   const [lng, setLng] = useState('');
   const [photoUrl, setPhotoUrl] = useState('');
+  const [uploadProgress, setUploadProgress] = useState(0);
   
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [dialogTitle, setDialogTitle] = useState('');
@@ -73,6 +74,7 @@ export function IssueReportForm() {
     setLat('');
     setLng('');
     setPhotoUrl('');
+    setUploadProgress(0);
     setIsCaptchaVerified(false);
     
     if (existingPhotoUrlRef.current) {
@@ -165,6 +167,10 @@ export function IssueReportForm() {
         setIsDialogOpen(true);
       }
     }
+    if (state?.uploadProgress !== undefined) {
+      setUploadProgress(state.uploadProgress);
+    }
+
   }, [state]);
 
   // Clean up object URL on unmount
@@ -275,6 +281,10 @@ export function IssueReportForm() {
               className="rounded-md"
             />
           </div>
+        )}
+
+        {uploadProgress > 0 && uploadProgress < 100 && (
+          <Progress value={uploadProgress} className="w-full" />
         )}
 
         <div className="flex items-center space-x-2">
