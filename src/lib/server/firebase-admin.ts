@@ -23,7 +23,7 @@ export function getFirebaseAdmin(): FirebaseAdmin {
   const serviceAccount = {
     projectId: 'civiclens-bexm4',
     clientEmail: `firebase-adminsdk-v59j3@civiclens-bexm4.iam.gserviceaccount.com`,
-    privateKey: process.env.FIREBASE_PRIVATE_KEY,
+    privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
   };
 
   let app: App;
