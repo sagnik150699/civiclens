@@ -1,3 +1,6 @@
+
+'use server';
+
 import { initializeApp, getApps, getApp, type App } from 'firebase-admin/app';
 import { getFirestore, type Firestore } from 'firebase-admin/firestore';
 import { getStorage, type Storage } from 'firebase-admin/storage';
@@ -15,13 +18,23 @@ export function getFirebaseAdmin(): FirebaseAdmin {
     return admin;
   }
 
+  if (!process.env.FIREBASE_PRIVATE_KEY) {
+    throw new Error('FIREBASE_PRIVATE_KEY is not set in the environment variables.');
+  }
+
+  const serviceAccount = {
+    projectId: 'civiclens-bexm4',
+    clientEmail: `firebase-adminsdk-v59j3@civiclens-bexm4.iam.gserviceaccount.com`,
+    privateKey: process.env.FIREBASE_PRIVATE_KEY,
+  };
+
   let app: App;
   if (!getApps().length) {
     app = initializeApp({
       credential: {
-        projectId: 'civiclens-bexm4',
-        clientEmail: `firebase-adminsdk-v59j3@civiclens-bexm4.iam.gserviceaccount.com`,
-        privateKey: process.env.FIREBASE_PRIVATE_KEY!.replace(/\\n/g, '\n'),
+        projectId: serviceAccount.projectId,
+        clientEmail: serviceAccount.clientEmail,
+        privateKey: serviceAccount.privateKey,
       },
     });
   } else {
