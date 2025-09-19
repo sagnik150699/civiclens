@@ -16,14 +16,14 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const sessionCookie = cookieStore.get('session');
   let isLoggedIn = false;
   if (sessionCookie?.value) {
     try {
       const session = JSON.parse(sessionCookie.value);
       isLoggedIn = session.loggedIn === true;
-    } catch (e) {
+    } catch {
       isLoggedIn = false;
     }
   }

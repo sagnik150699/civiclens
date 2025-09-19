@@ -9,6 +9,8 @@ import { redirect } from 'next/navigation';
 import type { IssueStatus } from '@/lib/data';
 import * as mockDb from './server/mock-db';
 
+type AuthState = { success: boolean; message: string } | undefined;
+
 const updateStatusSchema = z.object({
     id: z.string(),
     status: z.enum(ISSUE_STATUSES)
@@ -35,14 +37,15 @@ export async function updateIssueStatus(id: string, status: IssueStatus) {
     }
 }
 
-export async function login(prevState: any, formData: FormData) {
+export async function login(_prevState: AuthState, formData: FormData): Promise<AuthState> {
   const email = formData.get('email') as string;
   const password = formData.get('password') as string;
 
   if (email === 'admin' && password === 'admin') {
     const sessionData = { user: 'admin', loggedIn: true };
     const expiresIn = 60 * 60 * 24 * 5 * 1000; // 5 days
-    cookies().set('session', JSON.stringify(sessionData), { maxAge: expiresIn, httpOnly: true, secure: process.env.NODE_ENV === 'production' });
+    const cookieStore = await cookies();
+    cookieStore.set('session', JSON.stringify(sessionData), { maxAge: expiresIn, httpOnly: true, secure: process.env.NODE_ENV === 'production' });
     redirect('/admin');
   } else {
       return { success: false, message: 'Invalid username or password.' };
@@ -50,6 +53,7 @@ export async function login(prevState: any, formData: FormData) {
 }
 
 export async function logout() {
-  cookies().set('session', '', { expires: new Date(0) });
+  const cookieStore = await cookies();
+  cookieStore.set('session', '', { expires: new Date(0) });
   redirect(`/login`);
 }

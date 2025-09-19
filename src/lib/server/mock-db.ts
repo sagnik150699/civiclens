@@ -1,6 +1,6 @@
 import type { IssueReport, IssueStatus } from '../data';
 
-let mockIssues: IssueReport[] = [
+const mockIssues: IssueReport[] = [
     {
         id: '1',
         description: 'Large pothole on the corner of Main and 1st.',

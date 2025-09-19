@@ -1,7 +1,10 @@
-import { Lightbulb, SprayCan, Trash2, type LucideIcon, MapPin, X, Car, TreeDeciduous, Footprints, Signpost, Droplets } from 'lucide-react';
+import type { ComponentType } from 'react';
+import { Lightbulb, SprayCan, Trash2, type LucideProps, MapPin, X, Car, TreeDeciduous, Footprints, Signpost, Droplets } from 'lucide-react';
 import { PotholeIcon } from '@/components/icons/pothole-icon';
 
-export const ISSUE_CATEGORIES: { value: string; label: string; icon: LucideIcon }[] = [
+type IconComponent = ComponentType<LucideProps>;
+
+export const ISSUE_CATEGORIES: { value: string; label: string; icon: IconComponent }[] = [
   { value: 'pothole', label: 'Pothole', icon: PotholeIcon },
   { value: 'streetlight_out', label: 'Streetlight Out', icon: Lightbulb },
   { value: 'trash_overflow', label: 'Trash Overflow', icon: Trash2 },
