@@ -36,8 +36,10 @@ export async function submitIssue(_prevState: IssueFormState, formData: FormData
 
     const { description, category, address } = validatedFields.data;
     const photoUrl = validatedFields.data.photoUrl || null;
-    const lat = validatedFields.data.lat ? parseFloat(validatedFields.data.lat) : 34.0522 + (Math.random() - 0.5) * 0.1;
-    const lng = validatedFields.data.lng ? parseFloat(validatedFields.data.lng) : -118.2437 + (Math.random() - 0.5) * 0.1;
+    // Use client-provided coordinates, or default to 0 if they are missing.
+    // Avoid using Math.random() on the server.
+    const lat = validatedFields.data.lat ? parseFloat(validatedFields.data.lat) : 0;
+    const lng = validatedFields.data.lng ? parseFloat(validatedFields.data.lng) : 0;
 
     const newIssue = {
       description,
