@@ -2,7 +2,7 @@
 'use client';
 
 import { useEffect, useState, useRef, useActionState } from 'react';
-import { submitIssue, type IssueFormState } from '@/lib/issue-actions';
+import { submitIssue } from '@/lib/issue-actions';
 
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -31,6 +31,20 @@ import { Progress } from './ui/progress';
 import { useFormStatus } from 'react-dom';
 import { Checkbox } from './ui/checkbox';
 
+type IssueFormErrors = Record<string, string[]>;
+export type IssueFormState = {
+  success: boolean;
+  message: string;
+  errors?: IssueFormErrors;
+};
+
+const initialState: IssueFormState = {
+    success: false,
+    message: '',
+    errors: {}
+};
+
+
 function SubmitButton({ isUploading, isCaptchaVerified }: { isUploading: boolean, isCaptchaVerified: boolean }) {
   const { pending } = useFormStatus();
   const isDisabled = pending || isUploading || !isCaptchaVerified;
@@ -43,12 +57,6 @@ function SubmitButton({ isUploading, isCaptchaVerified }: { isUploading: boolean
     </Button>
   );
 }
-
-const initialState: IssueFormState = {
-    success: false,
-    message: '',
-    errors: {}
-};
 
 export function IssueReportForm() {
   const [state, formAction] = useActionState(submitIssue, initialState);
