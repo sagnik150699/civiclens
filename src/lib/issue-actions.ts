@@ -4,19 +4,18 @@
 import { issueSchema } from '@/lib/schemas';
 import { revalidatePath } from 'next/cache';
 import { collection, addDoc, Timestamp } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, bucket } from '@/lib/server/firebase-admin';
-
 import type { IssueStatus, IssuePriority, IssueCategory } from './data';
+import { randomUUID } from 'crypto';
 
 export type IssueFormState = {
   success: boolean;
   message: string;
   errors?: Record<string, string[]>;
+  uploadProgress?: number;
 };
 
 export async function submitIssue(prevState: IssueFormState, formData: FormData): Promise<IssueFormState> {
-
   try {
     const validatedFields = issueSchema.safeParse({
       description: formData.get('description'),
@@ -30,7 +29,7 @@ export async function submitIssue(prevState: IssueFormState, formData: FormData)
     if (!validatedFields.success) {
       return {
         success: false,
-        message: "Validation failed. Please check your inputs.",
+        message: 'Validation failed. Please check your inputs.',
         errors: validatedFields.error.flatten().fieldErrors,
       };
     }
@@ -39,13 +38,18 @@ export async function submitIssue(prevState: IssueFormState, formData: FormData)
     let photoUrl: string | null = null;
     
     if (photo && photo.size > 0) {
-        const photoBuffer = Buffer.from(await photo.arrayBuffer());
-        const photoId = crypto.randomUUID();
-        const photoPath = `issues/${photoId}-${photo.name}`;
-        
-        const storageRef = ref(bucket.name, photoPath);
-        await uploadBytes(storageRef, photoBuffer, { contentType: photo.type });
-        photoUrl = await getDownloadURL(storageRef);
+      const photoBuffer = Buffer.from(await photo.arrayBuffer());
+      const photoId = randomUUID();
+      const photoPath = `issues/${photoId}-${photo.name}`;
+      const file = bucket.file(photoPath);
+
+      await file.save(photoBuffer, {
+        metadata: {
+          contentType: photo.type,
+        },
+      });
+
+      photoUrl = file.publicUrl();
     }
     
     const lat = validatedFields.data.lat ? parseFloat(validatedFields.data.lat) : 0;
@@ -70,7 +74,7 @@ export async function submitIssue(prevState: IssueFormState, formData: FormData)
     return { success: true, message: 'Issue reported successfully! Our team will review it shortly.' };
 
   } catch (error) {
-    console.error("Error submitting issue:", error);
+    console.error('Error submitting issue:', error);
     
     const errorMessage = error instanceof Error ? error.message : 'An unexpected server error occurred. Please try again later.';
     return {
