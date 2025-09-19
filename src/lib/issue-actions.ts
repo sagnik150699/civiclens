@@ -15,6 +15,12 @@ export type IssueFormState = {
   uploadProgress?: number;
 };
 
+const initialState: IssueFormState = {
+  success: false,
+  message: '',
+  errors: {},
+};
+
 export async function submitIssue(prevState: IssueFormState, formData: FormData): Promise<IssueFormState> {
   try {
     const validatedFields = issueSchema.safeParse({
@@ -46,6 +52,7 @@ export async function submitIssue(prevState: IssueFormState, formData: FormData)
       await file.save(photoBuffer, {
         metadata: {
           contentType: photo.type,
+          cacheControl: 'public, max-age=31536000',
         },
       });
 
