@@ -149,6 +149,10 @@ export function IssueReportForm() {
     setUploadProgress(0);
     setHiddenPhotoUrl('');
 
+    // Use a random picsum photo for preview, but keep it consistent for this upload
+    const randomId = Math.floor(Math.random() * 1000);
+    const photoUrl = `https://picsum.photos/seed/${randomId}/600/400`;
+
     // Simulate upload
     const simulateUpload = () => {
       let progress = 0;
@@ -157,9 +161,6 @@ export function IssueReportForm() {
         setUploadProgress(progress);
         if (progress >= 100) {
           clearInterval(interval);
-          // Use a random picsum photo for preview
-          const randomId = Math.floor(Math.random() * 1000);
-          const photoUrl = `https://picsum.photos/seed/${randomId}/600/400`;
           setHiddenPhotoUrl(photoUrl);
           setUploadStatus('done');
         }
