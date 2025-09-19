@@ -27,15 +27,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Progress } from './ui/progress';
 import { useFormStatus } from 'react-dom';
 import { Checkbox } from './ui/checkbox';
 
-type IssueFormErrors = Record<string, string[]>;
 export type IssueFormState = {
   success: boolean;
   message: string;
-  errors?: IssueFormErrors;
+  errors?: Record<string, string[]>;
 };
 
 const initialState: IssueFormState = {
@@ -44,15 +42,13 @@ const initialState: IssueFormState = {
     errors: {}
 };
 
-function SubmitButton({ isUploading, isCaptchaVerified }: { isUploading: boolean, isCaptchaVerified: boolean }) {
+function SubmitButton({ isCaptchaVerified }: { isCaptchaVerified: boolean }) {
   const { pending } = useFormStatus();
-  const isDisabled = pending || isUploading || !isCaptchaVerified;
+  const isDisabled = pending || !isCaptchaVerified;
 
   return (
     <Button type="submit" className="w-full" disabled={isDisabled}>
-      {isUploading && <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Uploading...</>}
-      {pending && !isUploading && 'Submitting Report...'}
-      {!pending && !isUploading && <>Submit Report <Send className="ml-2 h-4 w-4" /></>}
+      {pending ? 'Submitting Report...' : <>Submit Report <Send className="ml-2 h-4 w-4" /></>}
     </Button>
   );
 }
@@ -63,31 +59,31 @@ export function IssueReportForm() {
   const [address, setAddress] = useState('');
   const [lat, setLat] = useState('');
   const [lng, setLng] = useState('');
-  const [hiddenPhotoUrl, setHiddenPhotoUrl] = useState('');
+  const [photoUrl, setPhotoUrl] = useState('');
   
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [dialogTitle, setDialogTitle] = useState('');
   const [dialogDescription, setDialogDescription] = useState('');
   const [isLocating, setIsLocating] = useState(false);
   const [isCaptchaVerified, setIsCaptchaVerified] = useState(false);
-
-  const [uploadStatus, setUploadStatus] = useState<'idle' | 'running' | 'done' | 'error'>('idle');
-  const [uploadProgress, setUploadProgress] = useState(0);
   
   const formRef = useRef<HTMLFormElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const imageSeedRef = useRef<number | null>(null);
+  const existingPhotoUrlRef = useRef<string | null>(null);
+
 
   const resetForm = () => {
     formRef.current?.reset();
     setAddress('');
     setLat('');
     setLng('');
-    setHiddenPhotoUrl('');
-    setUploadStatus('idle');
-    setUploadProgress(0);
+    setPhotoUrl('');
     setIsCaptchaVerified(false);
-    imageSeedRef.current = null;
+    
+    if (existingPhotoUrlRef.current) {
+        URL.revokeObjectURL(existingPhotoUrlRef.current);
+        existingPhotoUrlRef.current = null;
+    }
     const captchaCheckbox = document.getElementById('captcha') as HTMLInputElement;
     if (captchaCheckbox) captchaCheckbox.checked = false;
     if (fileInputRef.current) {
@@ -138,11 +134,14 @@ export function IssueReportForm() {
   };
   
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (existingPhotoUrlRef.current) {
+        URL.revokeObjectURL(existingPhotoUrlRef.current);
+    }
+    
     const file = e.target.files?.[0];
     if (!file) {
-        setUploadStatus('idle');
-        setHiddenPhotoUrl('');
-        imageSeedRef.current = null;
+        setPhotoUrl('');
+        existingPhotoUrlRef.current = null;
         return;
     }
     
@@ -159,31 +158,9 @@ export function IssueReportForm() {
         return;
     }
 
-    setUploadStatus('running');
-    setUploadProgress(0);
-    setHiddenPhotoUrl('');
-
-    // Set a consistent seed for this upload session
-    if (!imageSeedRef.current) {
-        imageSeedRef.current = Math.floor(Math.random() * 1000);
-    }
-    const photoUrl = `https://picsum.photos/seed/${imageSeedRef.current}/600/400`;
-
-    // Simulate upload
-    const simulateUpload = () => {
-      let progress = 0;
-      const interval = setInterval(() => {
-        progress += 20;
-        setUploadProgress(progress);
-        if (progress >= 100) {
-          clearInterval(interval);
-          setHiddenPhotoUrl(photoUrl);
-          setUploadStatus('done');
-        }
-      }, 100);
-    };
-
-    simulateUpload();
+    const objectUrl = URL.createObjectURL(file);
+    setPhotoUrl(objectUrl);
+    existingPhotoUrlRef.current = objectUrl;
   };
 
   useEffect(() => {
@@ -200,6 +177,15 @@ export function IssueReportForm() {
       }
     }
   }, [state]);
+
+  // Clean up object URL on unmount
+  useEffect(() => {
+    return () => {
+        if (existingPhotoUrlRef.current) {
+            URL.revokeObjectURL(existingPhotoUrlRef.current);
+        }
+    }
+  }, [])
 
 
   return (
@@ -272,7 +258,9 @@ export function IssueReportForm() {
         </div>
         <input type="hidden" name="lat" value={lat} />
         <input type="hidden" name="lng" value={lng} />
-        <input type="hidden" name="photoUrl" value={hiddenPhotoUrl || ''} />
+        {/* We use a placeholder for the mock submission */}
+        <input type="hidden" name="photoUrl" value={photoUrl ? 'https://picsum.photos/seed/123/600/400' : ''} />
+
 
         <div className="space-y-2">
           <Label htmlFor="photo">Photo (Optional)</Label>
@@ -285,29 +273,20 @@ export function IssueReportForm() {
               className="pl-10"
               ref={fileInputRef}
               onChange={handleFileChange}
-              disabled={uploadStatus === 'running'}
             />
             <CameraIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
           </div>
           {state?.errors?.photoUrl && <p className="text-sm font-medium text-destructive">{state.errors.photoUrl[0]}</p>}
         </div>
         
-        {uploadStatus === 'running' && (
-          <div className="space-y-2">
-            <Label>Upload Progress</Label>
-            <Progress value={uploadProgress} />
-          </div>
-        )}
-
-        {uploadStatus === 'done' && hiddenPhotoUrl && (
+        {photoUrl && (
           <div className="relative h-48 w-full">
             <Image
-              src={hiddenPhotoUrl}
+              src={photoUrl}
               alt="Image preview"
               fill
               style={{ objectFit: 'cover' }}
               className="rounded-md"
-              data-ai-hint="user uploaded image"
             />
           </div>
         )}
@@ -322,7 +301,7 @@ export function IssueReportForm() {
           </Label>
         </div>
 
-        <SubmitButton isUploading={uploadStatus === 'running'} isCaptchaVerified={isCaptchaVerified} />
+        <SubmitButton isCaptchaVerified={isCaptchaVerified} />
       </form>
 
       <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -341,3 +320,5 @@ export function IssueReportForm() {
     </>
   );
 }
+
+    
