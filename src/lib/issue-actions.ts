@@ -6,8 +6,15 @@ import { revalidatePath } from 'next/cache';
 import type { IssueStatus, IssuePriority, IssueCategory } from './data';
 import * as mockDb from './server/mock-db';
 
+type IssueFormErrors = Record<string, string[]>;
+type IssueFormState = {
+  success: boolean;
+  message: string;
+  errors: IssueFormErrors;
+};
 
-export async function submitIssue(prevState: any, formData: FormData) {
+
+export async function submitIssue(_prevState: IssueFormState, formData: FormData): Promise<IssueFormState> {
 
   try {
     const validatedFields = issueSchema.safeParse({
@@ -53,10 +60,10 @@ export async function submitIssue(prevState: any, formData: FormData) {
     console.error("Error submitting issue:", error);
     
     const errorMessage = error instanceof Error ? error.message : 'An unexpected server error occurred. Please try again later.';
-    return { 
-      success: false, 
-      message: errorMessage, 
-      errors: {} 
+    return {
+      success: false,
+      message: errorMessage,
+      errors: {}
     };
   }
 }
