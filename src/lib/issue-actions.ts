@@ -5,19 +5,7 @@ import { issueSchema } from '@/lib/schemas';
 import { revalidatePath } from 'next/cache';
 import type { IssueStatus, IssuePriority, IssueCategory } from './data';
 import * as mockDb from './server/mock-db';
-
-type IssueFormErrors = Record<string, string[]>;
-export type IssueFormState = {
-  success: boolean;
-  message: string;
-  errors?: IssueFormErrors;
-};
-
-const initialState: IssueFormState = {
-    success: false,
-    message: '',
-    errors: {}
-};
+import type { IssueFormState } from '@/components/issue-report-form';
 
 
 export async function submitIssue(prevState: IssueFormState, formData: FormData): Promise<IssueFormState> {
