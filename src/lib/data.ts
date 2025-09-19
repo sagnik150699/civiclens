@@ -1,5 +1,5 @@
 
-import type { Timestamp } from 'firebase-admin/firestore';
+import type { Timestamp } from 'firebase/firestore';
 import type { ISSUE_CATEGORIES, ISSUE_STATUSES, ISSUE_PRIORITIES } from './constants';
 
 export type IssueCategory = (typeof ISSUE_CATEGORIES)[number]['value'];

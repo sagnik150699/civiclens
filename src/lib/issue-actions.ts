@@ -3,10 +3,17 @@
 
 import { issueSchema } from '@/lib/schemas';
 import { revalidatePath } from 'next/cache';
-import type { IssueStatus, IssuePriority, IssueCategory } from './data';
-import * as mockDb from './server/mock-db';
-import type { IssueFormState } from '@/components/issue-report-form';
+import { collection, addDoc, Timestamp } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { db, bucket } from '@/lib/server/firebase-admin';
 
+import type { IssueStatus, IssuePriority, IssueCategory } from './data';
+
+export type IssueFormState = {
+  success: boolean;
+  message: string;
+  errors?: Record<string, string[]>;
+};
 
 export async function submitIssue(prevState: IssueFormState, formData: FormData): Promise<IssueFormState> {
 
@@ -14,10 +21,10 @@ export async function submitIssue(prevState: IssueFormState, formData: FormData)
     const validatedFields = issueSchema.safeParse({
       description: formData.get('description'),
       category: formData.get('category'),
-      photoUrl: formData.get('photoUrl'),
       address: formData.get('address'),
       lat: formData.get('lat'),
       lng: formData.get('lng'),
+      photo: formData.get('photo'),
     });
 
     if (!validatedFields.success) {
@@ -28,8 +35,19 @@ export async function submitIssue(prevState: IssueFormState, formData: FormData)
       };
     }
 
-    const { description, category, address } = validatedFields.data;
-    const photoUrl = validatedFields.data.photoUrl || null;
+    const { description, category, address, photo } = validatedFields.data;
+    let photoUrl: string | null = null;
+    
+    if (photo && photo.size > 0) {
+        const photoBuffer = Buffer.from(await photo.arrayBuffer());
+        const photoId = crypto.randomUUID();
+        const photoPath = `issues/${photoId}-${photo.name}`;
+        
+        const storageRef = ref(bucket.name, photoPath);
+        await uploadBytes(storageRef, photoBuffer, { contentType: photo.type });
+        photoUrl = await getDownloadURL(storageRef);
+    }
+    
     const lat = validatedFields.data.lat ? parseFloat(validatedFields.data.lat) : 0;
     const lng = validatedFields.data.lng ? parseFloat(validatedFields.data.lng) : 0;
 
@@ -42,9 +60,10 @@ export async function submitIssue(prevState: IssueFormState, formData: FormData)
       status: 'Submitted' as IssueStatus,
       priority: 'Medium' as IssuePriority, // Default priority
       reason: 'Awaiting review', // Default reason
+      createdAt: Timestamp.now(),
     };
 
-    mockDb.addIssue(newIssue);
+    await addDoc(collection(db, 'issues'), newIssue);
 
     revalidatePath('/');
     revalidatePath('/admin');

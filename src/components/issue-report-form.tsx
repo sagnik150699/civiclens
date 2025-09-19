@@ -29,12 +29,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useFormStatus } from 'react-dom';
 import { Checkbox } from './ui/checkbox';
-
-export type IssueFormState = {
-  success: boolean;
-  message: string;
-  errors?: Record<string, string[]>;
-};
+import type { IssueFormState } from '@/lib/issue-actions';
 
 const initialState: IssueFormState = {
     success: false,
@@ -144,19 +139,6 @@ export function IssueReportForm() {
         existingPhotoUrlRef.current = null;
         return;
     }
-    
-    if (!file.type.startsWith('image/')) {
-        setDialogTitle('Upload Failed');
-        setDialogDescription('Only image files are allowed.');
-        setIsDialogOpen(true);
-        return;
-    }
-    if (file.size > 10 * 1024 * 1024) {
-        setDialogTitle('Upload Failed');
-        setDialogDescription('File size cannot exceed 10MB.');
-        setIsDialogOpen(true);
-        return;
-    }
 
     const objectUrl = URL.createObjectURL(file);
     setPhotoUrl(objectUrl);
@@ -172,7 +154,14 @@ export function IssueReportForm() {
         resetForm();
       } else if (!state.success) {
         setDialogTitle('Submission Error');
-        setDialogDescription(state.message || 'An unknown error occurred.');
+        let errorMessages = state.message;
+        if (state.errors) {
+            const allErrors = Object.values(state.errors).flat();
+            if (allErrors.length > 0) {
+                errorMessages = allErrors.join('\n');
+            }
+        }
+        setDialogDescription(errorMessages || 'An unknown error occurred.');
         setIsDialogOpen(true);
       }
     }
@@ -258,9 +247,6 @@ export function IssueReportForm() {
         </div>
         <input type="hidden" name="lat" value={lat} />
         <input type="hidden" name="lng" value={lng} />
-        {/* We use a placeholder for the mock submission */}
-        <input type="hidden" name="photoUrl" value={photoUrl ? 'https://picsum.photos/seed/123/600/400' : ''} />
-
 
         <div className="space-y-2">
           <Label htmlFor="photo">Photo (Optional)</Label>
@@ -276,7 +262,7 @@ export function IssueReportForm() {
             />
             <CameraIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
           </div>
-          {state?.errors?.photoUrl && <p className="text-sm font-medium text-destructive">{state.errors.photoUrl[0]}</p>}
+          {state?.errors?.photo && <p className="text-sm font-medium text-destructive">{state.errors.photo[0]}</p>}
         </div>
         
         {photoUrl && (
@@ -320,5 +306,3 @@ export function IssueReportForm() {
     </>
   );
 }
-
-    

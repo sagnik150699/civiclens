@@ -3,11 +3,13 @@
 
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import { ISSUE_STATUSES } from './constants';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import type { IssueStatus } from '@/lib/data';
-import * as mockDb from './server/mock-db';
+import { collection, getDocs, doc, updateDoc, orderBy, query } from 'firebase/firestore';
+
+import { db } from '@/lib/server/firebase-admin';
+import type { IssueReport, IssueStatus } from '@/lib/data';
+import { ISSUE_STATUSES } from './constants';
 
 type AuthState = { success: boolean; message: string } | undefined;
 
@@ -16,8 +18,37 @@ const updateStatusSchema = z.object({
     status: z.enum(ISSUE_STATUSES)
 })
 
-export async function getIssues() {
-  return mockDb.getIssues();
+export async function getIssues(): Promise<IssueReport[]> {
+  try {
+    const issuesCollection = collection(db, 'issues');
+    const q = query(issuesCollection, orderBy('createdAt', 'desc'));
+    const issuesSnapshot = await getDocs(q);
+    
+    if (issuesSnapshot.empty) {
+        return [];
+    }
+
+    const issues: IssueReport[] = issuesSnapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        description: data.description,
+        category: data.category,
+        location: data.location,
+        address: data.address,
+        photoUrl: data.photoUrl,
+        status: data.status,
+        priority: data.priority,
+        reason: data.reason,
+        createdAt: data.createdAt.toDate(),
+      };
+    });
+
+    return issues;
+  } catch (error) {
+    console.error("Error fetching issues from Firestore:", error);
+    return [];
+  }
 }
 
 export async function updateIssueStatus(id: string, status: IssueStatus) {
@@ -27,12 +58,14 @@ export async function updateIssueStatus(id: string, status: IssueStatus) {
         return { success: false, message: "Invalid data provided."}
     }
     
-    const success = mockDb.updateIssueStatus(id, status);
-
-    if (success) {
+    try {
+        const issueRef = doc(db, 'issues', id);
+        await updateDoc(issueRef, { status: status });
+        
         revalidatePath('/admin');
         return { success: true, message: `Status updated to ${status}`};
-    } else {
+    } catch (error) {
+        console.error("Error updating issue status:", error);
         return { success: false, message: "Failed to update status." };
     }
 }
