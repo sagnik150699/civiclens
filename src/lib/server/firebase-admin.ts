@@ -24,8 +24,8 @@ export function getFirebaseAdmin(): FirebaseAdmin {
       privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
     };
     
-    if (!serviceAccount.privateKey) {
-        throw new Error('FIREBASE_PRIVATE_KEY is not set in the environment variables.');
+    if (!serviceAccount.privateKey || serviceAccount.privateKey === 'YOUR_PRIVATE_KEY_HERE') {
+        throw new Error('FIREBASE_PRIVATE_KEY is not set or is a placeholder in the environment variables.');
     }
 
     let app: App;

@@ -17,9 +17,9 @@ export const issueSchema = z.object({
   photo: z
     .instanceof(File)
     .optional()
-    .refine((file) => !file || file.size <= MAX_FILE_SIZE, `Max file size is 10MB.`)
+    .refine((file) => !file || file.size === 0 || file.size <= MAX_FILE_SIZE, `Max file size is 10MB.`)
     .refine(
-      (file) => !file || ACCEPTED_IMAGE_TYPES.includes(file.type),
+      (file) => !file || file.size === 0 || ACCEPTED_IMAGE_TYPES.includes(file.type),
       "Only .jpg, .jpeg, .png and .webp formats are supported."
     ),
 });

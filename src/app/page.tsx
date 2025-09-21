@@ -15,7 +15,7 @@ export default function Home() {
                     Improve Your Community.
                   </h1>
                   <p className="max-w-[600px] text-muted-foreground md:text-xl">
-                    See a problem in your neighborhood? A pothole, a broken streetlight, or overflowing trash? With CivicLens, you can report issues directly to your local government. It's quick, simple, and helps create a better community for everyone.
+                    Spotted a pothole, a broken streetlight, or overflowing trash? Use CivicLens to report issues directly to your local government. It’s fast, easy, and makes a real difference.
                   </p>
                 </div>
               </div>
