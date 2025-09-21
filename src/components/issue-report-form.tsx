@@ -15,8 +15,7 @@ import {
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import Image from 'next/image';
-import { CameraIcon, Send, LocateIcon, Loader2 } from 'lucide-react';
+import { Send, LocateIcon, Loader2 } from 'lucide-react';
 import { ISSUE_CATEGORIES } from '@/lib/constants';
 import {
   AlertDialog,
@@ -28,8 +27,6 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useFormStatus } from 'react-dom';
-import { Checkbox } from './ui/checkbox';
-import { Progress } from './ui/progress';
 
 const initialState: IssueFormState = {
     success: false,
@@ -37,12 +34,11 @@ const initialState: IssueFormState = {
     errors: {}
 };
 
-function SubmitButton({ isCaptchaVerified }: { isCaptchaVerified: boolean }) {
+function SubmitButton() {
   const { pending } = useFormStatus();
-  const isDisabled = pending || !isCaptchaVerified;
 
   return (
-    <Button type="submit" className="w-full" disabled={isDisabled}>
+    <Button type="submit" className="w-full" disabled={pending}>
       {pending ? 'Submitting Report...' : <>Submit Report <Send className="ml-2 h-4 w-4" /></>}
     </Button>
   );
@@ -54,18 +50,13 @@ export function IssueReportForm() {
   const [address, setAddress] = useState('');
   const [lat, setLat] = useState('');
   const [lng, setLng] = useState('');
-  const [photoUrl, setPhotoUrl] = useState('');
-  const [uploadProgress, setUploadProgress] = useState(0);
   
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [dialogTitle, setDialogTitle] = useState('');
   const [dialogDescription, setDialogDescription] = useState('');
   const [isLocating, setIsLocating] = useState(false);
-  const [isCaptchaVerified, setIsCaptchaVerified] = useState(false);
   
   const formRef = useRef<HTMLFormElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const existingPhotoUrlRef = useRef<string | null>(null);
 
 
   const resetForm = () => {
@@ -73,19 +64,6 @@ export function IssueReportForm() {
     setAddress('');
     setLat('');
     setLng('');
-    setPhotoUrl('');
-    setUploadProgress(0);
-    setIsCaptchaVerified(false);
-    
-    if (existingPhotoUrlRef.current) {
-        URL.revokeObjectURL(existingPhotoUrlRef.current);
-        existingPhotoUrlRef.current = null;
-    }
-    const captchaCheckbox = document.getElementById('captcha') as HTMLInputElement;
-    if (captchaCheckbox) captchaCheckbox.checked = false;
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
   }
 
   const handleGeolocation = () => {
@@ -130,23 +108,6 @@ export function IssueReportForm() {
     }
   };
   
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (existingPhotoUrlRef.current) {
-        URL.revokeObjectURL(existingPhotoUrlRef.current);
-    }
-    
-    const file = e.target.files?.[0];
-    if (!file) {
-        setPhotoUrl('');
-        existingPhotoUrlRef.current = null;
-        return;
-    }
-
-    const objectUrl = URL.createObjectURL(file);
-    setPhotoUrl(objectUrl);
-    existingPhotoUrlRef.current = objectUrl;
-  };
-
   useEffect(() => {
     if (state?.message) {
       if (state.success) {
@@ -167,21 +128,7 @@ export function IssueReportForm() {
         setIsDialogOpen(true);
       }
     }
-    if (state?.uploadProgress !== undefined) {
-      setUploadProgress(state.uploadProgress);
-    }
-
   }, [state]);
-
-  // Clean up object URL on unmount
-  useEffect(() => {
-    return () => {
-        if (existingPhotoUrlRef.current) {
-            URL.revokeObjectURL(existingPhotoUrlRef.current);
-        }
-    }
-  }, [])
-
 
   return (
     <>
@@ -254,50 +201,7 @@ export function IssueReportForm() {
         <input type="hidden" name="lat" value={lat} />
         <input type="hidden" name="lng" value={lng} />
 
-        <div className="space-y-2">
-          <Label htmlFor="photo">Photo (Optional)</Label>
-          <div className="relative">
-            <Input
-              id="photo"
-              name="photo"
-              type="file"
-              accept="image/*"
-              className="pl-10"
-              ref={fileInputRef}
-              onChange={handleFileChange}
-            />
-            <CameraIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-          </div>
-          {state?.errors?.photo && <p className="text-sm font-medium text-destructive">{state.errors.photo[0]}</p>}
-        </div>
-        
-        {photoUrl && (
-          <div className="relative h-48 w-full">
-            <Image
-              src={photoUrl}
-              alt="Image preview"
-              fill
-              style={{ objectFit: 'cover' }}
-              className="rounded-md"
-            />
-          </div>
-        )}
-
-        {uploadProgress > 0 && uploadProgress < 100 && (
-          <Progress value={uploadProgress} className="w-full" />
-        )}
-
-        <div className="flex items-center space-x-2">
-          <Checkbox id="captcha" onCheckedChange={(checked) => setIsCaptchaVerified(checked as boolean)} />
-          <Label
-            htmlFor="captcha"
-            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-          >
-            I am not a robot
-          </Label>
-        </div>
-
-        <SubmitButton isCaptchaVerified={isCaptchaVerified} />
+        <SubmitButton />
       </form>
 
       <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
