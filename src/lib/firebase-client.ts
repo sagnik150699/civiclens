@@ -5,12 +5,12 @@ import { getStorage, type FirebaseStorage } from "firebase/storage";
 
 // Your web app's Firebase configuration, with explicit values.
 const firebaseConfig = {
-  "projectId": "civiclens-bexm4",
-  "appId": "1:873086332859:web:8856f2a6ffa3f493ff5e9e",
-  "storageBucket": "civiclens-bexm4.appspot.com",
-  "apiKey": "AIzaSyAanUGeE4WzPNUCfx9d_KSM4vt5cZdStJg",
-  "authDomain": "civiclens-bexm4.firebaseapp.com",
-  "messagingSenderId": "873086332859"
+  projectId: "your-project-id", // Replace with your Project ID
+  appId: "your-app-id", // Replace with your App ID
+  storageBucket: "your-project-id.appspot.com", // Replace with your Storage Bucket
+  apiKey: "your-api-key", // Replace with your API Key
+  authDomain: "your-project-id.firebaseapp.com", // Replace with your Auth Domain
+  messagingSenderId: "your-sender-id", // Replace with your Sender ID
 };
 
 // This function can be called from anywhere (client-side) to get the app instance.

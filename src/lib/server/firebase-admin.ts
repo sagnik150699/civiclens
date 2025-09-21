@@ -1,7 +1,8 @@
 
-import { initializeApp, getApps, getApp, type App, cert } from 'firebase-admin/app';
+import { initializeApp, getApps, getApp, type App } from 'firebase-admin/app';
 import { getFirestore, type Firestore } from 'firebase-admin/firestore';
 import { getStorage, type Storage } from 'firebase-admin/storage';
+import { firebaseConfig } from '../firebase-client';
 
 interface FirebaseAdmin {
   app: App;
@@ -18,11 +19,11 @@ export function getFirebaseAdmin(): FirebaseAdmin {
 
   try {
     const serviceAccount = {
-        projectId: 'civiclens-bexm4',
-        clientEmail: `firebase-adminsdk-v59j3@civiclens-bexm4.iam.gserviceaccount.com`,
-        privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+      projectId: firebaseConfig.projectId,
+      clientEmail: `firebase-adminsdk-v59j3@${firebaseConfig.projectId}.iam.gserviceaccount.com`,
+      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
     };
-
+    
     if (!serviceAccount.privateKey) {
         throw new Error('FIREBASE_PRIVATE_KEY is not set in the environment variables.');
     }
@@ -30,8 +31,12 @@ export function getFirebaseAdmin(): FirebaseAdmin {
     let app: App;
     if (!getApps().length) {
       app = initializeApp({
-        credential: cert(serviceAccount),
-        storageBucket: 'civiclens-bexm4.appspot.com',
+        credential: {
+          projectId: serviceAccount.projectId,
+          clientEmail: serviceAccount.clientEmail,
+          privateKey: serviceAccount.privateKey,
+        },
+        storageBucket: firebaseConfig.storageBucket,
       });
     } else {
       app = getApp();
