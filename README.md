@@ -34,6 +34,13 @@ This project was built with Firebase Studio.
 
 This project uses environment variables to connect to Firebase. You will need to get your Firebase project's configuration keys and add them to the project.
 
+For Firebase Admin access, provide either of the following:
+
+* `FIREBASE_SERVICE_ACCOUNT`: A JSON string of your Firebase service-account credentials. This should include the `project_id`, `client_email`, and `private_key` fields exactly as exported from the Google Cloud Console.
+* or set `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY`, and optionally `FIREBASE_PROJECT_ID` individually. The private key should preserve newline characters (use `"\n"` in `.env` files).
+
+Regardless of which option you choose, ensure `FIREBASE_PRIVATE_KEY` (directly or within the JSON) is populated with your actual private key value, not a placeholder.
+
 ### Running the Application
 
 Once your environment is configured, you can run the application locally:
