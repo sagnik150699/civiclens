@@ -37,9 +37,15 @@ export function getFirebaseAdmin(): FirebaseAdmin {
     } else {
       app = getApp();
     }
-  
+
+    const storageBucket = process.env.FIREBASE_STORAGE_BUCKET ?? firebaseConfig.storageBucket;
+
+    if (!storageBucket) {
+      throw new Error('Firebase storage bucket is not configured. Set FIREBASE_STORAGE_BUCKET or NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET.');
+    }
+
     const db: Firestore = getFirestore(app);
-    const bucket = getStorage(app).bucket();
+    const bucket = getStorage(app).bucket(storageBucket);
   
     admin = { app, db, bucket };
     return admin;
