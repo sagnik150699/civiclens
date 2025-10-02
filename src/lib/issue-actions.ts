@@ -59,25 +59,15 @@ export async function submitIssue(prevState: IssueFormState, formData: FormData)
         });
 
         photoUrl = signedUrl;
-      } catch (uploadError) {
+      } catch (uploadError: any) {
         console.error('Failed to upload issue photo to Firebase Storage:', uploadError);
 
-        const errorMessage =
-          uploadError instanceof Error ? uploadError.message : 'Unknown Firebase Storage error.';
-
-        if (errorMessage.includes('The specified bucket does not exist')) {
-          uploadWarning =
-            'Issue reported successfully, but the attached photo could not be uploaded because the Firebase Storage bucket is not configured.';
-        } else if (typeof uploadError === 'object' && uploadError !== null && 'code' in uploadError) {
-          const errorCode = (uploadError as { code?: number }).code;
-          if (errorCode === 404) {
-            uploadWarning =
-              'Issue reported successfully, but the attached photo could not be uploaded because the Firebase Storage bucket is not configured.';
-          } else {
-            throw uploadError;
-          }
+        if (uploadError.code === 403 || (uploadError.message && uploadError.message.includes('permission'))) {
+          uploadWarning = 'Issue reported, but photo upload failed due to a permissions error. Please ensure the service account has the "Storage Admin" role in your Google Cloud project IAM settings.';
+        } else if (uploadError.code === 404 || (uploadError.message && uploadError.message.includes('does not exist'))) {
+          uploadWarning = 'Issue reported, but photo upload failed. The Firebase Storage bucket was not found. Please check the bucket name and service account permissions.';
         } else {
-          throw uploadError;
+            uploadWarning = `Issue reported, but photo could not be uploaded. Error: ${uploadError.message || 'An unknown storage error occurred.'}`;
         }
       }
     }
