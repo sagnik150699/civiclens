@@ -1,7 +1,7 @@
 
 'use client';
-import { useActionState, useEffect } from 'react';
-import { useFormStatus } from 'react-dom';
+import { useEffect } from 'react';
+import { useFormState, useFormStatus } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -22,7 +22,7 @@ function LoginButton() {
 
 export default function LoginPage() {
     const { toast } = useToast();
-    const [state, formAction] = useActionState(login, undefined);
+    const [state, formAction] = useFormState(login, undefined);
 
     useEffect(() => {
         if (state?.success === false && state.message) {
