@@ -7,7 +7,7 @@ import { getStorage, type FirebaseStorage } from "firebase/storage";
 const firebaseConfig = {
   projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ?? "civiclens-bexm4",
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID ?? "1:873086332859:web:8856f2a6ffa3f493ff5e9e",
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET ?? "civiclens-bexm4.firebasestorage.app",
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET ?? "civiclens-bexm4.appspot.com",
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY ?? "AIzaSyAanUGeE4WzPNUCfx9d_KSM4vt5cZdStJg",
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN ?? "civiclens-bexm4.firebaseapp.com",
   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID ?? "873086332859",

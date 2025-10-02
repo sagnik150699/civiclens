@@ -41,7 +41,7 @@ For Firebase Admin access, provide either of the following:
 
 Regardless of which option you choose, ensure `FIREBASE_PRIVATE_KEY` (directly or within the JSON) is populated with your actual private key value, not a placeholder.
 
-For file uploads you must also configure a Firebase Storage bucket. Set `FIREBASE_STORAGE_BUCKET` (preferred for server-side configuration) or `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` (shared client/server) to the bucket name. If neither variable is provided, the app will fall back to the bucket defined in `src/lib/firebase-client.ts` (default `civiclens-bexm4.firebasestorage.app`) or, if unavailable, to `${projectId}.appspot.com` when your Firebase project uses the legacy default storage bucket.
+For file uploads you must also configure a Firebase Storage bucket. Set `FIREBASE_STORAGE_BUCKET` (preferred for server-side configuration) or `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` (shared client/server) to the bucket name. If neither variable is provided, the app will fall back to the bucket defined in `src/lib/firebase-client.ts` (default `civiclens-bexm4.appspot.com`) or, if unavailable, to `${projectId}.appspot.com` when your Firebase project uses the legacy default storage bucket.
 
 ### Running the Application
 
