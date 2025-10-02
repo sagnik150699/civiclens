@@ -43,9 +43,11 @@ export function getFirebaseAdmin(): FirebaseAdmin {
   
     admin = { app, db, bucket };
     return admin;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Firebase Admin SDK initialization error:", error);
-    // Re-throw a more descriptive error to help with debugging
-    throw new Error(`Firebase Admin SDK initialization failed. This is often due to an invalid or missing private key in your .env file. Original error: ${error.message}`);
+    if (error instanceof Error) {
+      throw new Error(`Firebase Admin SDK initialization failed. This is often due to an invalid or missing private key in your .env file. Original error: ${error.message}`);
+    }
+    throw new Error('Firebase Admin SDK initialization failed due to an unknown error.');
   }
 }

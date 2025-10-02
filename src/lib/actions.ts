@@ -5,11 +5,10 @@ import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { collection, getDocs, doc, updateDoc, orderBy, query } from 'firebase/firestore';
-
 import { getFirebaseAdmin } from '@/lib/server/firebase-admin';
 import type { IssueReport, IssueStatus } from '@/lib/data';
 import { ISSUE_STATUSES } from './constants';
+import type { IssueReportFirestore } from './data';
 
 type AuthState = { success: boolean; message: string } | undefined;
 
@@ -21,16 +20,15 @@ const updateStatusSchema = z.object({
 export async function getIssues(): Promise<IssueReport[]> {
   try {
     const { db } = getFirebaseAdmin();
-    const issuesCollection = collection(db, 'issues');
-    const q = query(issuesCollection, orderBy('createdAt', 'desc'));
-    const issuesSnapshot = await getDocs(q);
+    const issuesCollection = db.collection('issues');
+    const issuesSnapshot = await issuesCollection.orderBy('createdAt', 'desc').get();
     
     if (issuesSnapshot.empty) {
         return [];
     }
 
     const issues: IssueReport[] = issuesSnapshot.docs.map(doc => {
-      const data = doc.data();
+      const data = doc.data() as IssueReportFirestore;
       return {
         id: doc.id,
         description: data.description,
@@ -61,8 +59,8 @@ export async function updateIssueStatus(id: string, status: IssueStatus) {
     
     try {
         const { db } = getFirebaseAdmin();
-        const issueRef = doc(db, 'issues', id);
-        await updateDoc(issueRef, { status: status });
+        const issueRef = db.collection('issues').doc(id);
+        await issueRef.update({ status: status });
         
         revalidatePath('/admin');
         return { success: true, message: `Status updated to ${status}`};

@@ -3,11 +3,11 @@
 
 import { issueSchema } from '@/lib/schemas';
 import { revalidatePath } from 'next/cache';
-import { collection, addDoc, Timestamp } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { ref, uploadBytes, getDownloadURL, type Storage } from 'firebase/storage';
 import { getFirebaseAdmin } from '@/lib/server/firebase-admin';
 import type { IssueStatus, IssuePriority, IssueCategory } from './data';
 import { v4 as uuidv4 } from 'uuid';
+import { Timestamp } from 'firebase-admin/firestore';
 
 export type IssueFormState = {
   success: boolean;
@@ -45,7 +45,8 @@ export async function submitIssue(prevState: IssueFormState, formData: FormData)
     if (photo && photo.size > 0) {
         const photoBuffer = Buffer.from(await photo.arrayBuffer());
         const photoId = uuidv4();
-        const photoRef = ref(bucket as any, `issues/${photoId}-${photo.name}`);
+        const storage = bucket as unknown as Storage;
+        const photoRef = ref(storage, `issues/${photoId}-${photo.name}`);
         
         await uploadBytes(photoRef, photoBuffer, {
             contentType: photo.type,
@@ -66,7 +67,8 @@ export async function submitIssue(prevState: IssueFormState, formData: FormData)
       createdAt: Timestamp.now(),
     };
 
-    await addDoc(collection(db, 'issues'), newIssue);
+    const issuesCollection = db.collection('issues');
+    await issuesCollection.add(newIssue);
 
     revalidatePath('/');
     revalidatePath('/admin');
