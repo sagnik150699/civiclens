@@ -20,11 +20,13 @@ export function getFirebaseAdmin(): FirebaseAdmin {
   try {
     const serviceAccount = buildServiceAccountFromEnv();
 
-    const storageBucket =
+    const rawStorageBucket =
       process.env.FIREBASE_STORAGE_BUCKET ??
       process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET ??
       firebaseConfig.storageBucket ??
       (serviceAccount.projectId ? `${serviceAccount.projectId}.appspot.com` : undefined);
+
+    const storageBucket = normalizeStorageBucket(rawStorageBucket);
 
     if (!serviceAccount.clientEmail) {
       throw new Error('Firebase Admin client email is not configured.');
@@ -90,4 +92,25 @@ function buildServiceAccountFromEnv(): ServiceAccount {
     clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
     privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
   };
+}
+
+function normalizeStorageBucket(bucket: string | undefined): string | undefined {
+  if (!bucket) {
+    return bucket;
+  }
+
+  let normalizedBucket = bucket.trim();
+
+  if (normalizedBucket.startsWith('gs://')) {
+    normalizedBucket = normalizedBucket.slice('gs://'.length);
+  }
+
+  // When using Firebase client configuration values the storage bucket often
+  // ends with `firebasestorage.app`, but the Admin SDK expects the underlying
+  // Google Cloud Storage bucket name which ends in `appspot.com`.
+  if (normalizedBucket.endsWith('.firebasestorage.app')) {
+    normalizedBucket = normalizedBucket.replace(/\.firebasestorage\.app$/, '.appspot.com');
+  }
+
+  return normalizedBucket;
 }
