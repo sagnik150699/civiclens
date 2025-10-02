@@ -20,6 +20,11 @@ export function getFirebaseAdmin(): FirebaseAdmin {
   try {
     const serviceAccount = buildServiceAccountFromEnv();
 
+    const storageBucket =
+      process.env.FIREBASE_STORAGE_BUCKET ??
+      process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET ??
+      (serviceAccount.projectId ? `${serviceAccount.projectId}.appspot.com` : undefined);
+
     if (!serviceAccount.clientEmail) {
       throw new Error('Firebase Admin client email is not configured.');
     }
@@ -28,20 +33,20 @@ export function getFirebaseAdmin(): FirebaseAdmin {
       throw new Error('FIREBASE_PRIVATE_KEY is not set or is a placeholder in the environment variables.');
     }
 
+    if (!storageBucket) {
+      throw new Error(
+        'Firebase storage bucket is not configured. Set FIREBASE_STORAGE_BUCKET, NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET, or ensure your Firebase project has a default bucket.'
+      );
+    }
+
     let app: App;
     if (!getApps().length) {
       app = initializeApp({
         credential: cert(serviceAccount),
-        storageBucket: firebaseConfig.storageBucket,
+        storageBucket,
       });
     } else {
       app = getApp();
-    }
-
-    const storageBucket = process.env.FIREBASE_STORAGE_BUCKET ?? firebaseConfig.storageBucket;
-
-    if (!storageBucket) {
-      throw new Error('Firebase storage bucket is not configured. Set FIREBASE_STORAGE_BUCKET or NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET.');
     }
 
     const db: Firestore = getFirestore(app);

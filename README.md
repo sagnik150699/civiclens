@@ -41,6 +41,8 @@ For Firebase Admin access, provide either of the following:
 
 Regardless of which option you choose, ensure `FIREBASE_PRIVATE_KEY` (directly or within the JSON) is populated with your actual private key value, not a placeholder.
 
+For file uploads you must also configure a Firebase Storage bucket. Set `FIREBASE_STORAGE_BUCKET` (preferred for server-side configuration) or `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` (shared client/server) to the bucket name. If neither variable is provided, the app will fall back to `${projectId}.appspot.com` when your Firebase project has the default storage bucket enabled.
+
 ### Running the Application
 
 Once your environment is configured, you can run the application locally:
