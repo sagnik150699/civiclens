@@ -42,11 +42,12 @@ export async function submitIssue(prevState: IssueFormState, formData: FormData)
     let photoUrl: string | null = null;
 
     if (photo && photo.size > 0) {
-      const photoBuffer = Buffer.from(await photo.arrayBuffer());
+      const photoArrayBuffer = await photo.arrayBuffer();
+      const photoBytes = new Uint8Array(photoArrayBuffer);
       const photoId = uuidv4();
       const file = bucket.file(`issues/${photoId}-${photo.name}`);
 
-      await file.save(photoBuffer, {
+      await file.save(photoBytes, {
         contentType: photo.type,
       });
 
