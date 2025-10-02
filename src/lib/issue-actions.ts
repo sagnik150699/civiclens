@@ -3,7 +3,6 @@
 
 import { issueSchema } from '@/lib/schemas';
 import { revalidatePath } from 'next/cache';
-import { ref, uploadBytes, getDownloadURL, type Storage } from 'firebase/storage';
 import { getFirebaseAdmin } from '@/lib/server/firebase-admin';
 import type { IssueStatus, IssuePriority, IssueCategory } from './data';
 import { v4 as uuidv4 } from 'uuid';
@@ -43,16 +42,20 @@ export async function submitIssue(prevState: IssueFormState, formData: FormData)
     let photoUrl: string | null = null;
 
     if (photo && photo.size > 0) {
-        const photoBuffer = Buffer.from(await photo.arrayBuffer());
-        const photoId = uuidv4();
-        const storage = bucket as unknown as Storage;
-        const photoRef = ref(storage, `issues/${photoId}-${photo.name}`);
-        
-        await uploadBytes(photoRef, photoBuffer, {
-            contentType: photo.type,
-        });
+      const photoBuffer = Buffer.from(await photo.arrayBuffer());
+      const photoId = uuidv4();
+      const file = bucket.file(`issues/${photoId}-${photo.name}`);
 
-        photoUrl = await getDownloadURL(photoRef);
+      await file.save(photoBuffer, {
+        contentType: photo.type,
+      });
+
+      const [signedUrl] = await file.getSignedUrl({
+        action: 'read',
+        expires: Date.now() + 7 * 24 * 60 * 60 * 1000, // 7 days
+      });
+
+      photoUrl = signedUrl;
     }
 
     const newIssue = {
