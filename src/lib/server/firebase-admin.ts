@@ -34,7 +34,7 @@ export function getFirebaseAdmin(): FirebaseAdmin {
 
   try {
     const serviceAccount = getServiceAccount();
-    const storageBucket = "civiclens-bexm4.firebasestorage.app";
+    const storageBucket = "civiclens-bexm4.appspot.com";
 
     let app: App;
     if (!getApps().length) {
