@@ -105,11 +105,10 @@ function normalizeStorageBucket(bucket: string | undefined): string | undefined 
     normalizedBucket = normalizedBucket.slice('gs://'.length);
   }
 
-  // When using Firebase client configuration values the storage bucket often
-  // ends with `firebasestorage.app`, but the Admin SDK expects the underlying
-  // Google Cloud Storage bucket name which ends in `appspot.com`.
-  if (normalizedBucket.endsWith('.firebasestorage.app')) {
-    normalizedBucket = normalizedBucket.replace(/\.firebasestorage\.app$/, '.appspot.com');
+  // Strip any accidental path suffixes so we only keep the bucket identifier.
+  const slashIndex = normalizedBucket.indexOf('/');
+  if (slashIndex !== -1) {
+    normalizedBucket = normalizedBucket.slice(0, slashIndex);
   }
 
   return normalizedBucket;
