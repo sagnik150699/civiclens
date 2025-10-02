@@ -18,14 +18,14 @@ export function getFirebaseAdmin(): FirebaseAdmin {
   }
 
   try {
-    const serviceAccount: ServiceAccount = {
-      projectId: firebaseConfig.projectId,
-      clientEmail: `firebase-adminsdk-v59j3@${firebaseConfig.projectId}.iam.gserviceaccount.com`,
-      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-    };
-    
+    const serviceAccount = buildServiceAccountFromEnv();
+
+    if (!serviceAccount.clientEmail) {
+      throw new Error('Firebase Admin client email is not configured.');
+    }
+
     if (!serviceAccount.privateKey || serviceAccount.privateKey.includes('YOUR_PRIVATE_KEY_HERE')) {
-        throw new Error('FIREBASE_PRIVATE_KEY is not set or is a placeholder in the environment variables.');
+      throw new Error('FIREBASE_PRIVATE_KEY is not set or is a placeholder in the environment variables.');
     }
 
     let app: App;
@@ -50,4 +50,32 @@ export function getFirebaseAdmin(): FirebaseAdmin {
     }
     throw new Error('Firebase Admin SDK initialization failed due to an unknown error.');
   }
+}
+
+function buildServiceAccountFromEnv(): ServiceAccount {
+  const serviceAccountEnv = process.env.FIREBASE_SERVICE_ACCOUNT;
+
+  if (serviceAccountEnv) {
+    try {
+      const parsed = JSON.parse(serviceAccountEnv) as {
+        project_id?: string;
+        client_email?: string;
+        private_key?: string;
+      };
+
+      return {
+        projectId: parsed.project_id ?? firebaseConfig.projectId,
+        clientEmail: parsed.client_email,
+        privateKey: parsed.private_key?.replace(/\\n/g, '\n'),
+      };
+    } catch {
+      throw new Error('FIREBASE_SERVICE_ACCOUNT is defined but could not be parsed as JSON.');
+    }
+  }
+
+  return {
+    projectId: process.env.FIREBASE_PROJECT_ID ?? firebaseConfig.projectId,
+    clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+    privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+  };
 }
