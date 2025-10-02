@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { Send, LocateIcon, Loader2 } from 'lucide-react';
+import { Send, LocateIcon, Loader2, Camera } from 'lucide-react';
 import { ISSUE_CATEGORIES } from '@/lib/constants';
 import {
   AlertDialog,
@@ -200,6 +200,15 @@ export function IssueReportForm() {
         </div>
         <input type="hidden" name="lat" value={lat} />
         <input type="hidden" name="lng" value={lng} />
+
+        <div className="space-y-2">
+            <Label htmlFor="photo">Photo (Optional)</Label>
+            <div className="flex items-center gap-2">
+                <Camera className="h-5 w-5 text-muted-foreground" />
+                <Input id="photo" name="photo" type="file" accept="image/*" />
+            </div>
+             {state?.errors?.photo && <p className="text-sm font-medium text-destructive">{state.errors.photo[0]}</p>}
+        </div>
 
         <SubmitButton />
       </form>

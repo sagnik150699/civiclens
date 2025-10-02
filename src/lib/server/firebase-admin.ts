@@ -1,13 +1,13 @@
 
 import { initializeApp, getApps, getApp, type App, cert, type ServiceAccount } from 'firebase-admin/app';
 import { getFirestore, type Firestore } from 'firebase-admin/firestore';
-import { getStorage, type Storage } from 'firebase-admin/storage';
+import { getStorage } from 'firebase-admin/storage';
 import { firebaseConfig } from '../firebase-client';
 
 interface FirebaseAdmin {
   app: App;
   db: Firestore;
-  bucket: Storage['bucket'];
+  bucket: ReturnType<typeof getStorage>['bucket'];
 }
 
 let admin: FirebaseAdmin | null = null;
@@ -39,7 +39,7 @@ export function getFirebaseAdmin(): FirebaseAdmin {
     }
   
     const db: Firestore = getFirestore(app);
-    const bucket: Storage['bucket'] = getStorage(app).bucket();
+    const bucket = getStorage(app).bucket();
   
     admin = { app, db, bucket };
     return admin;

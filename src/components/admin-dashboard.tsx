@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useMemo, useState, type FC, useEffect } from 'react';
@@ -215,6 +216,7 @@ export function AdminDashboard({ initialIssues }: { initialIssues: IssueReport[]
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>Photo</TableHead>
                   <TableHead>Priority</TableHead>
                   <TableHead>Category</TableHead>
                   <TableHead>Address</TableHead>
@@ -228,6 +230,7 @@ export function AdminDashboard({ initialIssues }: { initialIssues: IssueReport[]
                 {isLoading ? (
                     Array.from({ length: 5 }).map((_, i) => (
                         <TableRow key={i}>
+                            <TableCell><Skeleton className="h-12 w-12 rounded-md" /></TableCell>
                             <TableCell><Skeleton className="h-6 w-16" /></TableCell>
                             <TableCell><Skeleton className="h-6 w-24" /></TableCell>
                             <TableCell><Skeleton className="h-6 w-48" /></TableCell>
@@ -242,6 +245,13 @@ export function AdminDashboard({ initialIssues }: { initialIssues: IssueReport[]
                   const categoryLabel = ISSUE_CATEGORIES.find(c => c.value === issue.category)?.label || issue.category;
                   return (
                   <TableRow key={issue.id}>
+                    <TableCell>
+                      {issue.photoUrl ? (
+                        <a href={issue.photoUrl} target="_blank" rel="noopener noreferrer">
+                          <Image src={issue.photoUrl} alt="Issue photo" width={48} height={48} className="rounded-md object-cover" />
+                        </a>
+                      ) : <div className="h-12 w-12 bg-muted rounded-md flex items-center justify-center text-muted-foreground">n/a</div>}
+                    </TableCell>
                     <TableCell><PriorityBadge priority={issue.priority} /></TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
