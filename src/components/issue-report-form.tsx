@@ -135,7 +135,6 @@ export function IssueReportForm() {
       <form
         ref={formRef}
         action={formAction}
-        method="post"
         encType="multipart/form-data"
         className="space-y-4"
       >
