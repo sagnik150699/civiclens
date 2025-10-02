@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useState, useRef, useActionState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { submitIssue, type IssueFormState } from '@/lib/issue-actions';
 
 import { Button } from '@/components/ui/button';
@@ -26,7 +26,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { useFormStatus } from 'react-dom';
+import { useFormState, useFormStatus } from 'react-dom';
 
 const initialState: IssueFormState = {
     success: false,
@@ -45,7 +45,7 @@ function SubmitButton() {
 }
 
 export function IssueReportForm() {
-  const [state, formAction] = useActionState(submitIssue, initialState);
+  const [state, formAction] = useFormState(submitIssue, initialState);
   
   const [address, setAddress] = useState('');
   const [lat, setLat] = useState('');
