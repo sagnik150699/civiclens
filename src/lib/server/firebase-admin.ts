@@ -1,3 +1,4 @@
+
 import { initializeApp, getApps, getApp, type App, cert, type ServiceAccount } from 'firebase-admin/app';
 import { getFirestore, type Firestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
@@ -33,7 +34,7 @@ export function getFirebaseAdmin(): FirebaseAdmin {
 
   try {
     const serviceAccount = getServiceAccount();
-    const storageBucket = "civiclens-bexm4.appspot.com";
+    const storageBucket = "civiclens-bexm4.firebasestorage.app";
 
     let app: App;
     if (!getApps().length) {
