@@ -40,23 +40,46 @@ export async function submitIssue(prevState: IssueFormState, formData: FormData)
     const lng = validatedFields.data.lng ? parseFloat(validatedFields.data.lng) : 0;
 
     let photoUrl: string | null = null;
+    let uploadWarning: string | null = null;
 
     if (photo && photo.size > 0) {
-      const photoArrayBuffer = await photo.arrayBuffer();
-      const photoBytes = new Uint8Array(photoArrayBuffer);
-      const photoId = uuidv4();
-      const file = bucket.file(`issues/${photoId}-${photo.name}`);
+      try {
+        const photoArrayBuffer = await photo.arrayBuffer();
+        const photoBytes = new Uint8Array(photoArrayBuffer);
+        const photoId = uuidv4();
+        const file = bucket.file(`issues/${photoId}-${photo.name}`);
 
-      await file.save(photoBytes, {
-        contentType: photo.type,
-      });
+        await file.save(photoBytes, {
+          contentType: photo.type,
+        });
 
-      const [signedUrl] = await file.getSignedUrl({
-        action: 'read',
-        expires: Date.now() + 7 * 24 * 60 * 60 * 1000, // 7 days
-      });
+        const [signedUrl] = await file.getSignedUrl({
+          action: 'read',
+          expires: Date.now() + 7 * 24 * 60 * 60 * 1000, // 7 days
+        });
 
-      photoUrl = signedUrl;
+        photoUrl = signedUrl;
+      } catch (uploadError) {
+        console.error('Failed to upload issue photo to Firebase Storage:', uploadError);
+
+        const errorMessage =
+          uploadError instanceof Error ? uploadError.message : 'Unknown Firebase Storage error.';
+
+        if (errorMessage.includes('The specified bucket does not exist')) {
+          uploadWarning =
+            'Issue reported successfully, but the attached photo could not be uploaded because the Firebase Storage bucket is not configured.';
+        } else if (typeof uploadError === 'object' && uploadError !== null && 'code' in uploadError) {
+          const errorCode = (uploadError as { code?: number }).code;
+          if (errorCode === 404) {
+            uploadWarning =
+              'Issue reported successfully, but the attached photo could not be uploaded because the Firebase Storage bucket is not configured.';
+          } else {
+            throw uploadError;
+          }
+        } else {
+          throw uploadError;
+        }
+      }
     }
 
     const newIssue = {
@@ -76,7 +99,11 @@ export async function submitIssue(prevState: IssueFormState, formData: FormData)
 
     revalidatePath('/');
     revalidatePath('/admin');
-    return { success: true, message: 'Issue reported successfully! Our team will review it shortly.' };
+    const successMessage = uploadWarning
+      ? `${uploadWarning} Our team will review your report shortly.`
+      : 'Issue reported successfully! Our team will review it shortly.';
+
+    return { success: true, message: successMessage };
 
   } catch (error) {
     console.error('Error submitting issue:', error);
