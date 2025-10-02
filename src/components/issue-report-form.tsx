@@ -135,6 +135,8 @@ export function IssueReportForm() {
       <form
         ref={formRef}
         action={formAction}
+        method="post"
+        encType="multipart/form-data"
         className="space-y-4"
       >
         <h2 className="text-2xl font-bold font-headline text-center">Report an Issue</h2>
