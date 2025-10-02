@@ -23,6 +23,7 @@ export function getFirebaseAdmin(): FirebaseAdmin {
     const storageBucket =
       process.env.FIREBASE_STORAGE_BUCKET ??
       process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET ??
+      firebaseConfig.storageBucket ??
       (serviceAccount.projectId ? `${serviceAccount.projectId}.appspot.com` : undefined);
 
     if (!serviceAccount.clientEmail) {
