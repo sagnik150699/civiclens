@@ -3,7 +3,7 @@ import { Lightbulb, SprayCan, Trash2, type LucideProps, MapPin, X, Car, TreeDeci
 import { PotholeIcon } from '@/components/icons/pothole-icon';
 
 type IconComponent = ComponentType<LucideProps>;
-
+//hi
 export const ISSUE_CATEGORIES: { value: string; label: string; icon: IconComponent }[] = [
   { value: 'pothole', label: 'Pothole', icon: PotholeIcon },
   { value: 'streetlight_out', label: 'Streetlight Out', icon: Lightbulb },
