@@ -52,15 +52,13 @@ const getMarkerIcon = (issue: IssueReport): L.Icon => {
 
 export default function IssueMap({ issues }: { issues: IssueReport[] }) {
     
-    // Default center to the world view if no issues, otherwise average the locations
     const center: [number, number] = issues.length > 0
         ? [
             issues.reduce((acc, issue) => acc + issue.location.lat, 0) / issues.length,
-            issues.reduce((acc, issue) => acc + issue.location.lng, 0) / issues.length
+            issues.reduce((acc, issue) => acc + issue.location.lng, 0) / issues.length,
           ]
-        : [0, 0]; // Default to world view
-
-    const zoom = issues.length > 0 ? 11 : 2; // Zoom out for world view
+        : [0, 0];
+    const zoom = issues.length > 0 ? 11 : 2;
 
   return (
     <MapContainer center={center} zoom={zoom} style={{ height: '256px', width: '100%', borderRadius: '0.5rem' }}>
