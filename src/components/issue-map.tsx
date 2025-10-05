@@ -61,7 +61,7 @@ export default function IssueMap({ issues }: { issues: IssueReport[] }) {
         : [20.5937, 78.9629]; // Default to India
 
   return (
-    <MapContainer center={center} zoom={issues.length > 0 ? 11 : 5} style={{ height: '256px', width: '100%', borderRadius: '0.5rem' }}>
+    <MapContainer center={center} zoom={issues.length > 0 ? 11 : 4} style={{ height: '256px', width: '100%', borderRadius: '0.5rem' }}>
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
