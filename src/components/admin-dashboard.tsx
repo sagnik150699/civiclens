@@ -259,8 +259,8 @@ export function AdminDashboard({ initialIssues }: { initialIssues: IssueReport[]
                         <span className="font-medium">{categoryLabel}</span>
                       </div>
                     </TableCell>
-                    <TableCell className="max-w-xs truncate">{issue.address}</TableCell>
-                    <TableCell className="max-w-xs truncate">{issue.description}</TableCell>
+                    <TableCell>{issue.address}</TableCell>
+                    <TableCell>{issue.description}</TableCell>
                     <TableCell>{formatDistanceToNow(new Date(issue.createdAt), { addSuffix: true })}</TableCell>
                     <TableCell><StatusBadge status={issue.status} /></TableCell>
                     <TableCell>
