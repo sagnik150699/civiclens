@@ -46,6 +46,13 @@ import { MoreHorizontal, MapPin } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from './ui/skeleton';
+import dynamic from 'next/dynamic';
+
+const IssueMap = dynamic(() => import('@/components/issue-map'), { 
+    ssr: false,
+    loading: () => <Skeleton className="h-64 w-full" />
+});
+
 
 const priorityColors: Record<IssuePriority, string> = {
   High: 'bg-red-500 hover:bg-red-500/90',
@@ -172,37 +179,7 @@ export function AdminDashboard({ initialIssues }: { initialIssues: IssueReport[]
                 <CardDescription>Live map of reported issues.</CardDescription>
             </CardHeader>
             <CardContent>
-                <div className="relative h-64 w-full overflow-hidden rounded-md">
-                    <Image
-                        src="https://picsum.photos/800/400"
-                        alt="City map with issue locations"
-                        fill
-                        className="object-cover"
-                        data-ai-hint="city map"
-                    />
-                    {filteredIssues.map(issue => {
-                         const Icon = ISSUE_CATEGORIES.find(c => c.value === issue.category)?.icon || MapPin;
-                         const top = 10 + (issue.location.lat - 34.0) * 1000;
-                         const left = 10 + (issue.location.lng - (-118.3)) * 1000;
-                         return (
-                            <TooltipProvider key={issue.id}>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <div 
-                                          className="absolute -translate-x-1/2 -translate-y-1/2"
-                                          style={{ top: `${top % 90 + 5}%`, left: `${left % 90 + 5}%` }}
-                                        >
-                                           <Icon className={`h-6 w-6 ${priorityColors[issue.priority]} text-white rounded-full p-1 shadow-lg`}/>
-                                        </div>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                        <p>{issue.description}</p>
-                                    </TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
-                         )
-                    })}
-                </div>
+                <IssueMap issues={filteredIssues} />
             </CardContent>
         </Card>
         <Card>
