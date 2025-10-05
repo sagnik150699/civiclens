@@ -4,11 +4,20 @@
 import { MapContainer, TileLayer, Marker, Popup, Tooltip } from 'react-leaflet';
 import type { IssueReport } from '@/lib/data';
 import 'leaflet/dist/leaflet.css';
-import { icon, type Icon } from 'leaflet';
+import L from 'leaflet';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { ISSUE_CATEGORIES, ISSUE_PRIORITIES } from '@/lib/constants';
+import { ISSUE_CATEGORIES } from '@/lib/constants';
 import { MapPin } from 'lucide-react';
 import type { IssuePriority } from '@/lib/data';
+
+// Default icon to prevent leaflet/next.js build issues
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: '/leaflet/marker-icon-2x.png',
+  iconUrl: '/leaflet/marker-icon.png',
+  shadowUrl: '/leaflet/marker-shadow.png',
+});
+
 
 const priorityColors: Record<IssuePriority, string> = {
   High: '#ef4444', // red-500
@@ -16,7 +25,7 @@ const priorityColors: Record<IssuePriority, string> = {
   Low: '#22c55e', // green-500
 };
 
-const getMarkerIcon = (issue: IssueReport): Icon => {
+const getMarkerIcon = (issue: IssueReport): L.Icon => {
     const CategoryIcon = ISSUE_CATEGORIES.find(c => c.value === issue.category)?.icon || MapPin;
     const color = priorityColors[issue.priority];
 
@@ -26,7 +35,7 @@ const getMarkerIcon = (issue: IssueReport): Icon => {
         </div>
     );
 
-    return icon({
+    return L.divIcon({
         html: iconMarkup,
         className: 'bg-transparent border-0',
         iconSize: [24, 24],
