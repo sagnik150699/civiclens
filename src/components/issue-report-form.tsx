@@ -3,6 +3,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { submitIssue, type IssueFormState } from '@/lib/issue-actions';
+import dynamic from 'next/dynamic';
 
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -27,12 +28,18 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useFormState, useFormStatus } from 'react-dom';
+import { Skeleton } from './ui/skeleton';
 
 const initialState: IssueFormState = {
-    success: false,
-    message: '',
-    errors: {}
+  success: false,
+  message: '',
+  errors: {},
 };
+
+const LocationPickerMap = dynamic(() => import('@/components/location-picker-map'), {
+  ssr: false,
+  loading: () => <Skeleton className="h-[280px] w-full rounded-xl" />,
+});
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -48,8 +55,7 @@ export function IssueReportForm() {
   const [state, formAction] = useFormState(submitIssue, initialState);
   
   const [address, setAddress] = useState('');
-  const [lat, setLat] = useState('');
-  const [lng, setLng] = useState('');
+  const [coordinates, setCoordinates] = useState({ lat: 0, lng: 0 });
   
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [dialogTitle, setDialogTitle] = useState('');
@@ -62,9 +68,8 @@ export function IssueReportForm() {
   const resetForm = () => {
     formRef.current?.reset();
     setAddress('');
-    setLat('');
-    setLng('');
-  }
+    setCoordinates({ lat: 0, lng: 0 });
+  };
 
   const handleGeolocation = () => {
     if (navigator.geolocation) {
@@ -73,13 +78,15 @@ export function IssueReportForm() {
         async (position) => {
           const latCoord = position.coords.latitude;
           const lngCoord = position.coords.longitude;
-          setLat(latCoord.toString());
-          setLng(lngCoord.toString());
+          setCoordinates({
+            lat: Number(latCoord.toFixed(6)),
+            lng: Number(lngCoord.toFixed(6)),
+          });
 
           try {
-            const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latCoord}&lon=${lngCoord}`, {
-                headers: { 'User-Agent': 'CivicLens/1.0' }
-            });
+            const response = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latCoord}&lon=${lngCoord}`
+            );
             const data = await response.json();
             if (data && data.display_name) {
               setAddress(data.display_name);
@@ -173,34 +180,91 @@ export function IssueReportForm() {
 
         <div className="space-y-2">
             <Label htmlFor="address">Address</Label>
-            <div className="relative">
-                <Input
-                    id="address"
-                    name="address"
-                    placeholder="Enter the address or use geolocation"
-                    value={address}
-                    onChange={(e) => setAddress(e.target.value)}
-                    required
-                />
-                <Button
-                    type="button"
-                    size="icon"
-                    variant="ghost"
-                    className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8"
-                    onClick={handleGeolocation}
-                    disabled={isLocating}
-                >
-                    {isLocating ? (
-                        <Loader2 className="h-5 w-5 text-muted-foreground animate-spin" />
-                    ) : (
-                        <LocateIcon className="h-5 w-5 text-muted-foreground" />
-                    )}
-                </Button>
-            </div>
+            <Input
+                id="address"
+                name="address"
+                placeholder="Enter the address or landmark"
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                required
+            />
             {state?.errors?.address && <p className="text-sm font-medium text-destructive">{state.errors.address[0]}</p>}
         </div>
-        <input type="hidden" name="lat" value={lat} />
-        <input type="hidden" name="lng" value={lng} />
+
+        <div className="space-y-3">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <Label>Map Location</Label>
+              <p className="text-sm text-muted-foreground">
+                Use your current location or click the map to pin the exact issue spot.
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleGeolocation}
+              disabled={isLocating}
+            >
+              {isLocating ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Locating
+                </>
+              ) : (
+                <>
+                  <LocateIcon className="mr-2 h-4 w-4" />
+                  Use my location
+                </>
+              )}
+            </Button>
+          </div>
+
+          <LocationPickerMap
+            height={280}
+            onChange={setCoordinates}
+            value={coordinates}
+          />
+
+          <div className="grid gap-3 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="lat-display">Latitude</Label>
+              <Input
+                id="lat-display"
+                onChange={(event) =>
+                  setCoordinates((current) => ({
+                    ...current,
+                    lat: Number(event.target.value),
+                  }))
+                }
+                step="0.000001"
+                type="number"
+                value={coordinates.lat === 0 ? '' : coordinates.lat}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="lng-display">Longitude</Label>
+              <Input
+                id="lng-display"
+                onChange={(event) =>
+                  setCoordinates((current) => ({
+                    ...current,
+                    lng: Number(event.target.value),
+                  }))
+                }
+                step="0.000001"
+                type="number"
+                value={coordinates.lng === 0 ? '' : coordinates.lng}
+              />
+            </div>
+          </div>
+          {(state?.errors?.lat || state?.errors?.lng) && (
+            <p className="text-sm font-medium text-destructive">
+              {state.errors?.lat?.[0] ?? state.errors?.lng?.[0]}
+            </p>
+          )}
+        </div>
+        <input type="hidden" name="lat" value={coordinates.lat === 0 ? '' : String(coordinates.lat)} />
+        <input type="hidden" name="lng" value={coordinates.lng === 0 ? '' : String(coordinates.lng)} />
 
         <div className="space-y-2">
             <Label htmlFor="photo">Photo (Optional)</Label>

@@ -1,0 +1,45 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="98" y1="54" x2="1095" y2="584" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#061522" />
+      <stop offset="1" stop-color="#12314F" />
+    </linearGradient>
+    <linearGradient id="accent" x1="167" y1="86" x2="539" y2="402" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FF6A3D" />
+      <stop offset="0.55" stop-color="#FFD24D" />
+      <stop offset="1" stop-color="#2EE6A6" />
+    </linearGradient>
+    <radialGradient id="glow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(1010 90) rotate(143.746) scale(295.813 311.482)">
+      <stop stop-color="#2EE6A6" stop-opacity="0.65" />
+      <stop offset="1" stop-color="#2EE6A6" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+
+  <rect width="1200" height="630" rx="42" fill="url(#bg)" />
+  <circle cx="1010" cy="90" r="255" fill="url(#glow)" />
+
+  <rect x="84" y="82" width="154" height="154" rx="38" fill="url(#accent)" />
+  <circle cx="161" cy="159" r="47" stroke="#F8FAFC" stroke-width="11" />
+  <path d="M160.5 109C127.901 109 101.5 135.401 101.5 168C101.5 214.25 160.5 271 160.5 271C160.5 271 219.5 214.25 219.5 168C219.5 135.401 193.099 109 160.5 109Z" fill="url(#accent)" />
+  <circle cx="160.5" cy="168" r="19" fill="#061522" />
+  <path d="M200 127L241 86" stroke="#2EE6A6" stroke-width="16" stroke-linecap="round" />
+  <path d="M238 119V86H205" stroke="#2EE6A6" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" />
+
+  <text x="84" y="316" fill="#F8FAFC" font-family="PT Sans, Arial, sans-serif" font-size="76" font-weight="700">
+    CivicLens
+  </text>
+  <text x="84" y="392" fill="#F8FAFC" font-family="PT Sans, Arial, sans-serif" font-size="72" font-weight="700">
+    Report civic issues.
+  </text>
+  <text x="84" y="470" fill="#F8FAFC" font-family="PT Sans, Arial, sans-serif" font-size="72" font-weight="700">
+    Drive faster action.
+  </text>
+  <text x="87" y="536" fill="#CBD5E1" font-family="PT Sans, Arial, sans-serif" font-size="28" font-weight="400">
+    Exact map pins, durable photo uploads, and an admin dashboard built to triage fast.
+  </text>
+
+  <rect x="832" y="492" width="286" height="68" rx="34" fill="#FF6A3D" />
+  <text x="875" y="536" fill="#061522" font-family="PT Sans, Arial, sans-serif" font-size="28" font-weight="700">
+    codingliquids.com
+  </text>
+</svg>

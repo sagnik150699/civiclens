@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useMemo, useState, type FC, useEffect } from 'react';
+import { useMemo, useState, type FC } from 'react';
 import Image from 'next/image';
 import {
   Table,
@@ -11,12 +11,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import {
-    Tooltip,
-    TooltipContent,
-    TooltipProvider,
-    TooltipTrigger,
-} from '@/components/ui/tooltip'
 import {
   Card,
   CardContent,
@@ -40,19 +34,19 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import type { IssueReport, IssueStatus, IssuePriority } from '@/lib/data';
-import { getIssues, updateIssueStatus } from '@/lib/actions';
+import { updateIssueStatus } from '@/lib/actions';
 import { ISSUE_CATEGORIES, ISSUE_PRIORITIES, ISSUE_STATUSES, ICONS } from '@/lib/constants';
 import { MoreHorizontal, MapPin } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from './ui/skeleton';
 import dynamic from 'next/dynamic';
+import { AdminIssueEditor } from './admin-issue-editor';
 
-const IssueMap = dynamic(() => import('@/components/issue-map'), { 
-    ssr: false,
-    loading: () => <Skeleton className="h-64 w-full" />
+const IssueMap = dynamic(() => import('@/components/issue-map'), {
+  ssr: false,
+  loading: () => <Skeleton className="h-64 w-full" />,
 });
-
 
 const priorityColors: Record<IssuePriority, string> = {
   High: 'bg-red-500 hover:bg-red-500/90',
@@ -77,23 +71,10 @@ const PriorityBadge: FC<{ priority: IssuePriority }> = ({ priority }) => (
 
 export function AdminDashboard({ initialIssues }: { initialIssues: IssueReport[] }) {
   const [issues, setIssues] = useState<IssueReport[]>(initialIssues);
-  const [isLoading, setIsLoading] = useState(initialIssues.length === 0);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const { toast } = useToast();
-
-  useEffect(() => {
-    async function loadIssues() {
-      setIsLoading(true);
-      const fetchedIssues = await getIssues();
-      setIssues(fetchedIssues);
-      setIsLoading(false);
-    }
-    if (initialIssues.length === 0) {
-        loadIssues();
-    }
-  }, [initialIssues]);
 
   const filteredIssues = useMemo(() => {
     return issues.filter((issue) => {
@@ -106,24 +87,27 @@ export function AdminDashboard({ initialIssues }: { initialIssues: IssueReport[]
   
   const handleStatusUpdate = async (id: string, status: IssueStatus) => {
     const result = await updateIssueStatus(id, status);
-    if (result.success) {
+    if (result.success && result.issue) {
       toast({ title: 'Success', description: result.message });
-      setIssues(prevIssues => 
-        prevIssues.map(issue => 
-          issue.id === id ? { ...issue, status } : issue
-        )
+      setIssues((prevIssues) =>
+        prevIssues.map((issue) => (issue.id === id ? result.issue : issue))
       );
     } else {
       toast({ title: 'Error', description: result.message, variant: 'destructive' });
     }
   };
 
+  const handleIssueUpdated = (updatedIssue: IssueReport) => {
+    setIssues((prevIssues) =>
+      prevIssues.map((issue) => (issue.id === updatedIssue.id ? updatedIssue : issue))
+    );
+  };
+
   const clearFilters = () => {
     setStatusFilter('all');
     setPriorityFilter('all');
     setCategoryFilter('all');
-  }
-
+  };
 
   return (
     <div className="mx-auto grid w-full max-w-6xl items-start gap-6 md:grid-cols-[180px_1fr] lg:grid-cols-[250px_1fr]">
@@ -132,7 +116,7 @@ export function AdminDashboard({ initialIssues }: { initialIssues: IssueReport[]
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Filters</CardTitle>
             <Button variant="ghost" size="icon" onClick={clearFilters} className="h-6 w-6">
-                <ICONS.x className="h-4 w-4 text-muted-foreground" />
+              <ICONS.x className="h-4 w-4 text-muted-foreground" />
             </Button>
           </CardHeader>
           <CardContent className="grid gap-4">
@@ -143,7 +127,9 @@ export function AdminDashboard({ initialIssues }: { initialIssues: IssueReport[]
               <SelectContent>
                 <SelectItem value="all">All Statuses</SelectItem>
                 {ISSUE_STATUSES.map(status => (
-                  <SelectItem key={status} value={status}>{status}</SelectItem>
+                  <SelectItem key={status} value={status}>
+                    {status}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -154,7 +140,9 @@ export function AdminDashboard({ initialIssues }: { initialIssues: IssueReport[]
               <SelectContent>
                 <SelectItem value="all">All Priorities</SelectItem>
                 {ISSUE_PRIORITIES.map(priority => (
-                  <SelectItem key={priority} value={priority}>{priority}</SelectItem>
+                  <SelectItem key={priority} value={priority}>
+                    {priority}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -165,7 +153,9 @@ export function AdminDashboard({ initialIssues }: { initialIssues: IssueReport[]
               <SelectContent>
                 <SelectItem value="all">All Categories</SelectItem>
                 {ISSUE_CATEGORIES.map(cat => (
-                  <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
+                  <SelectItem key={cat.value} value={cat.value}>
+                    {cat.label}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -186,7 +176,7 @@ export function AdminDashboard({ initialIssues }: { initialIssues: IssueReport[]
           <CardHeader>
             <CardTitle>Reported Issues</CardTitle>
             <CardDescription>
-              A list of all issues reported by citizens.
+              Review reports, update workflow details, and correct map pins when needed.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -195,29 +185,17 @@ export function AdminDashboard({ initialIssues }: { initialIssues: IssueReport[]
                 <TableRow>
                   <TableHead>Photo</TableHead>
                   <TableHead>Priority</TableHead>
+                  <TableHead>Status</TableHead>
                   <TableHead>Category</TableHead>
                   <TableHead>Address</TableHead>
                   <TableHead>Description</TableHead>
+                  <TableHead>Internal Note</TableHead>
                   <TableHead>Reported</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead><span className="sr-only">Actions</span></TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {isLoading ? (
-                    Array.from({ length: 5 }).map((_, i) => (
-                        <TableRow key={i}>
-                            <TableCell><Skeleton className="h-12 w-12 rounded-md" /></TableCell>
-                            <TableCell><Skeleton className="h-6 w-16" /></TableCell>
-                            <TableCell><Skeleton className="h-6 w-24" /></TableCell>
-                            <TableCell><Skeleton className="h-6 w-48" /></TableCell>
-                            <TableCell><Skeleton className="h-6 w-64" /></TableCell>
-                            <TableCell><Skeleton className="h-6 w-24" /></TableCell>
-                            <TableCell><Skeleton className="h-6 w-20" /></TableCell>
-                            <TableCell><Skeleton className="h-8 w-8" /></TableCell>
-                        </TableRow>
-                    ))
-                ) : filteredIssues.map((issue) => {
+                {filteredIssues.map((issue) => {
                   const CategoryIcon = ISSUE_CATEGORIES.find(c => c.value === issue.category)?.icon || MapPin;
                   const categoryLabel = ISSUE_CATEGORIES.find(c => c.value === issue.category)?.label || issue.category;
                   return (
@@ -230,37 +208,47 @@ export function AdminDashboard({ initialIssues }: { initialIssues: IssueReport[]
                       ) : <div className="h-12 w-12 bg-muted rounded-md flex items-center justify-center text-muted-foreground">n/a</div>}
                     </TableCell>
                     <TableCell><PriorityBadge priority={issue.priority} /></TableCell>
+                    <TableCell><StatusBadge status={issue.status} /></TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <CategoryIcon className="h-4 w-4 text-muted-foreground" />
                         <span className="font-medium">{categoryLabel}</span>
                       </div>
                     </TableCell>
-                    <TableCell>{issue.address}</TableCell>
-                    <TableCell>{issue.description}</TableCell>
+                    <TableCell className="max-w-[220px] truncate">{issue.address}</TableCell>
+                    <TableCell className="max-w-[240px] truncate">{issue.description}</TableCell>
+                    <TableCell className="max-w-[220px] truncate">{issue.reason}</TableCell>
                     <TableCell>{formatDistanceToNow(new Date(issue.createdAt), { addSuffix: true })}</TableCell>
-                    <TableCell><StatusBadge status={issue.status} /></TableCell>
                     <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button aria-haspopup="true" size="icon" variant="ghost">
-                            <MoreHorizontal className="h-4 w-4" />
-                            <span className="sr-only">Toggle menu</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onSelect={() => handleStatusUpdate(issue.id, 'Acknowledged')}>Acknowledge</DropdownMenuItem>
-                          <DropdownMenuItem onSelect={() => handleStatusUpdate(issue.id, 'In Progress')}>Set In Progress</DropdownMenuItem>
-                          <DropdownMenuItem onSelect={() => handleStatusUpdate(issue.id, 'Resolved')}>Resolve</DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      <div className="flex items-center justify-end gap-2">
+                        <AdminIssueEditor issue={issue} onIssueUpdated={handleIssueUpdated} />
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button aria-haspopup="true" size="icon" variant="ghost">
+                              <MoreHorizontal className="h-4 w-4" />
+                              <span className="sr-only">Toggle menu</span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onSelect={() => handleStatusUpdate(issue.id, 'Acknowledged')}>
+                              Acknowledge
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => handleStatusUpdate(issue.id, 'In Progress')}>
+                              Set In Progress
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => handleStatusUpdate(issue.id, 'Resolved')}>
+                              Resolve
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
                     </TableCell>
                   </TableRow>
                   );
                 })}
               </TableBody>
             </Table>
-            {!isLoading && filteredIssues.length === 0 && (
+            {filteredIssues.length === 0 && (
               <div className="text-center p-8 text-muted-foreground">
                 No issues match the current filters.
               </div>

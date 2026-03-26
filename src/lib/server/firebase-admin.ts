@@ -1,30 +1,80 @@
 
-import { initializeApp, getApps, getApp, type App, cert, type ServiceAccount } from 'firebase-admin/app';
+import 'server-only';
+
+import {
+  initializeApp,
+  getApps,
+  getApp,
+  type App,
+  cert,
+  type ServiceAccount,
+  applicationDefault,
+} from 'firebase-admin/app';
 import { getFirestore, type Firestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
 
 interface FirebaseAdmin {
   app: App;
   db: Firestore;
-  bucket: ReturnType<typeof getStorage>['bucket'];
+  bucket: ReturnType<ReturnType<typeof getStorage>['bucket']>;
 }
 
 let admin: FirebaseAdmin | null = null;
 
-function getServiceAccount(): ServiceAccount {
+function getProjectId() {
+  return (
+    process.env.FIREBASE_PROJECT_ID ??
+    process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ??
+    process.env.GOOGLE_CLOUD_PROJECT ??
+    process.env.GCLOUD_PROJECT ??
+    'civiclens-bexm4'
+  );
+}
+
+function getStorageBucket(projectId: string) {
+  return (
+    process.env.FIREBASE_STORAGE_BUCKET ??
+    process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET ??
+    `${projectId}.firebasestorage.app`
+  );
+}
+
+function getServiceAccount(): ServiceAccount | null {
   const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT;
-  if (!serviceAccountJson) {
-    throw new Error('FIREBASE_SERVICE_ACCOUNT environment variable is not set.');
+  if (serviceAccountJson) {
+    try {
+      const serviceAccount = JSON.parse(serviceAccountJson);
+      const privateKey = serviceAccount.private_key ?? serviceAccount.privateKey;
+      if (typeof privateKey !== 'string' || privateKey.length === 0) {
+        throw new Error('FIREBASE_SERVICE_ACCOUNT is missing a private key.');
+      }
+      return {
+        ...serviceAccount,
+        privateKey: privateKey.replace(/\\n/g, '\n'),
+      };
+    } catch (error) {
+      if (error instanceof Error && error.message === 'FIREBASE_SERVICE_ACCOUNT is missing a private key.') {
+        throw error;
+      }
+      throw new Error(
+        'Failed to parse FIREBASE_SERVICE_ACCOUNT. Make sure it is a valid JSON string.'
+      );
+    }
   }
-  try {
-    const serviceAccount = JSON.parse(serviceAccountJson);
+
+  const projectId = getProjectId();
+  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+  const privateKey = process.env.FIREBASE_PRIVATE_KEY;
+
+  if (clientEmail && privateKey) {
     return {
-      ...serviceAccount,
-      privateKey: serviceAccount.private_key.replace(/\\n/g, '\n'),
+      projectId,
+      clientEmail,
+      privateKey: privateKey.replace(/\\n/g, '\n'),
     };
-  } catch (error) {
-    throw new Error('Failed to parse FIREBASE_SERVICE_ACCOUNT. Make sure it is a valid JSON string.');
   }
+
+  return null;
 }
 
 export function getFirebaseAdmin(): FirebaseAdmin {
@@ -34,12 +84,14 @@ export function getFirebaseAdmin(): FirebaseAdmin {
 
   try {
     const serviceAccount = getServiceAccount();
-    const storageBucket = "civiclens-bexm4.appspot.com";
+    const projectId = getProjectId();
+    const storageBucket = getStorageBucket(projectId);
 
     let app: App;
     if (!getApps().length) {
       app = initializeApp({
-        credential: cert(serviceAccount),
+        credential: serviceAccount ? cert(serviceAccount) : applicationDefault(),
+        projectId,
         storageBucket,
       });
     } else {
@@ -48,9 +100,10 @@ export function getFirebaseAdmin(): FirebaseAdmin {
 
     const db: Firestore = getFirestore(app);
     const bucket = getStorage(app).bucket();
-  
-    admin = { app, db, bucket };
-    return admin;
+    const initializedAdmin: FirebaseAdmin = { app, db, bucket };
+
+    admin = initializedAdmin;
+    return initializedAdmin;
   } catch (error: unknown) {
     console.error("Firebase Admin SDK initialization error:", error);
     if (error instanceof Error) {

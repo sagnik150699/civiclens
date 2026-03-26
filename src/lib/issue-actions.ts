@@ -5,8 +5,8 @@ import { issueSchema } from '@/lib/schemas';
 import { revalidatePath } from 'next/cache';
 import { getFirebaseAdmin } from '@/lib/server/firebase-admin';
 import type { IssueStatus, IssuePriority, IssueCategory } from './data';
-import { v4 as uuidv4 } from 'uuid';
 import { Timestamp } from 'firebase-admin/firestore';
+import { randomUUID } from 'crypto';
 
 export type IssueFormState = {
   success: boolean;
@@ -46,19 +46,22 @@ export async function submitIssue(prevState: IssueFormState, formData: FormData)
       try {
         const photoArrayBuffer = await photo.arrayBuffer();
         const photoBytes = new Uint8Array(photoArrayBuffer);
-        const photoId = uuidv4();
+        const photoId = randomUUID();
+        const downloadToken = randomUUID();
         const file = bucket.file(`issues/${photoId}-${photo.name}`);
 
         await file.save(photoBytes, {
           contentType: photo.type,
+          metadata: {
+            metadata: {
+              firebaseStorageDownloadTokens: downloadToken,
+            },
+          },
         });
 
-        const [signedUrl] = await file.getSignedUrl({
-          action: 'read',
-          expires: Date.now() + 7 * 24 * 60 * 60 * 1000, // 7 days
-        });
-
-        photoUrl = signedUrl;
+        photoUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(
+          file.name
+        )}?alt=media&token=${downloadToken}`;
       } catch (uploadError: any) {
         console.error('Failed to upload issue photo to Firebase Storage:', uploadError);
 
