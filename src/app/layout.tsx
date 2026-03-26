@@ -24,9 +24,9 @@ export const metadata: Metadata = {
   },
   description: siteConfig.description,
   keywords: siteConfig.keywords,
-  authors: [{ name: siteConfig.creator, url: 'https://codingliquids.com' }],
+  authors: [{ name: siteConfig.creator, url: siteConfig.creatorUrl }],
   creator: siteConfig.creator,
-  publisher: siteConfig.creator,
+  publisher: siteConfig.publisher,
   alternates: {
     canonical: '/',
   },

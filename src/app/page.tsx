@@ -1,11 +1,13 @@
 import type { Metadata } from 'next';
 import { IssueReportForm } from '@/components/issue-report-form';
+import { LicensingCTA } from '@/components/licensing-cta';
+import { Footer } from '@/components/footer';
 import { siteConfig } from '@/lib/site';
 
 export const metadata: Metadata = {
-  title: 'Report Civic Issues',
+  title: 'Report Civic Issues — Potholes, Streetlights & More',
   description:
-    'Let residents report potholes, broken streetlights, graffiti, and other local issues with an exact map pin and photo upload.',
+    'Let residents report potholes, broken streetlights, graffiti, and other local issues with an exact map pin and photo upload. CivicLens is the modern 311 alternative for municipalities.',
   alternates: {
     canonical: '/',
   },
@@ -20,11 +22,52 @@ export default function Home() {
     description: siteConfig.description,
     applicationCategory: 'GovernmentApplication',
     operatingSystem: 'All',
+    offers: {
+      '@type': 'Offer',
+      price: '0',
+      priceCurrency: 'USD',
+    },
+    author: {
+      '@type': 'Person',
+      name: siteConfig.creator,
+      url: siteConfig.creatorUrl,
+    },
     publisher: {
       '@type': 'Organization',
-      name: siteConfig.creator,
+      name: siteConfig.publisher,
       url: 'https://codingliquids.com',
     },
+  };
+
+  const faqData = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: [
+      {
+        '@type': 'Question',
+        name: 'What is CivicLens?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'CivicLens is a modern civic issue reporting platform that allows residents to report potholes, broken streetlights, graffiti, and other local issues with exact map pins and photo uploads.',
+        },
+      },
+      {
+        '@type': 'Question',
+        name: 'How do I report an issue?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Simply fill out the report form with a description, drop a pin on the map for the exact location, optionally attach a photo, and submit. The civic team is notified immediately.',
+        },
+      },
+      {
+        '@type': 'Question',
+        name: 'Can municipalities license CivicLens?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Yes! CivicLens is available for white-label licensing. Contact us to deploy it on your municipal or smart-city platform.',
+        },
+      },
+    ],
   };
 
   return (
@@ -33,6 +76,10 @@ export default function Home() {
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqData) }}
         />
         <section className="w-full py-12 md:py-24 lg:py-32">
           <div className="container px-4 md:px-6">
@@ -80,7 +127,11 @@ export default function Home() {
             </div>
           </div>
         </section>
+
+        <LicensingCTA />
       </main>
+
+      <Footer />
     </div>
   );
 }

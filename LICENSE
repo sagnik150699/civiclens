@@ -1,0 +1,67 @@
+CivicLens Proprietary License
+Copyright (c) 2025-present Sagnik Bhattacharya. All rights reserved.
+
+https://sagnikbhattacharya.com
+
+1. GRANT OF RIGHTS
+
+   This software and its source code ("Software") are the intellectual
+   property of Sagnik Bhattacharya ("Licensor"). No license, right, or
+   interest in the Software is granted to any person or entity except
+   under the terms of a separate, written commercial license agreement
+   signed by the Licensor.
+
+2. RESTRICTIONS
+
+   Unless you hold a valid commercial license from the Licensor, you
+   MAY NOT:
+
+   a. Use the Software, in whole or in part, for any commercial or
+      production purpose.
+   b. Copy, modify, merge, distribute, sublicense, or sell copies of
+      the Software.
+   c. Incorporate any portion of the Software into your own products
+      or services.
+   d. Deploy the Software on any publicly accessible server or
+      service.
+
+3. PERMITTED USE
+
+   You MAY:
+
+   a. View and study the source code for personal, educational, or
+      evaluation purposes only.
+   b. Fork the repository solely to propose contributions back to the
+      original project via pull requests, subject to the Licensor's
+      approval.
+
+4. COMMERCIAL LICENSING
+
+   To obtain a commercial license for use in your municipality,
+   platform, or product, contact:
+
+       Sagnik Bhattacharya
+       Email: hello@sagnikbhattacharya.com
+       Web:   https://sagnikbhattacharya.com
+
+5. CONTRIBUTIONS
+
+   By submitting a pull request or any other contribution to this
+   project, you irrevocably assign all intellectual property rights in
+   that contribution to the Licensor and agree that the contribution
+   will be licensed under the same terms as this License.
+
+6. NO WARRANTY
+
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+   EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+   MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND
+   NONINFRINGEMENT. IN NO EVENT SHALL THE LICENSOR BE LIABLE FOR ANY
+   CLAIM, DAMAGES, OR OTHER LIABILITY ARISING FROM THE USE OF THE
+   SOFTWARE.
+
+7. TERMINATION
+
+   Any use of the Software in violation of this License automatically
+   terminates any rights you may have under it. The Licensor reserves
+   the right to pursue all available legal remedies.

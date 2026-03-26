@@ -7,9 +7,11 @@ function trimTrailingSlash(value: string) {
 export const siteConfig = {
   name: 'CivicLens',
   shortName: 'CivicLens',
-  creator: 'Coding Liquids',
+  creator: 'Sagnik Bhattacharya',
+  creatorUrl: 'https://sagnikbhattacharya.com',
+  publisher: 'Coding Liquids',
   description:
-    'Report potholes, broken streetlights, graffiti, and other local issues so civic teams can respond faster.',
+    'Report potholes, broken streetlights, graffiti, and other local issues so civic teams can respond faster. CivicLens is an open-source civic-tech platform for smarter municipal operations.',
   keywords: [
     'civic issue reporting',
     '311 alternative',
@@ -17,9 +19,19 @@ export const siteConfig = {
     'pothole reporting',
     'streetlight repair reporting',
     'community problem reporting',
+    'smart city platform',
+    'citizen engagement tool',
+    'civic tech',
+    'gov tech',
+    'municipal operations software',
+    'local government software',
+    'neighborhood reporting app',
+    'public works management',
     'CivicLens',
+    'Sagnik Bhattacharya',
     'Coding Liquids',
   ],
+  licensingEmail: 'hello@sagnikbhattacharya.com',
   get url() {
     return trimTrailingSlash(
       process.env.NEXT_PUBLIC_SITE_URL ?? process.env.SITE_URL ?? DEFAULT_SITE_URL

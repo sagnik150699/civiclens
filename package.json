@@ -2,6 +2,11 @@
   "name": "civiclens",
   "version": "0.1.0",
   "private": true,
+  "license": "SEE LICENSE IN LICENSE",
+  "author": {
+    "name": "Sagnik Bhattacharya",
+    "url": "https://sagnikbhattacharya.com"
+  },
   "scripts": {
     "dev": "next dev -p 9002 -H 0.0.0.0",
     "build": "next build",
