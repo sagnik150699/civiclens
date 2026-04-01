@@ -2,25 +2,33 @@
 @tailwind components;
 @tailwind utilities;
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   font-family: var(--font-body), 'PT Sans', sans-serif;
+  min-height: 100vh;
+  background-image:
+    radial-gradient(circle at top, hsl(var(--primary) / 0.12), transparent 32%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.32));
 }
 
 @layer base {
   :root {
-    --background: 200 16% 96%; /* #ECF0F1 */
+    --background: 200 16% 96%;
     --foreground: 210 10% 23%;
     --card: 0 0% 100%;
     --card-foreground: 210 10% 23%;
     --popover: 0 0% 100%;
     --popover-foreground: 210 10% 23%;
-    --primary: 207 68% 53%; /* #3498DB */
+    --primary: 207 68% 53%;
     --primary-foreground: 210 40% 98%;
     --secondary: 210 15% 91%;
     --secondary-foreground: 210 7% 15%;
     --muted: 210 15% 91%;
     --muted-foreground: 210 7% 45%;
-    --accent: 145 63% 49%; /* #2ECC71 */
+    --accent: 145 63% 49%;
     --accent-foreground: 210 40% 98%;
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 98%;
@@ -42,6 +50,7 @@ body {
     --sidebar-border: 210 20% 92%;
     --sidebar-ring: 207 68% 53%;
   }
+
   .dark {
     --background: 220 14% 10%;
     --foreground: 210 40% 98%;
@@ -82,7 +91,22 @@ body {
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
+  }
+
+  ::selection {
+    background-color: hsl(var(--primary) / 0.18);
+    color: hsl(var(--foreground));
+  }
+}
+
+@layer utilities {
+  .bg-grid-fade {
+    background-image:
+      linear-gradient(to right, hsl(var(--foreground) / 0.05) 1px, transparent 1px),
+      linear-gradient(to bottom, hsl(var(--foreground) / 0.05) 1px, transparent 1px);
+    background-size: 28px 28px;
   }
 }

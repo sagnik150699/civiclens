@@ -54,6 +54,11 @@ For SEO and canonical URLs, set:
 * `SITE_URL`
 * `NEXT_PUBLIC_SITE_URL`
 
+For buyer-facing contact CTAs, optionally set:
+
+* `CONTACT_URL`
+* `NEXT_PUBLIC_CONTACT_URL`
+
 ### Running the Application
 
 Once your environment is configured, you can run the application locally:

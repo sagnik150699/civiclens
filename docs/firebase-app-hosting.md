@@ -41,6 +41,8 @@ Set or confirm these values in Firebase App Hosting:
 
 - `SITE_URL`
 - `NEXT_PUBLIC_SITE_URL`
+- `CONTACT_URL`
+- `NEXT_PUBLIC_CONTACT_URL`
 - `FIREBASE_STORAGE_BUCKET`
 - `ADMIN_USERNAME`
 - `ADMIN_PASSWORD`

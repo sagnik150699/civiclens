@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
   applicationName: siteConfig.name,
   title: {
-    default: `${siteConfig.name} | Report Local Issues Faster`,
+    default: `${siteConfig.name} | White-label Civic Issue Reporting Software`,
     template: `%s | ${siteConfig.name}`,
   },
   description: siteConfig.description,
@@ -37,7 +37,7 @@ export const metadata: Metadata = {
   },
   manifest: '/manifest.webmanifest',
   openGraph: {
-    title: `${siteConfig.name} | Report Local Issues Faster`,
+    title: `${siteConfig.name} | White-label Civic Issue Reporting Software`,
     description: siteConfig.description,
     url: siteConfig.url,
     siteName: siteConfig.name,
@@ -54,7 +54,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: `${siteConfig.name} | Report Local Issues Faster`,
+    title: `${siteConfig.name} | White-label Civic Issue Reporting Software`,
     description: siteConfig.description,
     images: [siteConfig.ogImage],
   },
@@ -73,7 +73,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: '#0f766e',
+  themeColor: '#3498db',
 };
 
 export default async function RootLayout({
