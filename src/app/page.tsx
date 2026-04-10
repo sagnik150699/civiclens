@@ -14,18 +14,52 @@ import {
 import { IssueReportForm } from '@/components/issue-report-form';
 import { LicensingCTA } from '@/components/licensing-cta';
 import { Footer } from '@/components/footer';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 import { siteConfig } from '@/lib/site';
 
 export const metadata: Metadata = {
   title: 'White-label 311 Software for Modern Civic Teams',
   description:
-    'Sell a cleaner civic reporting experience with branded resident intake, precise map pins, photo evidence, and a staff dashboard that keeps issues moving.',
+    'License or acquire CivicLens outright: a proprietary white-label 311 platform with branded resident intake, map pins, photo evidence, and a staff dashboard for civic teams.',
   alternates: {
     canonical: '/',
   },
 };
 
 export default function Home() {
+  const faqs = [
+    {
+      question: 'Who is CivicLens for?',
+      answer:
+        'CivicLens is built for municipalities, campuses, and managed communities that need a branded civic issue reporting portal paired with a staff-facing operations dashboard.',
+    },
+    {
+      question: 'What does the resident reporting workflow include?',
+      answer:
+        'Residents can choose an issue category, add a description, place an exact map pin, include an address, and upload a photo so staff receive clearer context from the start.',
+    },
+    {
+      question: 'How is CivicLens delivered to buyers?',
+      answer:
+        'Buyers can license CivicLens as a white-label deployment with their branding, domain, and rollout requirements. Deployment, hosting expectations, and implementation planning are handled as part of the commercial conversation.',
+    },
+    {
+      question: 'Can organizations license CivicLens or buy it outright?',
+      answer:
+        'Yes. CivicLens is proprietary software owned by Sagnik Bhattacharya and is available only through a written commercial license or a separate outright acquisition agreement.',
+    },
+    {
+      question: 'What happens after requesting pricing?',
+      answer:
+        'The next step is a conversation about organization size, deployment model, branding needs, implementation scope, and whether licensing or outright acquisition is the right fit.',
+    },
+  ];
+
   const heroPillars = [
     {
       title: 'Resident-first intake',
@@ -40,9 +74,9 @@ export default function Home() {
     {
       title: 'Licensable from day one',
       description:
-        'White-label the experience instead of funding a long custom build.',
-    },
-  ];
+        'License the platform for rollout or discuss an outright acquisition.',
+      },
+    ];
 
   const platformCards = [
     {
@@ -61,10 +95,14 @@ export default function Home() {
     },
     {
       icon: Building2,
-      title: 'Ready for a branded rollout',
+      title: 'Commercially ready ownership path',
       description:
-        'Position CivicLens as software your team can license, brand, and put in front of residents quickly.',
-      points: ['White-label positioning', 'Buyer-friendly deployment story', 'Fits municipalities, campuses, and portfolios'],
+        'CivicLens is proprietary software with a clear path for commercial licensing or a negotiated outright purchase.',
+      points: [
+        'White-label deployment options',
+        'Licensing or acquisition terms',
+        'Fits municipalities, campuses, and portfolios',
+      ],
     },
   ];
 
@@ -90,63 +128,83 @@ export default function Home() {
       icon: ShieldCheck,
       title: 'Leadership gets a platform they can stand behind',
       description:
-        'The product feels polished enough for residents and structured enough for staff.',
+        'The product pairs operational value with clear deployment, ownership, and rollout options.',
     },
   ];
 
-  const structuredData = {
+  const softwareApplicationData = {
     '@context': 'https://schema.org',
     '@type': 'SoftwareApplication',
+    '@id': `${siteConfig.url}#software`,
     name: siteConfig.name,
     url: siteConfig.url,
     description: siteConfig.description,
     applicationCategory: 'BusinessApplication',
     operatingSystem: 'All',
+    isAccessibleForFree: false,
     audience: {
       '@type': 'Audience',
       audienceType: 'Municipal operations teams, campuses, and managed communities',
     },
-    author: {
+    creator: {
       '@type': 'Person',
       name: siteConfig.creator,
       url: siteConfig.creatorUrl,
     },
     publisher: {
-      '@type': 'Organization',
-      name: siteConfig.publisher,
-      url: 'https://codingliquids.com',
+      '@id': `${siteConfig.url}#organization`,
     },
+    provider: {
+      '@id': `${siteConfig.url}#organization`,
+    },
+    featureList: [
+      'Branded resident issue reporting portal',
+      'Photo-backed intake with exact map pin capture',
+      'Staff dashboard for triage, status updates, and notes',
+      'White-label deployment planning for buyer organizations',
+    ],
+    offers: {
+      '@type': 'Offer',
+      url: siteConfig.contactUrl,
+      description: 'Commercial licensing and outright acquisition are available by written agreement.',
+      category: 'Commercial software',
+    },
+  };
+
+  const organizationData = {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    '@id': `${siteConfig.url}#organization`,
+    name: siteConfig.publisher,
+    url: siteConfig.publisherUrl,
+    founder: {
+      '@type': 'Person',
+      name: siteConfig.creator,
+      url: siteConfig.creatorUrl,
+    },
+    email: siteConfig.contactEmail,
+    contactPoint: [
+      {
+        '@type': 'ContactPoint',
+        contactType: 'sales',
+        email: siteConfig.contactEmail,
+        url: siteConfig.contactUrl,
+        availableLanguage: ['English'],
+      },
+    ],
   };
 
   const faqData = {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
-    mainEntity: [
-      {
-        '@type': 'Question',
-        name: 'Who is CivicLens for?',
-        acceptedAnswer: {
-          '@type': 'Answer',
-          text: 'CivicLens is built for municipalities, campuses, and managed communities that want a branded civic issue reporting portal paired with a staff-facing operations dashboard.',
-        },
+    mainEntity: faqs.map((faq) => ({
+      '@type': 'Question',
+      name: faq.question,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: faq.answer,
       },
-      {
-        '@type': 'Question',
-        name: 'What does the resident reporting flow include?',
-        acceptedAnswer: {
-          '@type': 'Answer',
-          text: 'Residents can choose an issue category, add a description, place an exact map pin, include an address, and upload a photo so staff have clearer context from the start.',
-        },
-      },
-      {
-        '@type': 'Question',
-        name: 'Can organizations license and white-label CivicLens?',
-        acceptedAnswer: {
-          '@type': 'Answer',
-          text: 'Yes. CivicLens is positioned for white-label licensing, so teams can request pricing, implementation guidance, and branding details for their own rollout.',
-        },
-      },
-    ],
+    })),
   };
 
   return (
@@ -154,7 +212,11 @@ export default function Home() {
       <main className="flex-1">
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareApplicationData) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationData) }}
         />
         <script
           type="application/ld+json"
@@ -179,7 +241,9 @@ export default function Home() {
                     A modern civic reporting portal people trust and staff can actually run.
                   </h1>
                   <p className="max-w-2xl text-lg leading-8 text-slate-600 md:text-xl">
-                    CivicLens helps municipalities, campuses, and managed communities launch a branded issue-reporting experience with exact map pins, photo evidence, and a staff dashboard built for follow-through.
+                    CivicLens gives municipalities, campuses, and managed communities a branded
+                    reporting portal, photo-backed intake, and a staff dashboard they can license
+                    for deployment or acquire outright.
                   </p>
                 </div>
 
@@ -188,7 +252,7 @@ export default function Home() {
                     href={siteConfig.contactUrl}
                     className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-primary px-6 text-sm font-medium text-primary-foreground shadow-xl shadow-primary/20 transition-colors hover:bg-primary/90"
                   >
-                    Request Pricing and Demo
+                    Request Pricing and Terms
                     <ArrowRight className="h-4 w-4" />
                   </a>
                   <Link
@@ -198,6 +262,11 @@ export default function Home() {
                     See the Resident Workflow
                   </Link>
                 </div>
+
+                <p className="text-sm leading-6 text-slate-500">
+                  Proprietary software available only by written commercial license or outright
+                  acquisition.
+                </p>
 
                 <div className="grid gap-3 sm:grid-cols-3">
                   {heroPillars.map((pillar) => (
@@ -324,7 +393,8 @@ export default function Home() {
                 Everything the sale needs, without losing the product substance.
               </h2>
               <p className="text-lg leading-8 text-slate-600">
-                The homepage now works as a product pitch: it explains the resident experience, the staff workflow, and the licensing value in one place.
+                Buyers can evaluate resident experience, staff workflow, deployment fit, and
+                commercial ownership options from one page.
               </p>
             </div>
 
@@ -367,7 +437,8 @@ export default function Home() {
                 From resident report to internal action in one workflow.
               </h2>
               <p className="text-lg leading-8 text-slate-600">
-                Prospects do not have to imagine the handoff. The site now shows how the public experience connects to staff operations and why that matters.
+                The handoff is clear from intake to resolution, which helps buyers assess
+                operational fit, deployment expectations, and internal rollout readiness faster.
               </p>
             </div>
 
@@ -403,14 +474,16 @@ export default function Home() {
                   Show the workflow clearly, then let buyers try it.
                 </h2>
                 <p className="text-lg leading-8 text-slate-600">
-                  Instead of leading with a generic utility form, the page now frames the reporting flow as part of the product story. Buyers can see exactly what residents experience before asking for pricing.
+                  Buyers can review the resident workflow in detail, validate the intake
+                  experience, and assess how the platform would fit a branded rollout before
+                  discussing pricing.
                 </p>
 
                 <div className="space-y-3">
                   {[
-                    'The form feels more guided and premium, with better sectioning and clearer prompts.',
-                    'Map capture, address entry, and photo upload are easier to scan and understand.',
-                    'The call to action stays focused on buying the platform, not just using the demo.',
+                    'Guided intake captures category, address, map pin, and photo in one flow.',
+                    'Staff receive clearer context, which reduces back-and-forth during triage.',
+                    'Commercial terms stay clear: license CivicLens or discuss an outright acquisition.',
                   ].map((item) => (
                     <div
                       key={item}
@@ -427,6 +500,40 @@ export default function Home() {
                 <IssueReportForm />
               </div>
             </div>
+          </div>
+        </section>
+
+        <section id="faq" className="border-t border-white/70 py-16 md:py-20">
+          <div className="container px-4 md:px-6">
+            <div className="flex max-w-3xl flex-col gap-4">
+              <div className="inline-flex w-fit items-center rounded-full border border-primary/15 bg-primary/10 px-4 py-1.5 text-sm font-semibold text-primary">
+                Licensing FAQ
+              </div>
+              <h2 className="font-headline text-3xl font-bold tracking-tight text-slate-950 md:text-4xl">
+                Ownership, deployment, and rollout questions answered plainly.
+              </h2>
+              <p className="text-lg leading-8 text-slate-600">
+                These are the questions buyers usually ask before a licensing conversation or an
+                outright acquisition review.
+              </p>
+            </div>
+
+            <Accordion type="single" collapsible className="mt-10 space-y-4">
+              {faqs.map((faq, index) => (
+                <AccordionItem
+                  key={faq.question}
+                  value={`faq-${index}`}
+                  className="rounded-[28px] border border-white/80 bg-white/85 px-6 shadow-lg shadow-slate-900/5 backdrop-blur"
+                >
+                  <AccordionTrigger className="py-5 text-left text-lg font-bold text-slate-950 hover:no-underline">
+                    {faq.question}
+                  </AccordionTrigger>
+                  <AccordionContent className="pb-5 text-base leading-8 text-slate-600">
+                    {faq.answer}
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
           </div>
         </section>
 

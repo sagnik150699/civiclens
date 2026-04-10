@@ -54,7 +54,7 @@ export function Header({ isLoggedIn }: { isLoggedIn: boolean }) {
           </Button>
           <Button asChild className="rounded-full px-5 shadow-lg shadow-primary/20">
             <a href={siteConfig.contactUrl}>
-              Request Demo
+              Request Pricing
               <ArrowRight className="h-4 w-4" />
             </a>
           </Button>

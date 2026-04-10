@@ -19,8 +19,8 @@ export function Footer() {
           </div>
 
           <p className="max-w-xl text-sm leading-6 text-muted-foreground">
-            Branded civic issue reporting for municipalities, campuses, and managed communities.
-            Give residents a polished reporting flow and give staff a cleaner queue to manage.
+            Proprietary white-label civic issue reporting software for municipalities, campuses,
+            and managed communities. Available by commercial license or outright acquisition.
           </p>
 
           <p className="text-sm text-muted-foreground">
@@ -56,12 +56,15 @@ export function Footer() {
         </div>
 
         <div className="rounded-3xl border border-primary/10 bg-background/80 p-5 shadow-lg shadow-primary/5">
-          <div className="text-sm font-semibold text-foreground">Ready to sell the rollout internally?</div>
+          <div className="text-sm font-semibold text-foreground">
+            Ready to review pricing, licensing, or acquisition terms?
+          </div>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
-            Send people to the contact page for pricing, deployment details, and white-label options.
+            Send decision-makers to the contact page for pricing, deployment details, and
+            commercial terms.
           </p>
           <Button asChild className="mt-4 w-full rounded-full">
-            <a href={siteConfig.contactUrl}>Request Pricing</a>
+            <a href={siteConfig.contactUrl}>Request Pricing and Terms</a>
           </Button>
         </div>
       </div>

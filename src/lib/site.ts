@@ -1,5 +1,7 @@
 const DEFAULT_SITE_URL = 'https://civiclens.codingliquids.com';
 const DEFAULT_CONTACT_URL = 'https://sagnikbhattacharya.com/contact';
+const DEFAULT_CONTACT_EMAIL = 'hello@sagnikbhattacharya.com';
+const DEFAULT_PUBLISHER_URL = 'https://codingliquids.com';
 
 function trimTrailingSlash(value: string) {
   return value.endsWith('/') ? value.slice(0, -1) : value;
@@ -13,10 +15,12 @@ export const siteConfig = {
   publisher: 'Coding Liquids',
   tagline: 'White-label civic issue reporting software',
   description:
-    'White-label civic issue reporting software for municipalities, campuses, and property portfolios. Launch a branded resident portal, photo-backed issue intake, and a staff dashboard without a long custom build.',
+    'Proprietary white-label civic issue reporting software for municipalities, campuses, and managed communities. License a branded resident portal and staff dashboard, or acquire the platform outright with deployment and implementation guidance.',
   keywords: [
     'white-label 311 software',
+    'white-label 311 software license',
     'civic reporting software',
+    'civic reporting software licensing',
     'municipal reporting software',
     'resident issue reporting portal',
     'civic issue management software',
@@ -30,10 +34,13 @@ export const siteConfig = {
     'citizen engagement tool',
     'civic tech',
     'gov tech',
+    'municipal software procurement',
     'municipal operations software',
     'local government software',
     'neighborhood reporting app',
     'public works management',
+    'campus issue reporting software',
+    'white-label civic platform',
     'CivicLens',
     'Sagnik Bhattacharya',
     'Coding Liquids',
@@ -48,6 +55,20 @@ export const siteConfig = {
   },
   get contactUrl() {
     return process.env.NEXT_PUBLIC_CONTACT_URL ?? process.env.CONTACT_URL ?? DEFAULT_CONTACT_URL;
+  },
+  get contactEmail() {
+    return (
+      process.env.NEXT_PUBLIC_CONTACT_EMAIL ??
+      process.env.CONTACT_EMAIL ??
+      DEFAULT_CONTACT_EMAIL
+    );
+  },
+  get publisherUrl() {
+    return (
+      process.env.NEXT_PUBLIC_PUBLISHER_URL ??
+      process.env.PUBLISHER_URL ??
+      DEFAULT_PUBLISHER_URL
+    );
   },
 };
 

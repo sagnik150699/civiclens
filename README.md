@@ -3,21 +3,37 @@
 </p>
 Website: [sagnikbhattacharya.com](https://sagnikbhattacharya.com)
 
-# CivicLens: Community Issue Reporting Platform
+# CivicLens: Proprietary White-Label Civic Issue Reporting Software
 
-CivicLens is a modern, full-stack web application designed to empower citizens to report civic issues directly to their local government. From potholes to broken streetlights, user can quickly submit reports with photos and location data. The platform features an administrative dashboard where municipal staff can view, manage, and prioritize these issues.
+CivicLens is proprietary software owned by Sagnik Bhattacharya. It is not open source and it is not available for public deployment, redistribution, resale, or commercial use without a separate written agreement.
+
+Organizations can work with CivicLens in only two ways:
+
+*   **Commercial license** for a branded rollout.
+*   **Outright acquisition** of the product under a separate written agreement.
+
+Repository access is provided for evaluation, due diligence, and approved contribution workflows only, as described in the [LICENSE](LICENSE).
+
+CivicLens is a modern full-stack platform for municipalities, campuses, and managed communities that need a branded civic issue reporting experience. Residents can submit reports with photos and map-based location data, while staff teams triage, prioritize, and resolve issues through an administrative dashboard.
 
 This project was built with Firebase Studio.
 
+## Commercial Model
+
+*   **Ownership**: CivicLens and its source code remain the intellectual property of Sagnik Bhattacharya unless transferred under a separate outright acquisition agreement.
+*   **Licensing**: Commercial use requires a written license agreement covering rollout scope, branding, hosting, implementation, and support expectations.
+*   **Acquisition**: Buyers who want full ownership can discuss an outright purchase separately.
+*   **Evaluation-only access**: If you do not have a signed commercial agreement, you may review the code for evaluation purposes only and may not deploy it publicly.
+
 ## Features
 
-*   **Public Issue Reporting**: An intuitive form for users to submit issues, including category, description, address, and a photo.
-*   **Geolocation**: Automatically detects the user's location to simplify address entry.
-*   **Image Uploads**: Securely uploads and stores user-submitted photos.
-*   **Secure Admin Dashboard**: A password-protected dashboard for staff to manage and track all reported issues.
-*   **Interactive Map**: Displays all reported issues on a map for easy visualization of problem areas.
-*   **Issue Filtering & Management**: Admins can filter issues by category, priority, and status, and update the status as work progresses.
-*   **Authentication**: A simple session-based authentication system for the admin dashboard.
+*   **White-label resident reporting**: A branded intake flow for issue category, description, address, exact map location, and photo evidence.
+*   **Geolocation and map workflow**: Automatically detects user location and supports precise location capture.
+*   **Secure image uploads**: Stores photo evidence for clearer staff triage.
+*   **Staff operations dashboard**: A password-protected interface for reviewing, prioritizing, and updating reported issues.
+*   **Interactive issue mapping**: Visualizes reports on a map so teams can spot problem areas quickly.
+*   **Workflow management**: Staff can update categories, priorities, statuses, and notes as work progresses.
+*   **Commercial rollout readiness**: Built to support branded deployments under license or as part of an outright acquisition.
 
 ## Tech Stack
 
@@ -36,6 +52,8 @@ This project was built with Firebase Studio.
 *   A Firebase project.
 
 ### Environment Variables
+
+The setup instructions below are intended for licensed customers, acquisition due diligence, or other authorized evaluation environments.
 
 This project uses environment variables to connect to Firebase. You will need to get your Firebase project's configuration keys and add them to the project.
 
@@ -77,6 +95,14 @@ This will start the development server, typically on `http://localhost:9002`.
 For Firebase App Hosting with GitHub rollouts, see [`docs/firebase-app-hosting.md`](docs/firebase-app-hosting.md) and copy the values from [`.env.example`](.env.example).
 
 ---
+
+## Licensing and Acquisition
+
+For commercial licensing, rollout discussions, or an outright acquisition inquiry, contact:
+
+*   **Sagnik Bhattacharya**
+*   **Email**: [hello@sagnikbhattacharya.com](mailto:hello@sagnikbhattacharya.com)
+*   **Web**: [sagnikbhattacharya.com/contact](https://sagnikbhattacharya.com/contact)
 
 ## Built By
 

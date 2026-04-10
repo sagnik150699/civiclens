@@ -18,11 +18,13 @@ export function LicensingCTA() {
             </div>
 
             <h2 className="mt-6 max-w-2xl font-headline text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl">
-              Ready to launch your branded civic reporting software?
+              Ready to license CivicLens or discuss an outright acquisition?
             </h2>
 
             <p className="mt-4 max-w-2xl text-lg leading-8 text-white/75">
-              CivicLens gives you a polished resident intake flow, a staff dashboard, and a licensing path that is easier to approve than a long custom build.
+              CivicLens is proprietary software. Buyers can move forward through a written
+              commercial license for a branded rollout or explore an outright purchase of the
+              platform.
             </p>
 
             <div className="mt-8 grid gap-3 sm:grid-cols-2">
@@ -30,7 +32,7 @@ export function LicensingCTA() {
                 {
                   icon: Building2,
                   title: 'White-label rollout',
-                  description: 'Match your organization, domain, and launch workflow.',
+                  description: 'Match your organization, domain, and resident-facing launch plan.',
                 },
                 {
                   icon: ShieldCheck,
@@ -39,13 +41,13 @@ export function LicensingCTA() {
                 },
                 {
                   icon: BadgeCheck,
-                  title: 'Buyer-friendly package',
-                  description: 'Ask about pricing, deployment, and customization in one reply.',
+                  title: 'Commercial clarity',
+                  description: 'Discuss licensing terms, acquisition options, and implementation scope.',
                 },
                 {
                   icon: CalendarDays,
-                  title: 'Fast next step',
-                  description: 'Send buyers to your contact page for a walkthrough or rollout plan.',
+                  title: 'Implementation planning',
+                  description: 'Review hosting, branding, deployment, and rollout requirements early.',
                 },
               ].map((item) => {
                 const Icon = item.icon;
@@ -79,13 +81,13 @@ export function LicensingCTA() {
 
             <div className="mt-4 space-y-3 text-sm text-white/75">
               <div className="rounded-2xl border border-white/10 bg-black/10 p-4">
-                Pricing for your organization size and rollout scope
+                Pricing for a licensed rollout or terms for an outright acquisition
               </div>
               <div className="rounded-2xl border border-white/10 bg-black/10 p-4">
-                Branding, hosting, and admin workflow requirements
+                Branding, hosting, deployment, and admin workflow requirements
               </div>
               <div className="rounded-2xl border border-white/10 bg-black/10 p-4">
-                Implementation guidance for your internal approval process
+                Implementation guidance and procurement support for internal approval
               </div>
             </div>
 
@@ -96,7 +98,7 @@ export function LicensingCTA() {
                 className="h-12 rounded-full bg-accent text-accent-foreground hover:bg-accent/90"
               >
                 <a href={siteConfig.contactUrl}>
-                  Request Pricing and Plan
+                  Request Pricing and Terms
                   <ArrowRight className="h-4 w-4" />
                 </a>
               </Button>
@@ -119,6 +121,11 @@ export function LicensingCTA() {
             </div>
 
             <p className="mt-6 text-sm leading-6 text-white/60">
+              Proprietary software. Available only by written commercial license or outright
+              acquisition.
+            </p>
+
+            <p className="mt-3 text-sm leading-6 text-white/60">
               Prefer direct outreach? Visit{' '}
               <a
                 className="font-medium text-white underline underline-offset-4"
