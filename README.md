@@ -71,6 +71,7 @@ For admin access in production, set:
 
 * `ADMIN_USERNAME`
 * `ADMIN_PASSWORD`
+* `SESSION_SECRET` (recommended): a long random string used to sign the admin session cookie. If it is not set, the cookie is signed with a key derived from the admin credentials, so changing the password also signs everyone out.
 
 For SEO and canonical URLs, set:
 
