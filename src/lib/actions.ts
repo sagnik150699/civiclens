@@ -9,9 +9,26 @@ import { getFirebaseAdmin } from '@/lib/server/firebase-admin';
 import { type IssuePriority, type IssueReport, type IssueStatus, normalizeIssueRecord } from '@/lib/data';
 import { ISSUE_PRIORITIES, ISSUE_STATUSES } from './constants';
 import type { IssueReportFirestore } from './data';
-import { SESSION_COOKIE_NAME, validateAdminCredentials } from './auth';
+import {
+  SESSION_COOKIE_NAME,
+  SESSION_MAX_AGE_SECONDS,
+  createSessionToken,
+  parseAdminSession,
+  validateAdminCredentials,
+} from './auth';
 
 type AuthState = { success: boolean; message: string } | undefined;
+
+const UNAUTHORIZED_MESSAGE = 'You must be signed in as an administrator to do that.';
+
+/**
+ * Server actions are publicly callable endpoints, so every admin-only action
+ * re-checks the signed session cookie instead of relying on the middleware alone.
+ */
+async function getCurrentAdminSession() {
+  const cookieStore = await cookies();
+  return parseAdminSession(cookieStore.get(SESSION_COOKIE_NAME)?.value);
+}
 
 const updateStatusSchema = z.object({
   id: z.string(),
@@ -29,6 +46,10 @@ const updateIssueDetailsSchema = z.object({
 });
 
 export async function getIssues(): Promise<IssueReport[]> {
+  if (!(await getCurrentAdminSession())) {
+    return [];
+  }
+
   try {
     const { db } = getFirebaseAdmin();
     const issuesCollection = db.collection('issues');
@@ -50,6 +71,10 @@ export async function getIssues(): Promise<IssueReport[]> {
 }
 
 export async function updateIssueStatus(id: string, status: IssueStatus) {
+  if (!(await getCurrentAdminSession())) {
+    return { success: false, message: UNAUTHORIZED_MESSAGE };
+  }
+
   const validated = updateStatusSchema.safeParse({ id, status });
 
   if (!validated.success) {
@@ -84,6 +109,10 @@ export async function updateIssueDetails(input: {
   lat: number;
   lng: number;
 }) {
+  if (!(await getCurrentAdminSession())) {
+    return { success: false, message: UNAUTHORIZED_MESSAGE };
+  }
+
   const validated = updateIssueDetailsSchema.safeParse(input);
 
   if (!validated.success) {
@@ -127,15 +156,15 @@ export async function updateIssueDetails(input: {
 }
 
 export async function login(_prevState: AuthState, formData: FormData): Promise<AuthState> {
-  const username = formData.get('username') as string;
-  const password = formData.get('password') as string;
+  const username = String(formData.get('username') ?? '');
+  const password = String(formData.get('password') ?? '');
   const validation = validateAdminCredentials(username, password);
 
   if (validation.success) {
-    const expiresIn = 60 * 60 * 24 * 5; // 5 days in seconds
+    const token = await createSessionToken(validation.session);
     const cookieStore = await cookies();
-    cookieStore.set(SESSION_COOKIE_NAME, JSON.stringify(validation.session), {
-      maxAge: expiresIn,
+    cookieStore.set(SESSION_COOKIE_NAME, token, {
+      maxAge: SESSION_MAX_AGE_SECONDS,
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',

@@ -8,6 +8,18 @@ import type { IssueStatus, IssuePriority, IssueCategory } from './data';
 import { Timestamp } from 'firebase-admin/firestore';
 import { randomUUID } from 'crypto';
 
+const MAX_FILE_NAME_LENGTH = 80;
+
+/**
+ * Storage object names come from user-controlled upload names, so strip path
+ * separators and anything outside a conservative character set.
+ */
+function sanitizeFileName(name: string) {
+  const baseName = name.split(/[\\/]/).pop() ?? '';
+  const cleaned = baseName.replace(/[^A-Za-z0-9._-]/g, '_').replace(/^\.+/, '');
+  return (cleaned || 'photo').slice(0, MAX_FILE_NAME_LENGTH);
+}
+
 export type IssueFormState = {
   success: boolean;
   message: string;
@@ -48,7 +60,8 @@ export async function submitIssue(prevState: IssueFormState, formData: FormData)
         const photoBytes = new Uint8Array(photoArrayBuffer);
         const photoId = randomUUID();
         const downloadToken = randomUUID();
-        const file = bucket.file(`issues/${photoId}-${photo.name}`);
+        const safeName = sanitizeFileName(photo.name);
+        const file = bucket.file(`issues/${photoId}-${safeName}`);
 
         await file.save(photoBytes, {
           contentType: photo.type,
